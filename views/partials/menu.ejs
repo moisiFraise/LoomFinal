@@ -1,0 +1,35 @@
+<nav class="barra-navegacao" id="barra-navegacao">
+    <div class="logo-container">
+        <span class="texto-logo">Loom</span>
+        <button type="button" class="botao-menu" id="botao-menu">
+            <i class="fa fa-bars"></i>
+        </button>
+    </div>
+    <div class="links-navegacao" id="links-navegacao">
+        <!-- links aparecem com js -->
+        <a href="#" onclick="mostrarSecao('tela-principal')">
+            <i class="fa fa-home"></i>
+            <span>Início</span>
+        </a>
+        <a href="#" onclick="mostrarSecao('explorar')">
+            <i class="fa fa-compass"></i>
+            <span>Explorar</span>
+        </a>
+        <a href="#" onclick="mostrarSecao('perfil')">
+            <i class="fa fa-user"></i>
+            <span>Meu Perfil</span>
+        </a>
+        <a href="#" onclick="mostrarSecao('configuracoes')">
+            <i class="fa fa-cog"></i>
+            <span>Configurações</span>
+        </a>
+        <a href="#" onclick="mostrarSecao('painel-admin')" id="navbarAdmin" style="display: none;">
+            <i class="fa fa-database"></i>
+            <span>Painel Admin</span>
+        </a>
+        <a href="#" onclick="sair()">
+            <i class="fa fa-power-off"></i>
+            <span>Sair</span>
+        </a>
+    </div>
+</nav>

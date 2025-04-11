@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="/css/menu.css">
+    <link rel="stylesheet" href="/css/criarClube.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <title><%= titulo %></title>
+</head>
+<body>
+    <%- include('partials/menu') %>
+
+    <section id="tela-principal">
+        <div class="header-container">
+            <h2>Meus Clubes</h2>
+            <button onclick="formClubeDoLivro()" class="botao-padrao" id="botaoCriarClube">Criar Clube do Livro</button>
+        </div>        
+        <div id="meus-clubes" class="clubes-grid">
+            <!-- Os clubes serão inseridos aqui via JavaScript -->
+        </div>
+    </section>
+
+    <div id="overlay" class="overlay" style="display: none;"></div>
+    <div class="form-container" id="modal-criar-clube" style="display: none;">
+        <form id="form-criar-clube">
+            <h2>Criar Clube do Livro</h2>
+            <p class="form-subtitulo">Nome do Clube do Livro</p>
+            <input type="text" id="nome-clube" placeholder="Nome do Clube" required>
+            <p class="form-subtitulo">Descrição do Clube</p>
+            <input type="text" id="descricao-clube" placeholder="Descrição do Clube" required>
+            <p class="form-subtitulo">Categorias do Clube</p>
+            <div class="categorias-selecao" id="categorias-clube">
+                <!-- As categorias serão adicionadas via JavaScript -->
+            </div>
+            <p class="form-subtitulo">Visibilidade do clube</p>
+            <div class="radio-group">
+                <input type="radio" id="publico" class="visibilidade" name="visibilidade" value="publico" checked onchange="toggleSenhaClube()">
+                <label for="publico">Público</label>
+                <input type="radio" id="privado" class="visibilidade" name="visibilidade" value="privado" onchange="toggleSenhaClube()">
+                <label for="privado">Privado</label>
+            </div>
+            <div id="senha-clube-container" style="display: none;">
+                <p class="form-subtitulo">Senha de acesso ao clube</p>
+                <input type="password" id="senha-clube" placeholder="Defina uma senha para o clube">
+                <p class="senha-info">Esta senha será necessária para novos membros entrarem no clube.</p>
+            </div>
+            <button type="button" id="confirmarClube" class="botao-padrao" onclick="criarClube()">Criar Clube</button>
+            <button type="button" id="cancelarClube" onclick="cancelarCriacaoClube()">Cancelar</button>
+        </form>
+    </div>
+
+    <script src="/js/dashboard.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,87 @@
+.form-container {
+    max-width: 450px;
+    width: 85%; 
+    padding: 20px; 
+    background: var(--current-line);
+    border: 2px solid var(--roxo);
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(189, 147, 249, 0.3);
+    position: relative;
+    margin: 15px auto; 
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; 
+    width: 100%;
+}
+
+h2 {
+    color: var(--roxo);
+    text-align: center;
+    font-size: 24px;
+    margin-bottom: 15px;
+    font-weight: 600;
+    text-shadow: 0 0 8px var(--roxo);
+}
+
+input {
+    padding: 10px 12px;
+    border: 2px solid var(--roxo);
+    border-radius: 8px;
+    font-size: 14px;
+    background: var(--background);
+    color: var(--foreground);
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.radio-group {
+    display: flex;
+    gap: 15px; 
+    margin: 5px 0;
+}
+
+.botao-padrao {
+    padding: 10px; /* Reduzido de 12px */
+    font-size: 15px; /* Reduzido de 16px */
+}
+
+p {
+    margin-top: 10px; /* Reduzido de 15px */
+    font-size: 13px; /* Reduzido de 14px */
+}
+
+/* Estilos para o campo de senha */
+#senha-clube-container {
+    margin-bottom: 15px; /* Reduzido de 20px */
+}
+
+.senha-info {
+    font-size: 11px; /* Reduzido de 12px */
+    margin-top: 3px; /* Reduzido de 5px */
+}
+
+input[type="password"] {
+    padding: 10px 12px; /* Reduzido de 12px 15px */
+}
+
+/* Adicionar estilos para tornar o formulário mais compacto */
+.form-subtitulo {
+    margin-bottom: 3px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Reduzir o espaçamento entre elementos do formulário */
+.categorias-selecao {
+    margin-bottom: 10px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 5px;
+}
+
+.categoria-item {
+    font-size: 13px;
+}

@@ -1,0 +1,70 @@
+#cancelarClube {
+    background: linear-gradient(45deg, var(--vermelho), var(--laranja));
+    color: var(--foreground);
+    padding: 8px; 
+    border: none;
+    border-radius: 12px; 
+    font-size: 14px; 
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#cancelarClube:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(248, 28, 28, 0.4);
+}
+
+.overlay { /*fundo blur*/
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(40, 42, 54, 0.8);
+    backdrop-filter: blur(5px);
+    z-index: 1000;
+}
+
+#modal-criar-clube {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1001;
+    width: 85%; /* Reduzido de 90% */
+    max-width: 450px; /* Reduzido de 500px */
+}
+
+/* Adicionar estilos para tornar o modal mais compacto */
+#form-criar-clube {
+    padding: 5px;
+}
+
+/* Ajustar espaçamento dos botões */
+#confirmarClube, #cancelarClube {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+/* Reduzir o tamanho dos inputs */
+#form-criar-clube input[type="text"],
+#form-criar-clube input[type="password"] {
+    height: 38px;
+}
+
+/* Reduzir o espaçamento entre os elementos do formulário */
+#form-criar-clube > * {
+    margin-bottom: 8px;
+}
+
+/* Tornar as categorias mais compactas */
+.categoria-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 3px;
+}
+
+.categoria-item label {
+    font-size: 12px;
+    margin-left: 3px;
+}

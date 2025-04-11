@@ -1,0 +1,38 @@
+:root {
+    --background: #ffffff;
+    --current-line: #f5f5f5;
+    --selection: #e8e8e8;
+    --foreground: #2d3436;
+    --paragrafo: #636e72;
+    --ciano: #00b894;
+    --verde: #00cec9;
+    --laranja: #fdcb6e;
+    --rosa: #e84393;
+    --roxo: #6c5ce7;
+    --vermelho: #d63031;
+    --vinho: #b71540;
+    --amarelo: #ffeaa7;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+::selection{ /*mudar cor do texto selecionado hihihihi*/
+    background-color: var(--roxo);
+    color: var(--foreground);
+}
+
+body {
+    background-color: var(--current-line);
+    font-family: 'Poppins', sans-serif;
+    color: var(--foreground);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.6;
+}

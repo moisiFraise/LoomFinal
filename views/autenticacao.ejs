@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/autenticacao.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <title>Loom - Login e Cadastro</title>
+</head>
+<body>
+    <div class="form-container">
+        <div class="abas">
+            <button class="botao-aba ativo" data-aba="login">Login</button>
+            <button class="botao-aba" data-aba="registro">Cadastro</button>
+        </div>
+        
+        <div class="conteudo-aba ativo" id="login">
+            <h2>Login</h2>
+            <form id="formulario-login">
+                <div class="grupo-formulario">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" placeholder="Seu email" required>
+                </div>
+                <div class="grupo-formulario">
+                    <label for="login-senha">Senha</label>
+                    <input type="password" id="login-senha" placeholder="Sua senha" required>
+                </div>
+                <button type="submit" class="botao botao-primario">Entrar</button>
+            </form>
+        </div>
+        
+        <div class="conteudo-aba" id="registro">
+            <h2>Cadastro</h2>
+            <form id="formulario-registro">
+                <div class="grupo-formulario">
+                    <label for="registro-nome">Nome</label>
+                    <input type="text" id="registro-nome" placeholder="Seu nome completo" required>
+                </div>
+                <div class="grupo-formulario">
+                    <label for="registro-email">Email</label>
+                    <input type="email" id="registro-email" placeholder="Seu melhor email" required>
+                </div>
+                <div class="grupo-formulario">
+                    <label for="registro-senha">Senha</label>
+                    <input type="password" id="registro-senha" placeholder="Crie uma senha forte" required>
+                </div>
+                <div class="grupo-formulario">
+                    <label for="registro-confirmar-senha">Confirmar Senha</label>
+                    <input type="password" id="registro-confirmar-senha" placeholder="Confirme sua senha" required>
+                </div>
+                <button type="submit" class="botao botao-primario">Cadastrar</button>
+            </form>
+        </div>
+    </div>
+    
+    <script src="/js/autenticacao.js"></script>
+</body>
+</html>
