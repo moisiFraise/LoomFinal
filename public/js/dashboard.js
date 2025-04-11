@@ -1,12 +1,8 @@
-// ID do usuário fixo para teste (1 para o admin)
-const userId = 1;
 
-// Função para mostrar o formulário de criação de clube
 function formClubeDoLivro() {
     document.getElementById('overlay').style.display = 'block';
     document.getElementById('modal-criar-clube').style.display = 'block';
     
-    // Adicionar categorias (exemplo)
     const categoriasContainer = document.getElementById('categorias-clube');
     categoriasContainer.innerHTML = '';
     
@@ -26,12 +22,10 @@ function formClubeDoLivro() {
         categoriasContainer.appendChild(div);
     });
     
-    // Resetar visibilidade
     document.getElementById('publico').checked = true;
     toggleSenhaClube();
 }
 
-// Função para mostrar/esconder o campo de senha baseado na visibilidade
 function toggleSenhaClube() {
     const visibilidade = document.querySelector('input[name="visibilidade"]:checked').value;
     const senhaContainer = document.getElementById('senha-clube-container');
@@ -45,20 +39,17 @@ function toggleSenhaClube() {
     }
 }
 
-// Função para cancelar a criação do clube
 function cancelarCriacaoClube() {
     document.getElementById('overlay').style.display = 'none';
     document.getElementById('modal-criar-clube').style.display = 'none';
     document.getElementById('form-criar-clube').reset();
 }
 
-// Função para criar um novo clube
 async function criarClube() {
     const nome = document.getElementById('nome-clube').value;
     const descricao = document.getElementById('descricao-clube').value;
     const visibilidade = document.querySelector('input[name="visibilidade"]:checked').value;
     
-    // Obter senha apenas se for clube privado
     let senha = null;
     if (visibilidade === 'privado') {
         senha = document.getElementById('senha-clube').value;
@@ -68,7 +59,6 @@ async function criarClube() {
         }
     }
     
-    // Obter categorias selecionadas
     const categoriasSelecionadas = [];
     document.querySelectorAll('input[name="categorias"]:checked').forEach(checkbox => {
         categoriasSelecionadas.push(checkbox.value);
@@ -101,25 +91,24 @@ async function criarClube() {
         }
         
         const data = await response.json();
-        
-        // Fechar modal
-        cancelarCriacaoClube();
-        
-        // Recarregar clubes
-        carregarMeusClubes();
-        
-        // Mostrar mensagem de sucesso
-        alert('Clube criado com sucesso!');
+                cancelarCriacaoClube();
+                carregarMeusClubes();
+                alert('Clube criado com sucesso!');
         
     } catch (error) {
         console.error('Erro ao criar clube:', error);
         alert(error.message || 'Erro ao criar clube. Tente novamente.');
     }
 }
-
-// Função para carregar os clubes do usuário
 async function carregarMeusClubes() {
     try {
+        if (!userId) {
+            console.error('ID de usuário não definido');
+            const clubesGrid = document.getElementById('meus-clubes');
+            clubesGrid.innerHTML = '<p class="mensagem-erro">Não foi possível carregar seus clubes. ID de usuário não definido.</p>';
+            return;
+        }
+        
         const response = await fetch(`/api/clubes/${userId}`);
         
         if (!response.ok) {
@@ -127,8 +116,6 @@ async function carregarMeusClubes() {
         }
         
         const data = await response.json();
-        
-        // Renderizar clubes
         renderizarMeusClubes(data.clubesCriados, data.clubesParticipando);
         
     } catch (error) {
@@ -138,12 +125,10 @@ async function carregarMeusClubes() {
     }
 }
 
-// Função para renderizar os clubes do usuário
 function renderizarMeusClubes(clubesCriados, clubesParticipando) {
     const clubesGrid = document.getElementById('meus-clubes');
     clubesGrid.innerHTML = '';
     
-    // Combinar clubes criados e participando
     const todosClubes = [...clubesCriados, ...clubesParticipando];
     
     if (todosClubes.length === 0) {
@@ -151,14 +136,12 @@ function renderizarMeusClubes(clubesCriados, clubesParticipando) {
         return;
     }
     
-    // Renderizar cada clube
     todosClubes.forEach(clube => {
         const ehCriador = clubesCriados.some(c => c.id === clube.id);
         
         const clubeCard = document.createElement('div');
         clubeCard.className = 'clube-card';
         
-        // Criar ícone de visibilidade
         const iconeVisibilidade = clube.visibilidade === 'privado' 
             ? '<i class="fas fa-lock" title="Clube Privado"></i>' 
             : '<i class="fas fa-globe" title="Clube Público"></i>';
@@ -179,38 +162,29 @@ function renderizarMeusClubes(clubesCriados, clubesParticipando) {
         clubesGrid.appendChild(clubeCard);
     });
 }
-
-// Função para acessar um clube
 function editarClube(clubeId) {
-    // Adicionar efeito de loading ao clicar
     const botao = event.target.closest('.botao-editar');
     const textoOriginal = botao.innerHTML;
     botao.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando...';
     botao.disabled = true;
     
-    // Simular um pequeno delay para mostrar o efeito
     setTimeout(() => {
         alert(`Funcionalidade de edição do clube ${clubeId} a ser implementada`);
         botao.innerHTML = textoOriginal;
         botao.disabled = false;
     }, 500);
 }
-// Função para editar um clube
 function acessarClube(clubeId) {
-    // Adicionar efeito de loading ao clicar
     const botao = event.target.closest('.botao-acessar');
     const textoOriginal = botao.innerHTML;
     botao.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Acessando...';
     botao.disabled = true;
     
-    // Simular um pequeno delay para mostrar o efeito
-    setTimeout(() => {
+    setTimeout(() => { //delay para impressionar
         window.location.href = `/clube/${clubeId}`;
     }, 500);
 }
 
-
-// Função para mostrar diferentes seções
 function mostrarSecao(secao) {
     if (secao === 'tela-principal') {
         document.getElementById('tela-principal').style.display = 'block';
@@ -219,24 +193,16 @@ function mostrarSecao(secao) {
     }
 }
 
-// Função para sair (logout)
 function sair() {
     window.location.href = '/autenticacao';
 }
 
-// Inicializar a página
 document.addEventListener('DOMContentLoaded', () => {
-    // Mostrar a tela principal por padrão
     document.getElementById('tela-principal').style.display = 'block';
     
-    // Carregar os clubes do usuário
     carregarMeusClubes();
-    
-    // Adicionar evento para fechar o modal ao clicar no overlay
-    document.getElementById('overlay').addEventListener('click', cancelarCriacaoClube);
-    
-    // Adicionar evento para alternar a visibilidade do campo de senha
-    const radioButtons = document.querySelectorAll('input[name="visibilidade"]');
+        document.getElementById('overlay').addEventListener('click', cancelarCriacaoClube);
+        const radioButtons = document.querySelectorAll('input[name="visibilidade"]');
     radioButtons.forEach(radio => {
         radio.addEventListener('change', toggleSenhaClube);
     });

@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -20,7 +21,6 @@
             <button onclick="formClubeDoLivro()" class="botao-padrao" id="botaoCriarClube">Criar Clube do Livro</button>
         </div>        
         <div id="meus-clubes" class="clubes-grid">
-            <!-- Os clubes serão inseridos aqui via JavaScript -->
         </div>
     </section>
 
@@ -34,7 +34,6 @@
             <input type="text" id="descricao-clube" placeholder="Descrição do Clube" required>
             <p class="form-subtitulo">Categorias do Clube</p>
             <div class="categorias-selecao" id="categorias-clube">
-                <!-- As categorias serão adicionadas via JavaScript -->
             </div>
             <p class="form-subtitulo">Visibilidade do clube</p>
             <div class="radio-group">
@@ -51,9 +50,13 @@
             <button type="button" id="confirmarClube" class="botao-padrao" onclick="criarClube()">Criar Clube</button>
             <button type="button" id="cancelarClube" onclick="cancelarCriacaoClube()">Cancelar</button>
         </form>
-    </div>
-
+    </div>    
+    <script> //define user id
+        const userId = '<%= typeof userId !== "undefined" && userId ? userId : null %>';
+        console.log('userId definido para JavaScript:', userId);
+      </script>
+           
     <script src="/js/dashboard.js"></script>
 </body>
-</html>
+</html></html>
 
