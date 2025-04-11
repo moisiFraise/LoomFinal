@@ -31,33 +31,28 @@
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 1001;
-    width: 85%; /* Reduzido de 90% */
-    max-width: 450px; /* Reduzido de 500px */
+    width: 85%; 
+    max-width: 450px; 
 }
 
-/* Adicionar estilos para tornar o modal mais compacto */
 #form-criar-clube {
     padding: 5px;
 }
 
-/* Ajustar espaçamento dos botões */
 #confirmarClube, #cancelarClube {
     margin-top: 5px;
     margin-bottom: 5px;
 }
 
-/* Reduzir o tamanho dos inputs */
 #form-criar-clube input[type="text"],
 #form-criar-clube input[type="password"] {
     height: 38px;
 }
 
-/* Reduzir o espaçamento entre os elementos do formulário */
 #form-criar-clube > * {
     margin-bottom: 8px;
 }
 
-/* Tornar as categorias mais compactas */
 .categoria-item {
     display: flex;
     align-items: center;
@@ -67,4 +62,26 @@
 .categoria-item label {
     font-size: 12px;
     margin-left: 3px;
+}
+#modal-criar-clube {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1001;
+    width: 85%; 
+    max-width: 450px; 
+}
+
+.clubes-grid {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.clube-card {
+    width: 100% !important;
+    border-radius: 0 !important;
+    margin: 0 0 30px 0 !important;
 }

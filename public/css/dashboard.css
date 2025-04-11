@@ -44,37 +44,41 @@ input {
 }
 
 .botao-padrao {
-    padding: 10px; /* Reduzido de 12px */
-    font-size: 15px; /* Reduzido de 16px */
+    background: linear-gradient(45deg, var(--roxo), var(--rosa));
+    color: var(--current-line);
+    padding: 12px;
+    border: none;
+    border-radius: 15px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
 p {
-    margin-top: 10px; /* Reduzido de 15px */
-    font-size: 13px; /* Reduzido de 14px */
+    margin-top: 10px;
+    font-size: 13px; 
 }
 
-/* Estilos para o campo de senha */
+
 #senha-clube-container {
-    margin-bottom: 15px; /* Reduzido de 20px */
+    margin-bottom: 15px; 
 }
 
 .senha-info {
-    font-size: 11px; /* Reduzido de 12px */
-    margin-top: 3px; /* Reduzido de 5px */
+    font-size: 11px;
+    margin-top: 3px;
 }
 
 input[type="password"] {
-    padding: 10px 12px; /* Reduzido de 12px 15px */
+    padding: 10px 12px;
 }
 
-/* Adicionar estilos para tornar o formulário mais compacto */
 .form-subtitulo {
     margin-bottom: 3px;
     font-size: 13px;
     font-weight: 500;
 }
 
-/* Reduzir o espaçamento entre elementos do formulário */
 .categorias-selecao {
     margin-bottom: 10px;
     display: grid;
@@ -84,4 +88,39 @@ input[type="password"] {
 
 .categoria-item {
     font-size: 13px;
+}
+
+.clubes-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: unset !important;
+    width: 100% !important;
+    max-width: 100% !important; 
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.clube-card {
+    width: 100% !important;
+    margin: 0 0 30px 0 !important;
+    border-radius: 0 !important; 
+}
+
+.header-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 20px !important;
+}
+
+/* Ajustar o conteúdo principal */
+#tela-principal {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+}
+.full-width {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
 }

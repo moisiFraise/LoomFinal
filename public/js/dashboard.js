@@ -181,14 +181,34 @@ function renderizarMeusClubes(clubesCriados, clubesParticipando) {
 }
 
 // Função para acessar um clube
+function editarClube(clubeId) {
+    // Adicionar efeito de loading ao clicar
+    const botao = event.target.closest('.botao-editar');
+    const textoOriginal = botao.innerHTML;
+    botao.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando...';
+    botao.disabled = true;
+    
+    // Simular um pequeno delay para mostrar o efeito
+    setTimeout(() => {
+        alert(`Funcionalidade de edição do clube ${clubeId} a ser implementada`);
+        botao.innerHTML = textoOriginal;
+        botao.disabled = false;
+    }, 500);
+}
+// Função para editar um clube
 function acessarClube(clubeId) {
-    window.location.href = `/clube/${clubeId}`;
+    // Adicionar efeito de loading ao clicar
+    const botao = event.target.closest('.botao-acessar');
+    const textoOriginal = botao.innerHTML;
+    botao.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Acessando...';
+    botao.disabled = true;
+    
+    // Simular um pequeno delay para mostrar o efeito
+    setTimeout(() => {
+        window.location.href = `/clube/${clubeId}`;
+    }, 500);
 }
 
-// Função para editar um clube
-function editarClube(clubeId) {
-    alert(`Funcionalidade de edição do clube ${clubeId} a ser implementada`);
-}
 
 // Função para mostrar diferentes seções
 function mostrarSecao(secao) {
