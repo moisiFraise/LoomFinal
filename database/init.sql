@@ -47,8 +47,23 @@ CREATE TABLE IF NOT EXISTS atualizacoes (
   data_postagem DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (id_clube) REFERENCES clubes(id)
 );
+-- Tabela de categorias
+CREATE TABLE IF NOT EXISTS categorias (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nome VARCHAR(100) NOT NULL UNIQUE,
+  data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP
+);
 
--- admin padrão (senha: admin123)
+-- Tabela de relação entre clubes e categorias
+CREATE TABLE IF NOT EXISTS clube_categorias (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  id_clube INT NOT NULL,
+  id_categoria INT NOT NULL,
+  FOREIGN KEY (id_clube) REFERENCES clubes(id) ON DELETE CASCADE,
+  FOREIGN KEY (id_categoria) REFERENCES categorias(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_clube_categoria (id_clube, id_categoria)
+);
+
 INSERT INTO usuarios (nome, email, senha, tipo) 
 VALUES ('Administrador', 'admin@loom.com', '123', 'admin')
 ON DUPLICATE KEY UPDATE id=id;

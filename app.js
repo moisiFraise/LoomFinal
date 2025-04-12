@@ -4,7 +4,7 @@ const path = require('path');
 const Usuario = require('./models/Usuario');
 require('dotenv').config();
 const session = require('express-session');
-
+const Categorias = require('./models/Categorias');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -281,7 +281,103 @@ app.get('/painelAdmin', verificarAutenticacao, async (req, res) => {
     res.redirect('/dashboard');
   }
 });
+app.get('/gerenciarCategorias', verificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    
+    if (!usuario || usuario.tipo !== 'admin') {
+      return res.redirect('/dashboard');
+    }
+    
+    res.render('categorias', { 
+      titulo: 'Loom - Gerenciar Categorias',
+      userId: req.session.userId,
+      userType: usuario.tipo
+    });
+  } catch (error) {
+    console.error('Erro ao carregar página de categorias:', error);
+    res.redirect('/painelAdmin');
+  }
+});
 
+app.get('/api/categorias', verificarAutenticacao, async (req, res) => {
+  try {
+    const categorias = await Categorias.contarClubesPorCategoria();
+    res.json(categorias);
+  } catch (error) {
+    console.error('Erro ao listar categorias:', error);
+    res.status(500).json({ erro: 'Erro ao listar categorias' });
+  }
+});
+
+app.post('/api/categorias', verificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    if (!usuario || usuario.tipo !== 'admin') {
+      return res.status(403).json({ erro: 'Acesso negado' });
+    }
+    
+    const { nome } = req.body;
+    if (!nome) {
+      return res.status(400).json({ erro: 'Nome da categoria é obrigatório' });
+    }
+    
+    const novaCategoria = await Categorias.criar(nome);
+    res.status(201).json(novaCategoria);
+  } catch (error) {
+    console.error('Erro ao criar categoria:', error);
+    res.status(500).json({ erro: 'Erro ao criar categoria' });
+  }
+});
+
+app.put('/api/categorias/:id', verificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    if (!usuario || usuario.tipo !== 'admin') {
+      return res.status(403).json({ erro: 'Acesso negado' });
+    }
+    
+    const { id } = req.params;
+    const { nome } = req.body;
+    
+    if (!nome) {
+      return res.status(400).json({ erro: 'Nome da categoria é obrigatório' });
+    }
+    
+    const categoriaAtualizada = await Categorias.atualizar(id, nome);
+    res.json(categoriaAtualizada);
+  } catch (error) {
+    console.error('Erro ao atualizar categoria:', error);
+    res.status(500).json({ erro: 'Erro ao atualizar categoria' });
+  }
+});
+
+app.delete('/api/categorias/:id', verificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    if (!usuario || usuario.tipo !== 'admin') {
+      return res.status(403).json({ erro: 'Acesso negado' });
+    }
+    
+    const { id } = req.params;
+    await Categorias.excluir(id);
+    res.json({ mensagem: 'Categoria excluída com sucesso' });
+  } catch (error) {
+    console.error('Erro ao excluir categoria:', error);
+    res.status(500).json({ erro: 'Erro ao excluir categoria' });
+  }
+});
+
+app.get('/api/categorias/:id/clubes', verificarAutenticacao, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const clubes = await Categorias.listarClubesPorCategoria(id);
+    res.json(clubes);
+  } catch (error) {
+    console.error('Erro ao listar clubes da categoria:', error);
+    res.status(500).json({ erro: 'Erro ao listar clubes da categoria' });
+  }
+});
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });

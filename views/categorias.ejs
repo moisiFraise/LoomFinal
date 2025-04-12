@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= titulo %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/menu.css">
+    <link rel="stylesheet" href="/css/categorias.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+<body>
+    <%- include('partials/menu') %>
+
+    <div class="categorias-container">
+        <div class="categorias-header">
+            <h1>Gerenciar Categorias</h1>
+            <p>Gerencie as categorias disponíveis para os clubes do livro</p>
+            <button id="btn-nova-categoria" class="btn-nova-categoria">
+                <i class="fas fa-plus"></i> Nova Categoria
+            </button>
+        </div>
+
+        <div class="categorias-tabela-container">
+            <table class="categorias-tabela">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Clubes</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="categorias-lista">
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div id="modal-categoria" class="modal">
+        <div class="overlay"></div>
+        <div class="modal-content">
+            <span class="fechar-modal">&times;</span>
+            <h2 id="modal-titulo">Nova Categoria</h2>
+            <form id="form-categoria">
+                <input type="hidden" id="categoria-id">
+                <div class="form-grupo">
+                    <label for="categoria-nome">Nome da Categoria</label>
+                    <input type="text" id="categoria-nome" required>
+                </div>
+                <div class="form-acoes">
+                    <button type="submit" class="btn-salvar">Salvar</button>
+                    <button type="button" class="btn-cancelar">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Also update the other modals with overlay -->
+    <div id="modal-clubes" class="modal">
+        <div class="overlay"></div>
+        <div class="modal-content">
+            <span class="fechar-modal">&times;</span>
+            <h2 id="modal-clubes-titulo">Clubes da Categoria</h2>
+            <div id="lista-clubes-categoria">
+                <!-- Clubes carregados aqui -->
+            </div>
+            <button class="btn-fechar-modal">Fechar</button>
+        </div>
+    </div>
+    
+    <div id="modal-confirmar" class="modal">
+        <div class="overlay"></div>
+        <div class="modal-content modal-confirmar">
+            <h2>Confirmar Exclusão</h2>
+            <p>Tem certeza que deseja excluir esta categoria? Esta ação não pode ser desfeita.</p>
+            <div class="form-acoes">
+                <button id="btn-confirmar-excluir" class="btn-excluir">Sim, Excluir</button>
+                <button class="btn-cancelar">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <%- include('partials/imports') %>
+    <script src="/js/categorias.js"></script>
+</body>
+</html>
