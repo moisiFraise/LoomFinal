@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= titulo %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/menu.css">
+    <link rel="stylesheet" href="/css/painelAdmin.css">
+    <%- include('partials/imports') %>
+</head>
+<body>
+    <%- include('partials/menu') %>
+
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1>Painel Administrativo</h1>
+            <p>Funções do Administrador da Plataforma Loom</p>
+        </div>
+
+        <div class="admin-cards">
+            <div class="admin-card">
+                <div class="card-icon">
+                    <i class="fas fa-tags"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Categorias</h3>
+                    <p>Gerenciamento das cateogrias dos clubes de leitura</p>
+                    <a href="/gerenciarCategorias" class="admin-btn">
+                        <span>Gerenciar Categorias</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="admin-card">
+                <div class="card-icon">
+                    <i class="fas fa-book-reader"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Clubes</h3>
+                    <p>Visualização e gerenciamento de todos os clubes cadastrados no sistema</p>
+                    <a href="/gerenciarClubes" class="admin-btn">
+                        <span>Gerenciar Clubes</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="admin-card">
+                <div class="card-icon">
+                    <i class="fas fa-flag"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Denúncias</h3>
+                    <p>Denúncias de usuários</p>
+                    <a href="/denuncias" class="admin-btn">
+                        <span>Ver Denúncias</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="admin-card">
+                <div class="card-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Usuários</h3>
+                    <p>Gerencie contas de usuários</p>
+                    <a href="/gerenciarUsuarios" class="admin-btn">
+                        <span>Gerenciar Usuários</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('partials/imports') %>
+</body>
+</html>

@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="/css/menu.css">
     <link rel="stylesheet" href="/css/cardsClube.css">
     <link rel="stylesheet" href="/css/criarClube.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <title><%= titulo %></title>
 </head>
 <body>
@@ -51,7 +50,7 @@
             <button type="button" id="cancelarClube" onclick="cancelarCriacaoClube()">Cancelar</button>
         </form>
     </div>    
-    <script> //define user id
+    <script> // define o user id
         const userId = '<%= typeof userId !== "undefined" && userId ? userId : null %>';
         console.log('userId definido para JavaScript:', userId);
       </script>

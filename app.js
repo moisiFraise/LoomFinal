@@ -23,7 +23,7 @@ app.use(session({
   cookie: { secure: process.env.NODE_ENV === 'production', maxAge: 24 * 60 * 60 * 1000 } // 24 horas
 }));
 
-// Rota da página inicial
+// Rota página inicial
 app.get('/', (req, res) => {
   res.render('index', { title: 'Loom - Home' });
 });
@@ -263,6 +263,24 @@ app.post('/api/explorar/entrar-privado', verificarAutenticacao, async (req, res)
   }
 });
 
+app.get('/painelAdmin', verificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    
+    if (!usuario || usuario.tipo !== 'admin') { //if user = admin
+      return res.redirect('/dashboard');
+    }
+    
+    res.render('painelAdmin', { 
+      titulo: 'Loom - Painel Administrativo',
+      userId: req.session.userId,
+      userType: usuario.tipo
+    });
+  } catch (error) {
+    console.error('Erro ao carregar painel admin:', error);
+    res.redirect('/dashboard');
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

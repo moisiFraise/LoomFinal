@@ -1,0 +1,165 @@
+.admin-container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+.admin-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.admin-header h1 {
+    font-size: 2.5rem;
+    color: var(--foreground);
+    margin-bottom: 10px;
+    position: relative;
+    display: inline-block;
+}
+
+.admin-header h1::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(to right, var(--rosa), var(--roxo));
+    border-radius: 2px;
+}
+
+.admin-header p {
+    color: var(--paragrafo);
+    font-size: 1.1rem;
+}
+
+.admin-cards {
+    display: grid;
+/*4 cards por linha*/
+    grid-template-columns: repeat(4, 1fr);
+    gap: 30px;
+}
+
+.admin-card {
+    background-color: var(--background);
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.admin-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+.card-icon {
+    background: linear-gradient(45deg, var(--rosa), var(--roxo));
+    color: white;
+    padding: 30px 0;
+    text-align: center;
+    font-size: 2.5rem;
+}
+
+.card-content {
+    padding: 25px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-content h3 {
+    color: var(--foreground);
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+.card-content p {
+    color: var(--paragrafo);
+    margin-bottom: 25px;
+    line-height: 1.5;
+    flex-grow: 1;
+}
+
+.admin-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(45deg, var(--rosa), var(--roxo));
+    color: white;
+    text-decoration: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(108, 92, 231, 0.2);
+    margin-top: auto;
+}
+
+.admin-btn:hover {
+    background: linear-gradient(45deg, var(--roxo), var(--rosa));
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(108, 92, 231, 0.3);
+}
+
+.admin-btn i {
+    margin-left: 10px;
+    transition: transform 0.3s ease;
+}
+
+.admin-btn:hover i {
+    transform: translateX(5px);
+}
+/*notebooks pequenos e tables 2 por linha*/
+@media (max-width: 992px) and (min-width: 601px) {
+    .admin-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .admin-header h1 {
+        font-size: 2.2rem;
+    }
+}
+
+/*no telefone é um card por linha*/
+@media (max-width: 600px) {
+    .admin-header h1 {
+        font-size: 2rem;
+    }
+    
+    .admin-header p {
+        font-size: 1rem;
+    }
+    
+    .admin-cards {
+        grid-template-columns: 1fr;
+    }
+}
+/*cores diferentes para cada card, mais bonito e dificil de se confundior*/
+.admin-card:nth-child(1) .card-icon {
+    background: linear-gradient(45deg, var(--rosa), var(--roxo));
+}
+
+.admin-card:nth-child(2) .card-icon {
+    background: linear-gradient(45deg, var(--ciano), var(--verde));
+}
+
+.admin-card:nth-child(3) .card-icon {
+    background: linear-gradient(45deg, var(--vermelho), var(--vinho));
+}
+
+.admin-card:nth-child(4) .card-icon {
+    background: linear-gradient(45deg, var(--laranja), var(--amarelo));
+}
+
+.admin-btn {
+    background: linear-gradient(45deg, var(--rosa), var(--roxo));
+}
+
+.admin-btn:hover {
+    background: linear-gradient(45deg, var(--roxo), var(--rosa));
+}

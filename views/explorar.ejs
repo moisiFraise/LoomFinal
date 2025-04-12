@@ -10,14 +10,14 @@
 </head>
 <body>
     <%- include('partials/menu') %>  
-    <section id="explorar">
+    <section id="explorar" style="display: none;">
         <h2 class="explorar-clubes">Explorar Clubes</h2>
         <div id="lista-clubes">
-            <!--clubes criados-->
+            <!--clubes criados(get all clubes)-->
         </div>
     </section>
-    
-    <%- include('partials/imports') %>
     <script src="/js/explorar.js"></script>
+    <%- include('partials/imports') %>
+
 </body>
 </html>
