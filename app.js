@@ -158,7 +158,88 @@ app.post('/api/clubes', async (req, res) => {
       res.status(500).json({ erro: 'Erro ao criar clube. Tente novamente.' });
     }
   });
-  
+
+const Explorar = require('./models/explorar');
+
+app.get('/explorar', verificarAutenticacao, (req, res) => {
+  res.render('explorar', { 
+    titulo: 'Loom - Explorar Clubes',
+    userId: req.session.userId
+  });
+});
+
+app.get('/api/explorar/clubes', verificarAutenticacao, async (req, res) => {
+  try {
+    const clubes = await Explorar.listarTodosClubes();
+    
+    const participacoes = [];
+    
+    for (const clube of clubes) {
+      const isParticipante = await Explorar.verificarParticipacao(req.session.userId, clube.id);
+      if (isParticipante) {
+        participacoes.push(clube.id);
+      }
+    }
+    
+    res.json({
+      clubes,
+      participacoes
+    });
+  } catch (error) {
+    console.error('Erro ao listar clubes:', error);
+    res.status(500).json({ erro: 'Erro ao buscar clubes. Tente novamente.' });
+  }
+});
+
+app.post('/api/explorar/entrar', verificarAutenticacao, async (req, res) => {
+  try {
+    const { clubeId } = req.body;
+    
+    if (!clubeId) {
+      return res.status(400).json({ erro: 'ID do clube é obrigatório.' });
+    }
+    
+    const jaParticipa = await Explorar.verificarParticipacao(req.session.userId, clubeId);
+    if (jaParticipa) {
+      return res.status(400).json({ erro: 'Você já é membro deste clube.' });
+    }
+    
+    await Explorar.entrarNoClube(req.session.userId, clubeId);
+    
+    res.json({ mensagem: 'Você entrou no clube com sucesso!' });
+  } catch (error) {
+    console.error('Erro ao entrar no clube:', error);
+    res.status(500).json({ erro: 'Erro ao entrar no clube. Tente novamente.' });
+  }
+});
+
+app.post('/api/explorar/entrar-privado', verificarAutenticacao, async (req, res) => {
+  try {
+    const { clubeId, senha } = req.body;
+    
+    if (!clubeId || !senha) {
+      return res.status(400).json({ erro: 'ID do clube e senha são obrigatórios.' });
+    }
+    
+    const jaParticipa = await Explorar.verificarParticipacao(req.session.userId, clubeId);
+    if (jaParticipa) {
+      return res.status(400).json({ erro: 'Você já é membro deste clube.' });
+    }
+    
+    const senhaCorreta = await Clube.verificarSenha(clubeId, senha);
+    if (!senhaCorreta) {
+      return res.status(401).json({ erro: 'Senha incorreta para este clube.' });
+    }
+    
+    await Explorar.entrarNoClube(req.session.userId, clubeId);
+    
+    res.json({ mensagem: 'Você entrou no clube com sucesso!' });
+  } catch (error) {
+    console.error('Erro ao entrar no clube privado:', error);
+    res.status(500).json({ erro: 'Erro ao entrar no clube. Tente novamente.' });
+  }
+});
+
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

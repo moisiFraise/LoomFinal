@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/explorar.css">
+    <link rel="stylesheet" href="/css/menu.css">
+    <title><%= titulo %></title>
+</head>
+<body>
+    <%- include('partials/menu') %>  
+    <section id="explorar">
+        <h2 class="explorar-clubes">Explorar Clubes</h2>
+        <div id="lista-clubes">
+            <!--clubes criados-->
+        </div>
+    </section>
+    
+    <%- include('partials/imports') %>
+    <script src="/js/explorar.js"></script>
+</body>
+</html>

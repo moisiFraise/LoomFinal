@@ -23,6 +23,9 @@ CREATE TABLE IF NOT EXISTS clubes (
   data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (id_criador) REFERENCES usuarios(id)
 );
+ALTER TABLE clubes 
+ADD COLUMN modelo ENUM('hibrido', 'online', 'presencial') DEFAULT 'online',
+ADD COLUMN leitura_atual VARCHAR(255) DEFAULT NULL;
 
 -- Tabela de participação em clubes
 CREATE TABLE IF NOT EXISTS participacoes (

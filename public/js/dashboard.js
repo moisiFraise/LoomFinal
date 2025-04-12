@@ -185,25 +185,4 @@ function acessarClube(clubeId) {
     }, 500);
 }
 
-function mostrarSecao(secao) {
-    if (secao === 'tela-principal') {
-        document.getElementById('tela-principal').style.display = 'block';
-    } else {
-        alert(`Funcionalidade "${secao}" a ser implementada`);
-    }
-}
 
-function sair() {
-    window.location.href = '/autenticacao';
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('tela-principal').style.display = 'block';
-    
-    carregarMeusClubes();
-        document.getElementById('overlay').addEventListener('click', cancelarCriacaoClube);
-        const radioButtons = document.querySelectorAll('input[name="visibilidade"]');
-    radioButtons.forEach(radio => {
-        radio.addEventListener('change', toggleSenhaClube);
-    });
-});
