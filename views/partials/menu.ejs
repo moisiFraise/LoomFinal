@@ -22,10 +22,12 @@
             <i class="fa fa-cog"></i>
             <span>Configurações</span>
         </a>
-        <a href="#" onclick="alert('Funcionalidade de painel admin a ser implementada')" id="navbarAdmin" style="display: none;">
+        <% if (typeof userType !== 'undefined' && userType === 'admin') { %>
+        <a href="#" onclick="alert('Funcionalidade de painel admin a ser implementada')">
             <i class="fa fa-database"></i>
             <span>Painel Admin</span>
         </a>
+        <% } %>
         <a href="/autenticacao">
             <i class="fa fa-power-off"></i>
             <span>Sair</span>

@@ -5,7 +5,7 @@ class Usuario {
     try {
       const [result] = await pool.query(
         'INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)',
-        [nome, email, senha]  // Senha em texto simples
+        [nome, email, senha]  
       );
       
       return { id: result.insertId, nome, email };
@@ -33,6 +33,19 @@ class Usuario {
 
   static async verificarSenha(senha, senhaBanco) {
     return senha === senhaBanco;
+  }
+  static async buscarPorId(id) {
+    try {
+      const [rows] = await pool.query(
+        'SELECT * FROM usuarios WHERE id = ?',
+        [id]
+      );
+      
+      return rows[0];
+    } catch (error) {
+      console.error('Erro ao buscar usuário por ID:', error);
+      throw error;
+    }
   }
 }
 

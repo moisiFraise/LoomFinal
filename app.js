@@ -101,12 +101,23 @@ function verificarAutenticacao(req, res, next) {
   }
   next();
 }
-
-app.get('/dashboard', verificarAutenticacao, (req, res) => {
-  res.render('dashboard', { 
-    titulo: 'Loom - Meus Clubes',
-    userId: req.session.userId  // userID da sessão
-  });
+app.get('/dashboard', verificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    
+    res.render('dashboard', { 
+      titulo: 'Loom - Meus Clubes',
+      userId: req.session.userId,
+      userType: usuario ? usuario.tipo : null
+    });
+  } catch (error) {
+    console.error('Erro ao carregar dashboard:', error);
+    res.render('dashboard', { 
+      titulo: 'Loom - Meus Clubes',
+      userId: req.session.userId,
+      userType: null
+    });
+  }
 });
 
 const Clube = require('./models/Clube');
@@ -161,11 +172,23 @@ app.post('/api/clubes', async (req, res) => {
 
 const Explorar = require('./models/explorar');
 
-app.get('/explorar', verificarAutenticacao, (req, res) => {
-  res.render('explorar', { 
-    titulo: 'Loom - Explorar Clubes',
-    userId: req.session.userId
-  });
+app.get('/explorar', verificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    
+    res.render('explorar', { 
+      titulo: 'Loom - Explorar Clubes',
+      userId: req.session.userId,
+      userType: usuario ? usuario.tipo : null
+    });
+  } catch (error) {
+    console.error('Erro ao carregar página explorar:', error);
+    res.render('explorar', { 
+      titulo: 'Loom - Explorar Clubes',
+      userId: req.session.userId,
+      userType: null
+    });
+  }
 });
 
 app.get('/api/explorar/clubes', verificarAutenticacao, async (req, res) => {
