@@ -195,5 +195,8 @@ function acessarClube(clubeId) {
         window.location.href = `/clube/${clubeId}`;
     }, 500);
 }
-
+//dom carrega os clubes a página automaticamente
+document.addEventListener('DOMContentLoaded', function() {
+    carregarMeusClubes();
+});
 
