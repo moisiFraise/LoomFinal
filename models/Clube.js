@@ -1,33 +1,56 @@
 const pool = require('../config/database');
 
 class Clube {
-  static async criar(nome, descricao, idCriador, visibilidade, senha) {
+  static async criar(nome, descricao, idCriador, visibilidade, senha, categorias = []) {
     try {
-      const senhaAcesso = visibilidade === 'privado' ? senha : null;
+      const connection = await pool.getConnection();
       
-      const [result] = await pool.query(
-        'INSERT INTO clubes (nome, descricao, id_criador, visibilidade, senha_acesso) VALUES (?, ?, ?, ?, ?)',
-        [nome, descricao, idCriador, visibilidade, senhaAcesso]
-      );
-      
-      await pool.query(
-        'INSERT INTO participacoes (id_usuario, id_clube) VALUES (?, ?)',
-        [idCriador, result.insertId]
-      );
-      
-      return { 
-        id: result.insertId, 
-        nome, 
-        descricao, 
-        id_criador: idCriador,
-        visibilidade
-      };
+      try {
+        await connection.beginTransaction();
+        
+        const senhaAcesso = visibilidade === 'privado' ? senha : null;
+        
+        const [result] = await connection.query(
+          'INSERT INTO clubes (nome, descricao, id_criador, visibilidade, senha_acesso) VALUES (?, ?, ?, ?, ?)',
+          [nome, descricao, idCriador, visibilidade, senhaAcesso]
+        );
+        
+        const clubeId = result.insertId;
+        
+        await connection.query(
+          'INSERT INTO participacoes (id_usuario, id_clube) VALUES (?, ?)',
+          [idCriador, clubeId]
+        );
+        
+        if (categorias && categorias.length > 0) {
+          const valoresSQL = categorias.map(categoriaId => `(${clubeId}, ${categoriaId})`).join(', ');
+          await connection.query(
+            `INSERT INTO clube_categorias (id_clube, id_categoria) VALUES ${valoresSQL}`
+          );
+        }
+        
+        await connection.commit();
+        
+        return { 
+          id: clubeId, 
+          nome, 
+          descricao, 
+          id_criador: idCriador,
+          visibilidade,
+          categorias
+        };
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally {
+        connection.release();
+      }
     } catch (error) {
       console.error('Erro ao criar clube:', error);
       throw error;
     }
-
   }
+  
   static async buscarPorCriador(idCriador) {
     try {
       const [rows] = await pool.query(

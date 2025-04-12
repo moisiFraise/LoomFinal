@@ -5,6 +5,8 @@ const Usuario = require('./models/Usuario');
 require('dotenv').config();
 const session = require('express-session');
 const Categorias = require('./models/Categorias');
+const Explorar = require('./models/explorar');
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -141,36 +143,35 @@ app.get('/api/clubes/:userId', async (req, res) => {
 });
 
 app.post('/api/clubes', async (req, res) => {
-    try {
-      const { nome, descricao, idCriador, visibilidade, senha } = req.body;
-      
-      if (!nome || !idCriador) {
-        return res.status(400).json({ erro: 'Nome do clube e ID do criador são obrigatórios.' });
-      }
-      
-      if (visibilidade === 'privado' && !senha) {
-        return res.status(400).json({ erro: 'Clubes privados precisam de uma senha de acesso.' });
-      }
-      
-      const novoClube = await Clube.criar(
-        nome, 
-        descricao || '', 
-        idCriador, 
-        visibilidade || 'publico', 
-        senha
-      );
-      
-      res.status(201).json({
-        mensagem: 'Clube criado com sucesso!',
-        clube: novoClube
-      });
-    } catch (error) {
-      console.error('Erro ao criar clube:', error);
-      res.status(500).json({ erro: 'Erro ao criar clube. Tente novamente.' });
+  try {
+    const { nome, descricao, idCriador, visibilidade, senha, categorias } = req.body;
+    
+    if (!nome || !idCriador) {
+      return res.status(400).json({ erro: 'Nome do clube e ID do criador são obrigatórios.' });
     }
-  });
-
-const Explorar = require('./models/explorar');
+    
+    if (visibilidade === 'privado' && !senha) {
+      return res.status(400).json({ erro: 'Clubes privados precisam de uma senha de acesso.' });
+    }
+    
+    const novoClube = await Clube.criar(
+      nome, 
+      descricao || '', 
+      idCriador, 
+      visibilidade || 'publico', 
+      senha,
+      categorias || []
+    );
+    
+    res.status(201).json({
+      mensagem: 'Clube criado com sucesso!',
+      clube: novoClube
+    });
+  } catch (error) {
+    console.error('Erro ao criar clube:', error);
+    res.status(500).json({ erro: 'Erro ao criar clube. Tente novamente.' });
+  }
+});
 
 app.get('/explorar', verificarAutenticacao, async (req, res) => {
   try {

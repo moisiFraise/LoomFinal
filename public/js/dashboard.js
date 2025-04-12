@@ -1,30 +1,41 @@
-
-function formClubeDoLivro() {
+async function formClubeDoLivro() {
     document.getElementById('overlay').style.display = 'block';
     document.getElementById('modal-criar-clube').style.display = 'block';
     
     const categoriasContainer = document.getElementById('categorias-clube');
-    categoriasContainer.innerHTML = '';
+    categoriasContainer.innerHTML = '<p class="carregando"><i class="fas fa-spinner fa-spin"></i> Carregando categorias...</p>';
     
-    const categorias = [
-        'Ficção', 'Não-Ficção', 'Romance', 'Fantasia', 
-        'Sci-Fi', 'Terror', 'Biografia', 'História', 
-        'Autoajuda', 'Negócios'
-    ];
-    
-    categorias.forEach(categoria => {
-        const div = document.createElement('div');
-        div.className = 'categoria-item';
-        div.innerHTML = `
-            <input type="checkbox" id="cat-${categoria}" name="categorias" value="${categoria}">
-            <label for="cat-${categoria}">${categoria}</label>
-        `;
-        categoriasContainer.appendChild(div);
-    });
+    try {
+        const response = await fetch('/api/categorias');
+        if (!response.ok) {
+            throw new Error('Erro ao carregar categorias');
+        }
+        
+        const categorias = await response.json();
+        categoriasContainer.innerHTML = '';
+        
+        if (categorias.length === 0) {
+            categoriasContainer.innerHTML = '<p>Nenhuma categoria disponível</p>';
+        } else {
+            categorias.forEach(categoria => {
+                const div = document.createElement('div');
+                div.className = 'categoria-item';
+                div.innerHTML = `
+                    <input type="checkbox" id="cat-${categoria.id}" name="categorias" value="${categoria.id}">
+                    <label for="cat-${categoria.id}">${categoria.nome}</label>
+                `;
+                categoriasContainer.appendChild(div);
+            });
+        }
+    } catch (error) {
+        console.error('Erro ao carregar categorias:', error);
+        categoriasContainer.innerHTML = '<p class="erro">Erro ao carregar categorias. Tente novamente.</p>';
+    }
     
     document.getElementById('publico').checked = true;
     toggleSenhaClube();
 }
+
 
 function toggleSenhaClube() {
     const visibilidade = document.querySelector('input[name="visibilidade"]:checked').value;
@@ -61,7 +72,7 @@ async function criarClube() {
     
     const categoriasSelecionadas = [];
     document.querySelectorAll('input[name="categorias"]:checked').forEach(checkbox => {
-        categoriasSelecionadas.push(checkbox.value);
+        categoriasSelecionadas.push(parseInt(checkbox.value));
     });
     
     if (!nome || !descricao) {
@@ -91,9 +102,9 @@ async function criarClube() {
         }
         
         const data = await response.json();
-                cancelarCriacaoClube();
-                carregarMeusClubes();
-                alert('Clube criado com sucesso!');
+        cancelarCriacaoClube();
+        carregarMeusClubes();
+        alert('Clube criado com sucesso!');
         
     } catch (error) {
         console.error('Erro ao criar clube:', error);
