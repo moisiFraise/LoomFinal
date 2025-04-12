@@ -3,7 +3,6 @@ const pool = require('../config/database');
 class Usuario {
   static async criar(nome, email, senha) {
     try {
-      // Inserir usuário no banco com senha em texto simples
       const [result] = await pool.query(
         'INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)',
         [nome, email, senha]  // Senha em texto simples
@@ -33,7 +32,6 @@ class Usuario {
   }
 
   static async verificarSenha(senha, senhaBanco) {
-    // Comparação direta de strings
     return senha === senhaBanco;
   }
 }

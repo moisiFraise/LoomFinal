@@ -2,6 +2,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const botoesAba = document.querySelectorAll('.botao-aba');
     const conteudosAba = document.querySelectorAll('.conteudo-aba');
     
+    const urlParams = new URLSearchParams(window.location.search);
+    const abaParam = urlParams.get('aba');
+    
+    if (abaParam === 'registro') {
+        document.querySelector('.botao-aba[data-aba="registro"]').click();
+    }
+    
     botoesAba.forEach(botao => {
         botao.addEventListener('click', () => {
             botoesAba.forEach(b => b.classList.remove('ativo'));
@@ -11,6 +18,10 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const idAba = botao.getAttribute('data-aba');
             document.getElementById(idAba).classList.add('ativo');
+            
+            const url = new URL(window.location);
+            url.searchParams.set('aba', idAba);
+            window.history.pushState({}, '', url);
         });
     });
     
@@ -42,6 +53,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const email = document.getElementById('login-email').value;
             const senha = document.getElementById('login-senha').value;
             
+            const botaoSubmit = formularioLogin.querySelector('button[type="submit"]');
+            botaoSubmit.disabled = true;
+            botaoSubmit.textContent = 'Entrando...';
+            
             try {
                 const response = await fetch('/api/login', {
                     method: 'POST',
@@ -55,10 +70,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if (!response.ok) {
                     mostrarMensagem(formularioLogin, 'erro', data.erro);
+                    botaoSubmit.disabled = false;
+                    botaoSubmit.textContent = 'Entrar';
                     return;
                 }
                 
                 mostrarMensagem(formularioLogin, 'sucesso', data.mensagem);
+                
+                localStorage.setItem('usuarioNome', data.usuario.nome);
+                localStorage.setItem('usuarioEmail', data.usuario.email);
                 
                 setTimeout(() => {
                     window.location.href = '/dashboard';
@@ -67,6 +87,8 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (error) {
                 console.error('Erro ao fazer login:', error);
                 mostrarMensagem(formularioLogin, 'erro', 'Erro ao conectar com o servidor. Tente novamente.');
+                botaoSubmit.disabled = false;
+                botaoSubmit.textContent = 'Entrar';
             }
         });
     }
@@ -81,13 +103,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const senha = document.getElementById('registro-senha').value;
             const confirmarSenha = document.getElementById('registro-confirmar-senha').value;
             
+            const botaoSubmit = formularioRegistro.querySelector('button[type="submit"]');
+            botaoSubmit.disabled = true;
+            botaoSubmit.textContent = 'Cadastrando...';
+            
             if (senha !== confirmarSenha) {
                 mostrarMensagem(formularioRegistro, 'erro', 'As senhas não coincidem.');
+                botaoSubmit.disabled = false;
+                botaoSubmit.textContent = 'Cadastrar';
                 return;
             }
             
             if (senha.length < 6) {
                 mostrarMensagem(formularioRegistro, 'erro', 'A senha deve ter pelo menos 6 caracteres.');
+                botaoSubmit.disabled = false;
+                botaoSubmit.textContent = 'Cadastrar';
                 return;
             }
             
@@ -104,12 +134,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if (!response.ok) {
                     mostrarMensagem(formularioRegistro, 'erro', data.erro);
+                    botaoSubmit.disabled = false;
+                    botaoSubmit.textContent = 'Cadastrar';
                     return;
                 }
                 
                 mostrarMensagem(formularioRegistro, 'sucesso', data.mensagem);
                 
                 formularioRegistro.reset();
+                botaoSubmit.disabled = false;
+                botaoSubmit.textContent = 'Cadastrar';
                 
                 setTimeout(() => {
                     document.querySelector('.botao-aba[data-aba="login"]').click();
@@ -118,7 +152,21 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (error) {
                 console.error('Erro ao fazer cadastro:', error);
                 mostrarMensagem(formularioRegistro, 'erro', 'Erro ao conectar com o servidor. Tente novamente.');
+                botaoSubmit.disabled = false;
+                botaoSubmit.textContent = 'Cadastrar';
             }
         });
     }
+        const inputs = document.querySelectorAll('input');
+    inputs.forEach(input => {
+        input.addEventListener('focus', () => {
+            input.parentElement.classList.add('input-ativo');
+        });
+        
+        input.addEventListener('blur', () => {
+            if (!input.value) {
+                input.parentElement.classList.remove('input-ativo');
+            }
+        });
+    });
 });
