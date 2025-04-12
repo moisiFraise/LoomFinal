@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= titulo %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/menu.css">
+    <link rel="stylesheet" href="/css/gerenciasClubes.css">
+    <%- include('partials/imports') %>
+</head>
+<body>
+    <%- include('partials/menu') %>
+
+    <div class="clubes-container">
+        <div class="clubes-header">
+            <h1>Gerenciamento de Clubes</h1>
+            <p>Visualize e gerencie todos os clubes cadastrados na plataforma</p>
+        </div>
+
+        <div class="clubes-tabela-container">
+            <table class="clubes-tabela">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Criador</th>
+                        <th>Participantes</th>
+                        <th>Visibilidade</th>
+                        <th>Modelo</th>
+                        <th>Data de Criação</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-clubes">
+                    <tr>
+                        <td colspan="8" class="sem-dados">Carregando clubes...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="modal-visibilidade" class="modal">
+        <div class="overlay"></div>
+        <div class="modal-content">
+            <span class="fechar-modal">&times;</span>
+            <h2>Alterar Visibilidade</h2>
+            <form id="form-visibilidade">
+                <input type="hidden" id="clube-id-visibilidade">
+                <div class="form-grupo">
+                    <label for="visibilidade">Visibilidade:</label>
+                    <select id="visibilidade" name="visibilidade" required>
+                        <option value="publico">Público</option>
+                        <option value="privado">Privado</option>
+                    </select>
+                </div>
+                <div class="form-grupo" id="grupo-senha" style="display: none;">
+                    <label for="senha">Senha de Acesso:</label>
+                    <input type="text" id="senha" name="senha" placeholder="Digite a senha de acesso">
+                </div>
+                <div class="form-acoes">
+                    <button type="submit" class="btn-salvar">Salvar</button>
+                    <button type="button" class="btn-cancelar" onclick="fecharModal('modal-visibilidade')">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-modelo" class="modal">
+        <div class="overlay"></div>
+        <div class="modal-content">
+            <span class="fechar-modal">&times;</span>
+            <h2>Alterar Modelo</h2>
+            <form id="form-modelo">
+                <input type="hidden" id="clube-id-modelo">
+                <div class="form-grupo">
+                    <label for="modelo">Modelo:</label>
+                    <select id="modelo" name="modelo" required>
+                        <option value="presencial">Presencial</option>
+                        <option value="online">Online</option>
+                        <option value="hibrido">Híbrido</option>
+                    </select>
+                </div>
+                <div class="form-acoes">
+                    <button type="submit" class="btn-salvar">Salvar</button>
+                    <button type="button" class="btn-cancelar" onclick="fecharModal('modal-modelo')">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Detalhes do Clube -->
+    <div id="modal-detalhes" class="modal">
+        <div class="overlay"></div>
+        <div class="modal-content">
+            <span class="fechar-modal">&times;</span>
+            <h2>Detalhes do Clube</h2>
+            <div id="detalhes-clube">
+                <div class="detalhe-item">
+                    <strong>Nome:</strong> <span id="detalhe-nome"></span>
+                </div>
+                <div class="detalhe-item">
+                    <strong>Descrição:</strong> <span id="detalhe-descricao"></span>
+                </div>
+                <div class="detalhe-item">
+                    <strong>Criador:</strong> <span id="detalhe-criador"></span>
+                </div>
+                <div class="detalhe-item">
+                    <strong>Participantes:</strong> <span id="detalhe-participantes"></span>
+                </div>
+                <div class="detalhe-item">
+                    <strong>Visibilidade:</strong> <span id="detalhe-visibilidade"></span>
+                </div>
+                <div class="detalhe-item" id="detalhe-grupo-senha">
+                    <strong>Senha de Acesso:</strong> <span id="detalhe-senha"></span>
+                </div>
+                <div class="detalhe-item">
+                    <strong>Modelo:</strong> <span id="detalhe-modelo"></span>
+                </div>
+                <div class="detalhe-item">
+                    <strong>Data de Criação:</strong> <span id="detalhe-data"></span>
+                </div>
+            </div>
+            <div class="form-acoes">
+                <button type="button" class="btn-fechar-modal" onclick="fecharModal('modal-detalhes')">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/gerenciarClubes.js"></script>
+</body>
+</html>

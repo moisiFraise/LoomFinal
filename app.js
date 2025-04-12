@@ -379,6 +379,90 @@ app.get('/api/categorias/:id/clubes', verificarAutenticacao, async (req, res) =>
     res.status(500).json({ erro: 'Erro ao listar clubes da categoria' });
   }
 });
+
+app.get('/gerenciarClubes', verificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    
+    if (!usuario || usuario.tipo !== 'admin') {
+      return res.redirect('/dashboard');
+    }
+    
+    res.render('gerenciarClubes', { 
+      titulo: 'Loom - Gerenciar Clubes',
+      userId: req.session.userId,
+      userType: usuario.tipo
+    });
+  } catch (error) {
+    console.error('Erro ao carregar página de gerenciamento de clubes:', error);
+    res.redirect('/painelAdmin');
+  }
+});
+
+app.get('/api/admin/clubes', verificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    if (!usuario || usuario.tipo !== 'admin') {
+      return res.status(403).json({ erro: 'Acesso negado' });
+    }
+    
+    const clubes = await Clube.listarTodos();
+    res.json(clubes);
+  } catch (error) {
+    console.error('Erro ao listar clubes:', error);
+    res.status(500).json({ erro: 'Erro ao listar clubes' });
+  }
+});
+
+app.put('/api/admin/clubes/:id/visibilidade', verificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    if (!usuario || usuario.tipo !== 'admin') {
+      return res.status(403).json({ erro: 'Acesso negado' });
+    }
+    
+    const { id } = req.params;
+    const { visibilidade, senha } = req.body;
+    
+    if (!visibilidade) {
+      return res.status(400).json({ erro: 'Visibilidade é obrigatória' });
+    }
+    
+    if (visibilidade === 'privado' && !senha) {
+      return res.status(400).json({ erro: 'Clubes privados precisam de uma senha de acesso' });
+    }
+    
+    const senhaAcesso = visibilidade === 'privado' ? senha : null;
+    const clubeAtualizado = await Clube.atualizarVisibilidade(id, visibilidade, senhaAcesso);
+    res.json(clubeAtualizado);
+  } catch (error) {
+    console.error('Erro ao atualizar visibilidade do clube:', error);
+    res.status(500).json({ erro: 'Erro ao atualizar visibilidade do clube' });
+  }
+});
+
+app.put('/api/admin/clubes/:id/modelo', verificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    if (!usuario || usuario.tipo !== 'admin') {
+      return res.status(403).json({ erro: 'Acesso negado' });
+    }
+    
+    const { id } = req.params;
+    const { modelo } = req.body;
+    
+    if (!modelo || !['presencial', 'online', 'hibrido'].includes(modelo)) {
+      return res.status(400).json({ erro: 'Modelo inválido' });
+    }
+    
+    const clubeAtualizado = await Clube.atualizarModelo(id, modelo);
+    res.json(clubeAtualizado);
+  } catch (error) {
+    console.error('Erro ao atualizar modelo do clube:', error);
+    res.status(500).json({ erro: 'Erro ao atualizar modelo do clube' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });

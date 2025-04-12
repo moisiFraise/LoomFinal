@@ -1,7 +1,7 @@
 const pool = require('../config/database');
 
 class Categorias {
-  static async listarTodas() {
+  static async listarTodas() { //get all
     try {
       const [rows] = await pool.query(
         'SELECT * FROM categorias ORDER BY nome'
@@ -13,7 +13,7 @@ class Categorias {
     }
   }
 
-  static async buscarPorId(id) {
+  static async buscarPorId(id) { //get por id
     try {
       const [rows] = await pool.query(
         'SELECT * FROM categorias WHERE id = ?',
@@ -26,7 +26,7 @@ class Categorias {
     }
   }
 
-  static async criar(nome) {
+  static async criar(nome) { //criar categoria
     try {
       const [result] = await pool.query(
         'INSERT INTO categorias (nome) VALUES (?)',
@@ -39,7 +39,7 @@ class Categorias {
     }
   }
 
-  static async atualizar(id, nome) {
+  static async atualizar(id, nome) { //update
     try {
       await pool.query(
         'UPDATE categorias SET nome = ? WHERE id = ?',
@@ -52,7 +52,7 @@ class Categorias {
     }
   }
 
-  static async excluir(id) {
+  static async excluir(id) { //delete
     try {
       await pool.query(
         'DELETE FROM categorias WHERE id = ?',

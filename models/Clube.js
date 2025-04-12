@@ -103,6 +103,65 @@ class Clube {
       throw error;
     }
   }
+
+static async listarTodos() { //get all clubes usado no painelAdmin
+  try {
+    const [rows] = await pool.query(`
+      SELECT c.id, c.nome, c.descricao, c.visibilidade, c.senha_acesso, 
+             c.data_criacao, c.id_criador, c.modelo,
+             u.nome as nome_criador,
+             (SELECT COUNT(*) FROM participacoes WHERE id_clube = c.id) as total_participantes
+      FROM clubes c
+      JOIN usuarios u ON c.id_criador = u.id
+      ORDER BY c.data_criacao DESC
+    `);
+    return rows;
+  } catch (error) {
+    console.error('Erro ao listar todos os clubes:', error);
+    throw error;
+  }
+}
+
+static async atualizarVisibilidade(id, visibilidade, senha = null) {
+  try {
+    const connection = await pool.getConnection();
+    
+    try {
+      await connection.beginTransaction();
+      
+      await connection.query(
+        'UPDATE clubes SET visibilidade = ?, senha_acesso = ? WHERE id = ?',
+        [visibilidade, senha, id]
+      );
+      
+      await connection.commit();
+      
+      return { id, visibilidade, senha_acesso: senha };
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar visibilidade do clube:', error);
+    throw error;
+  }
+}
+
+static async atualizarModelo(id, modelo) {
+  try {
+    await pool.query(
+      'UPDATE clubes SET modelo = ? WHERE id = ?',
+      [modelo, id]
+    );
+    return { id, modelo };
+  } catch (error) {
+    console.error('Erro ao atualizar modelo do clube:', error);
+    throw error;
+  }
+}
+
 }
 
 module.exports = Clube;
