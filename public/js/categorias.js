@@ -111,7 +111,6 @@ document.addEventListener('DOMContentLoaded', function() {
         modalCategoria.classList.add('show');
         document.getElementById('categoria-nome').focus();
     }
-    
     async function salvarCategoria(event) {
         event.preventDefault();
         
@@ -129,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (id) {
                 url = `/api/categorias/${id}`;
-                method = 'PUT';
+                method = 'POST'; 
             }
             
             const response = await fetch(url, {

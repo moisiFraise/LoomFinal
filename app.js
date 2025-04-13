@@ -331,7 +331,7 @@ app.post('/api/categorias', verificarAutenticacao, async (req, res) => {
   }
 });
 
-app.put('/api/categorias/:id', verificarAutenticacao, async (req, res) => {
+app.post('/api/categorias/:id', verificarAutenticacao, async (req, res) => {
   try {
     const usuario = await Usuario.buscarPorId(req.session.userId);
     if (!usuario || usuario.tipo !== 'admin') {
@@ -462,6 +462,98 @@ app.put('/api/admin/clubes/:id/modelo', verificarAutenticacao, async (req, res) 
     res.status(500).json({ erro: 'Erro ao atualizar modelo do clube' });
   }
 });
+app.get('/gerenciarUsuarios', verificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    
+    if (!usuario || usuario.tipo !== 'admin') {
+      return res.redirect('/dashboard');
+    }
+    
+    res.render('gerenciarUsuarios', { 
+      titulo: 'Loom - Gerenciar Usuários',
+      userId: req.session.userId,
+      userType: usuario.tipo
+    });
+  } catch (error) {
+    console.error('Erro ao carregar página de gerenciamento de usuários:', error);
+    res.redirect('/painelAdmin');
+  }
+});
+
+app.get('/api/admin/usuarios', verificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    if (!usuario || usuario.tipo !== 'admin') {
+      return res.status(403).json({ erro: 'Acesso negado' });
+    }
+    
+    const usuarios = await Usuario.listarTodos();
+    res.json(usuarios);
+  } catch (error) {
+    console.error('Erro ao listar usuários:', error);
+    res.status(500).json({ erro: 'Erro ao listar usuários' });
+  }
+});
+
+app.get('/api/admin/usuarios/:id', verificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    if (!usuario || usuario.tipo !== 'admin') {
+      return res.status(403).json({ erro: 'Acesso negado' });
+    }
+    
+    const { id } = req.params;
+    const usuarioAlvo = await Usuario.buscarPorId(id);
+    
+    if (!usuarioAlvo) {
+      return res.status(404).json({ erro: 'Usuário não encontrado' });
+    }
+    
+    res.json(usuarioAlvo);
+  } catch (error) {
+    console.error('Erro ao buscar usuário:', error);
+    res.status(500).json({ erro: 'Erro ao buscar usuário' });
+  }
+});
+
+app.post('/api/admin/usuarios/:id', verificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    if (!usuario || usuario.tipo !== 'admin') {
+      return res.status(403).json({ erro: 'Acesso negado' });
+    }
+    
+    const { id } = req.params;
+    const { email, senha, estado } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ erro: 'Email é obrigatório' });
+    }
+    
+    const usuarioAtualizado = await Usuario.atualizar(id, { email, senha, estado });
+    res.json(usuarioAtualizado);
+  } catch (error) {
+    console.error('Erro ao atualizar usuário:', error);
+    res.status(500).json({ erro: 'Erro ao atualizar usuário' });
+  }
+});
+app.get('/api/admin/usuarios/:id/clubes', verificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    if (!usuario || usuario.tipo !== 'admin') {
+      return res.status(403).json({ erro: 'Acesso negado' });
+    }
+    
+    const { id } = req.params;
+    const clubes = await Usuario.buscarClubes(id);
+    res.json(clubes);
+  } catch (error) {
+    console.error('Erro ao listar clubes do usuário:', error);
+    res.status(500).json({ erro: 'Erro ao listar clubes do usuário' });
+  }
+});
+
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

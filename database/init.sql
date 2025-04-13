@@ -11,6 +11,8 @@ CREATE TABLE IF NOT EXISTS usuarios (
   tipo ENUM('usuario', 'admin') DEFAULT 'usuario',
   data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+ALTER TABLE usuarios 
+ADD COLUMN estado ENUM('ativo', 'inativo','suspenso') DEFAULT 'ativo';
 
 -- Tabela de clubes
 CREATE TABLE IF NOT EXISTS clubes (

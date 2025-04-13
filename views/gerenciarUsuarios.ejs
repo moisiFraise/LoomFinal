@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= titulo %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/menu.css">
+    <link rel="stylesheet" href="/css/gerenciarUsuarios.css">
+    <%- include('partials/imports') %>
+</head>
+<body>
+    <%- include('partials/menu') %>
+
+    <div class="usuarios-container">
+        <div class="usuarios-header">
+            <h1>Gerenciamento de Usuários</h1>
+            <p>Visualize e gerencie os usuários cadastrados na plataforma</p>
+        </div>
+
+        <div class="usuarios-tabela-container">
+            <table class="usuarios-tabela">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Email</th>
+                        <th>Tipo</th>
+                        <th>Estado</th>
+                        <th>Data de Criação</th>
+                        <th>Clubes</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-usuarios">
+                    <tr>
+                        <td colspan="8" class="sem-dados">Carregando usuários...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal de Edição -->
+    <div id="modal-editar" class="modal">
+        <div class="overlay"></div>
+        <div class="modal-content">
+            <span class="fechar-modal">&times;</span>
+            <h2>Editar Usuário</h2>
+            <form id="form-usuario">
+                <input type="hidden" id="usuario-id">
+                <div class="form-grupo">
+                    <label for="usuario-nome">Nome:</label>
+                    <input type="text" id="usuario-nome" disabled>
+                </div>
+                <div class="form-grupo">
+                    <label for="usuario-email">Email:</label>
+                    <input type="email" id="usuario-email" required>
+                </div>
+                <div class="form-grupo">
+                    <label for="usuario-estado">Estado:</label>
+                    <select id="usuario-estado" required>
+                        <option value="ativo">Ativo</option>
+                        <option value="inativo">Inativo</option>
+                    </select>
+                </div>
+                <div class="form-grupo">
+                    <label for="usuario-senha">Nova Senha:</label>
+                    <input type="password" id="usuario-senha" placeholder="Deixe em branco para manter a senha atual">
+                </div>
+                <div class="form-acoes">
+                    <button type="submit" class="btn-salvar">Salvar</button>
+                    <button type="button" class="btn-cancelar" id="btn-cancelar-edicao">Cancelar</button>
+                </div>
+               
+            </form>
+        </div>
+    </div>
+
+
+        <div id="modal-clubes" class="modal">
+        <div class="overlay"></div>
+        <div class="modal-content">
+            <span class="fechar-modal">&times;</span>
+            <h2>Clubes do Usuário</h2>
+            <div id="lista-clubes-usuario">
+                <p class="sem-dados">Carregando clubes...</p>
+            </div>
+            <button class="btn-fechar-modal" id="btn-fechar-clubes">Fechar</button>
+        </div>
+    </div>
+
+    <%- include('partials/imports') %>
+    <script src="/js/gerenciarUsuarios.js"></script>
+</body>
+</html>
