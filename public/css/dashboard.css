@@ -1,278 +1,125 @@
 .form-container {
-    max-width: 500px;
-    width: 90%; 
-    padding: 28px 32px; 
-    background: var(--background);
-    border: 1px solid #eee;
-    border-radius: 8px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    max-width: 450px;
+    width: 85%; 
+    padding: 20px; 
+    background: var(--current-line);
+    border: 2px solid var(--roxo);
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(189, 147, 249, 0.3);
     position: relative;
-    margin: 25px auto;
+    margin: 15px auto; 
 }
 
 form {
     display: flex;
     flex-direction: column;
-    gap: 16px; 
+    gap: 10px; 
     width: 100%;
 }
 
 h2 {
-    color: var(--foreground);
-    text-align: left;
+    color: var(--roxo);
+    text-align: center;
     font-size: 24px;
     margin-bottom: 15px;
     font-weight: 600;
-    position: relative;
-    display: inline-block;
-}
-
-h2::after {
-    content: "";
-    position: absolute;
-    bottom: -6px;
-    left: 0;
-    width: 70%;
-    height: 3px;
-    background: linear-gradient(90deg, var(--rosa), var(--roxo));
-    border-radius: 4px;
+    text-shadow: 0 0 8px var(--roxo);
 }
 
 input {
-    padding: 12px 14px;
-    border: 1px solid var(--current-line);
-    border-radius: 4px;
-    font-size: 15px;
+    padding: 10px 12px;
+    border: 2px solid var(--roxo);
+    border-radius: 8px;
+    font-size: 14px;
     background: var(--background);
     color: var(--foreground);
+    transition: all 0.3s ease;
     width: 100%;
-}
-
-input:focus {
-    outline: none;
-    border-color: var(--roxo);
 }
 
 .radio-group {
     display: flex;
     gap: 15px; 
-    margin: 8px 0;
-    background: var(--current-line);
-    padding: 12px;
-    border-radius: 4px;
-}
-
-.radio-group label {
-    position: relative;
-    padding-left: 28px;
-    cursor: pointer;
-    font-weight: 500;
-}
-
-.radio-group input[type="radio"] {
-    position: absolute;
-    opacity: 0;
-}
-
-.radio-group label:before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 18px;
-    height: 18px;
-    border: 2px solid var(--roxo);
-    border-radius: 50%;
-    background: var(--background);
-}
-
-.radio-group input[type="radio"]:checked + label:after {
-    content: '';
-    position: absolute;
-    left: 5px;
-    top: 5px;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--roxo);
+    margin: 5px 0;
 }
 
 .botao-padrao {
-    background: linear-gradient(135deg, var(--roxo), var(--rosa));
-    color: var(--background);
-    padding: 12px 20px;
+    background: linear-gradient(45deg, var(--roxo), var(--rosa));
+    color: var(--current-line);
+    padding: 12px;
     border: none;
-    border-radius: 4px;
+    border-radius: 15px;
     font-size: 16px;
-    font-weight: 600;
     cursor: pointer;
+    transition: all 0.3s ease;
 }
 
 p {
     margin-top: 10px;
-    font-size: 14px;
-    line-height: 1.5;
+    font-size: 13px; 
 }
 
-#cancelarClube {
-    background: transparent;
-    color: var(--foreground);
-    border: 1px solid var(--current-line);
-    padding: 12px 18px;
-    border-radius: 4px;
-    font-size: 15px;
-    font-weight: 500;
-    cursor: pointer;
-    margin-top: 8px;
-}
 
 #senha-clube-container {
-    margin: 5px 0 15px;
-    padding: 15px;
-    background: var(--current-line);
-    border-radius: 4px;
-    border-left: 4px solid var(--laranja);
+    margin-bottom: 15px; 
 }
 
 .senha-info {
-    font-size: 12px;
-    margin-top: 8px;
-    color: var(--paragrafo);
-    font-style: italic;
+    font-size: 11px;
+    margin-top: 3px;
 }
 
 input[type="password"] {
-    padding: 12px 14px;
-    border-color: var(--current-line);
+    padding: 10px 12px;
 }
 
 .form-subtitulo {
-    margin-bottom: 6px;
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--foreground);
+    margin-bottom: 3px;
+    font-size: 13px;
+    font-weight: 500;
 }
 
 .categorias-selecao {
-    margin: 5px 0 15px;
+    margin-bottom: 10px;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 10px;
-    padding: 15px;
-    background: var(--current-line);
-    border-radius: 4px;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 5px;
 }
 
 .categoria-item {
-    font-size: 14px;
-    background: var(--background);
-    padding: 8px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    border: 1px solid transparent;
-    text-align: center;
-}
-
-.categoria-item:hover {
-    border-color: var(--roxo);
-}
-
-.categoria-item.selected {
-    background: var(--roxo);
-    color: var(--background);
-    border-color: var(--roxo);
+    font-size: 13px;
 }
 
 .clubes-grid {
-    display: grid !important;
-    grid-template-columns: 1fr !important;
-    gap: 15px !important;
-    width: 95% !important;
-    max-width: 1200px !important;
-    margin: 0 auto !important;
-    padding: 20px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: unset !important;
+    width: 100% !important;
+    max-width: 100% !important; 
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 .clube-card {
     width: 100% !important;
-    margin: 0 !important;
-    border-radius: 8px !important;
-    overflow: hidden;
-    position: relative;
-    background: var(--background);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    border: 1px solid #eee;
-    padding: 20px;
+    margin: 0 0 30px 0 !important;
+    border-radius: 0 !important; 
 }
 
 .header-container {
-    width: 95% !important;
-    max-width: 1200px !important;
+    width: 100% !important;
+    max-width: 100% !important;
     padding: 20px !important;
-    margin: 0 auto !important;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    position: relative;
-}
-
-.header-container h2 {
-    font-size: 24px;
-    color: var(--foreground);
-    margin: 0;
-    position: relative;
 }
 
 #tela-principal {
     width: 100% !important;
     max-width: 100% !important;
-    padding-top: 80px !important;
-    background: var(--current-line);
-    position: relative;
+    padding: 0 !important;
 }
-
 .full-width {
     width: 100% !important;
     max-width: 100% !important;
     padding: 0 !important;
     margin: 0 !important;
-}
-
-#overlay {
-    background: rgba(45, 52, 54, 0.7);
-    backdrop-filter: blur(5px);
-}
-
-::-webkit-scrollbar {
-    width: 10px;
-}
-
-::-webkit-scrollbar-track {
-    background: var(--current-line);
-    border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb {
-    background: linear-gradient(var(--roxo), var(--rosa));
-    border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(var(--rosa), var(--roxo));
-}
-
-@media (max-width: 768px) {
-    .clubes-grid {
-        grid-template-columns: 1fr !important;
-    }
-    
-    .header-container {
-        flex-direction: column;
-        gap: 20px;
-        text-align: center;
-    }
-    
-    #tela-principal {
-        padding-top: 70px !important;
-    }
 }

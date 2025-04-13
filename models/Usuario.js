@@ -47,26 +47,32 @@ class Usuario {
       throw error;
     }
   }
-// Modificar o método listarTodos para incluir o estado
-static async listarTodos() {
-  try {
-    const [rows] = await pool.query(`
-      SELECT u.*, 
-        (SELECT COUNT(*) FROM participacoes WHERE id_usuario = u.id) +
-        (SELECT COUNT(*) FROM clubes WHERE id_criador = u.id) as total_clubes
-      FROM usuarios u
-      ORDER BY u.id
-    `);
-    
-    return rows;
-  } catch (error) {
-    console.error('Erro ao listar usuários:', error);
-    throw error;
+  static async listarTodos() {
+    try {
+      const [rows] = await pool.query(`
+        SELECT u.* FROM usuarios u ORDER BY u.id
+      `);
+      
+      for (let i = 0; i < rows.length; i++) {
+        const [result] = await pool.query(`
+          SELECT COUNT(DISTINCT clube_id) as total FROM (
+            SELECT id as clube_id FROM clubes WHERE id_criador = ?
+            UNION
+            SELECT id_clube as clube_id FROM participacoes WHERE id_usuario = ?
+          ) as combined_clubs
+        `, [rows[i].id, rows[i].id]);
+        
+        rows[i].total_clubes = result[0].total;
+      }
+      
+      return rows;
+    } catch (error) {
+      console.error('Erro ao listar usuários:', error);
+      throw error;
+    }
   }
-}
-
-// Modificar o método atualizar para permitir atualizar o estado
-static async atualizar(id, dados) {
+  
+static async atualizar(id, dados) { //crUd
   try {
     const campos = [];
     const valores = [];
