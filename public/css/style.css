@@ -14,6 +14,7 @@
     --amarelo: #ffeaa7;
 }
 
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -35,4 +36,38 @@ body {
     align-items: center;
     justify-content: center;
     line-height: 1.6;
+}
+.botao-moderno {
+    background-color: var(--roxo);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    padding: 10px 20px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.botao-moderno:hover {
+    background-color: #5a4ecc;
+}
+
+.card-moderno {
+    background-color: var(--background);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s;
+}
+
+.card-moderno:hover {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+    .container {
+        width: 100%;
+        padding: 0 15px;
+    }
 }

@@ -1,11 +1,8 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Mostrar a seção de explorar
     document.getElementById('explorar').style.display = 'block';
     
-    // Buscar todos os clubes
     buscarTodosClubes();
     
-    // Configurar o diálogo de senha
     configurarDialogoSenha();
 });
 
@@ -45,10 +42,8 @@ function criarCardClube(clube, isParticipante) {
     card.className = 'clube-card';
     card.dataset.id = clube.id;
     
-    // Leitura atual (placeholder se não existir)
     const leituraAtual = clube.leitura_atual || 'Nenhuma leitura definida';
     
-    // Modelo do clube (com valor padrão)
     const modelo = clube.modelo || 'online';
     
     card.innerHTML = `
@@ -64,7 +59,8 @@ function criarCardClube(clube, isParticipante) {
         <p class="clube-leitura">Leitura atual: ${leituraAtual}</p>
         <div class="clube-acoes">
             ${isParticipante 
-                ? `<button class="btn-ver" onclick="verClube(${clube.id})">Ver Clube</button>` 
+                ? `<button class="botao-padrao" onclick="acessarClube(${clube.id})">Acessar</button>
+` 
                 : clube.visibilidade === 'privado'
                     ? `<button class="btn-senha" onclick="solicitarSenha(${clube.id})">Entrar (Requer Senha)</button>`
                     : `<button class="btn-entrar" onclick="entrarNoClube(${clube.id})">Entrar no Clube</button>`
@@ -178,4 +174,14 @@ async function entrarNoClubeSenha(clubeId, senha) {
         console.error('Erro:', error);
         alert(error.message || 'Não foi possível entrar no clube. Verifique a senha e tente novamente.');
     }
+}
+function acessarClube(clubeId) {
+    const botao = event.target;
+    const textoOriginal = botao.innerHTML;
+    botao.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Acessando...';
+    botao.disabled = true;
+    
+    setTimeout(() => {
+        window.location.href = `/clube/${clubeId}`;
+    }, 500);
 }

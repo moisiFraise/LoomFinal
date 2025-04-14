@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/menu.css">
+    <link rel="stylesheet" href="/css/clubePrincipal.css">
+    <link rel="stylesheet" href="/css/menuClube.css">
+    <title><%= titulo %></title>
+</head>
+<body>
+    <%- include('partials/menu') %>
+    
+    <section id="clube-principal">
+        <div class="header-container">
+            <h2 id="clube-titulo">Carregando...</h2>
+            <div class="clube-acoes">
+                <button id="botao-voltar" onclick="voltarParaTelaAnterior()">
+                    <i class="fa fa-arrow-left"></i> Voltar
+                </button>
+            </div>
+        </div>
+
+        <div class="clube-content-wrapper">
+            <%- include('partials/menuClube') %>
+            
+            <div class="clube-container">
+                <div id="secao-discussao" class="clube-secao">
+                    <div class="clube-info-card">
+                        <h3 id="clube-nome"></h3>
+                        <p id="clube-descricao"></p>
+                        <div class="clube-meta">
+                            <span id="clube-visibilidade" class="visibilidade-badge"></span>
+                            <span id="clube-membros-count">0 membros</span>
+                        </div>
+                        <div id="clube-categorias" class="clube-categorias"></div>
+                    </div>
+                    
+                    <div class="livro-atual-container">
+                        <h4>Leitura Atual</h4>
+                        <div id="livro-atual-info"></div>
+                    </div>
+                </div>
+                
+                <div id="secao-membros" class="clube-secao" style="display: none;">
+                    <h3>Membros do Clube</h3>
+                    <div id="clube-membros-lista-completa"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        const clubeId = '<%= clubeId %>';
+        const userId = '<%= userId %>';
+    </script>
+    <script src="/js/clubePrincipal.js"></script>
+    <%- include('partials/imports') %>
+</body>
+</html>

@@ -41,14 +41,19 @@ CREATE TABLE IF NOT EXISTS participacoes (
 );
 
 -- Tabela de atualizações
+DROP TABLE IF EXISTS atualizacoes;
+
 CREATE TABLE IF NOT EXISTS atualizacoes (
   id INT AUTO_INCREMENT PRIMARY KEY,
   id_clube INT NOT NULL,
-  titulo VARCHAR(100) NOT NULL,
+  id_leitura INT NOT NULL,
   conteudo TEXT,
   data_postagem DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (id_clube) REFERENCES clubes(id)
+  porcentagem_leitura INT,
+  FOREIGN KEY (id_clube) REFERENCES clubes(id),
+  FOREIGN KEY (id_leitura) REFERENCES leituras(id)
 );
+
 -- Tabela de categorias
 CREATE TABLE IF NOT EXISTS categorias (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -69,3 +74,14 @@ CREATE TABLE IF NOT EXISTS clube_categorias (
 INSERT INTO usuarios (nome, email, senha, tipo) 
 VALUES ('Administrador', 'admin@loom.com', '123', 'admin')
 ON DUPLICATE KEY UPDATE id=id;
+
+CREATE TABLE leituras (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_clube INT NOT NULL,
+    titulo VARCHAR(255) NOT NULL,
+    autor VARCHAR(255),
+    status ENUM('atual', 'anterior') DEFAULT 'atual',
+    data_inicio DATE,
+    data_fim DATE,
+    FOREIGN KEY (id_clube) REFERENCES clubes(id) ON DELETE CASCADE
+);

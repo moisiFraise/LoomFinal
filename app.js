@@ -5,7 +5,11 @@ const Usuario = require('./models/Usuario');
 require('dotenv').config();
 const session = require('express-session');
 const Categorias = require('./models/Categorias');
-const Explorar = require('./models/explorar');
+const Explorar = require('./models/Explorar');
+const pool = require('./config/database');
+const Clube = require('./models/Clube');
+
+
 
 
 const app = express();
@@ -122,7 +126,6 @@ app.get('/dashboard', verificarAutenticacao, async (req, res) => {
   }
 });
 
-const Clube = require('./models/Clube');
 
 app.get('/api/clubes/:userId', async (req, res) => {
   try {
@@ -551,6 +554,140 @@ app.get('/api/admin/usuarios/:id/clubes', verificarAutenticacao, async (req, res
   } catch (error) {
     console.error('Erro ao listar clubes do usuário:', error);
     res.status(500).json({ erro: 'Erro ao listar clubes do usuário' });
+  }
+});
+/*clubePrincipal*/
+app.get('/clube/:id', verificarAutenticacao, async (req, res) => {
+  try {
+    const clubeId = req.params.id;
+    const userId = req.session.userId;
+    
+    const [participacoes] = await pool.query(
+      'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
+      [userId, clubeId]
+    );
+    
+    if (participacoes.length === 0) {
+      return res.redirect('/dashboard');
+    }
+    
+    const usuario = await Usuario.buscarPorId(userId);
+    
+    res.render('clubePrincipal', { 
+      titulo: 'Loom - Clube',
+      userId: userId,
+      clubeId: clubeId,
+      userType: usuario ? usuario.tipo : null
+    });
+  } catch (error) {
+    console.error('Erro ao carregar página do clube:', error);
+    res.redirect('/dashboard');
+  }
+});
+
+app.get('/api/clube/:id', verificarAutenticacao, async (req, res) => {
+  try {
+    const clubeId = req.params.id;
+    
+    const [clubeRows] = await pool.query(`
+      SELECT c.*, 
+             (SELECT COUNT(*) FROM participacoes WHERE id_clube = c.id) as total_membros
+      FROM clubes c
+      WHERE c.id = ?
+    `, [clubeId]);
+    
+    if (clubeRows.length === 0) {
+      return res.status(404).json({ erro: 'Clube não encontrado' });
+    }
+    
+    const clube = clubeRows[0];
+    
+    const [categoriasRows] = await pool.query(`
+      SELECT cat.nome
+      FROM categorias cat
+      JOIN clube_categorias cc ON cat.id = cc.id_categoria
+      WHERE cc.id_clube = ?
+    `, [clubeId]);
+    
+    clube.categorias = categoriasRows.map(cat => cat.nome);
+    
+    try {
+      const [leituraRows] = await pool.query(`
+        SELECT * FROM leituras
+        WHERE id_clube = ? AND status = 'atual'
+        ORDER BY data_inicio DESC
+        LIMIT 1
+      `, [clubeId]);
+      
+      if (leituraRows.length > 0) {
+        clube.leitura_atual = leituraRows[0];
+      }
+    } catch (leituraError) {
+      console.error('Erro ao buscar leitura atual:', leituraError);
+      if (leituraError.code !== 'ER_NO_SUCH_TABLE') {
+        throw leituraError;
+      }
+    }
+    
+    res.json(clube);
+  } catch (error) {
+    console.error('Erro ao buscar informações do clube:', error);
+    res.status(500).json({ erro: 'Erro ao buscar informações do clube' });
+  }
+});
+
+app.get('/api/clube/:id/membros', verificarAutenticacao, async (req, res) => {
+  try {
+    const clubeId = req.params.id;
+    
+    const [clubeRows] = await pool.query('SELECT id_criador FROM clubes WHERE id = ?', [clubeId]);
+    
+    if (clubeRows.length === 0) {
+      return res.status(404).json({ erro: 'Clube não encontrado' });
+    }
+    
+    const idCriador = clubeRows[0].id_criador;
+    
+    const [membrosRows] = await pool.query(`
+      SELECT u.id, u.nome, u.email, 
+             (CASE WHEN u.id = ? THEN 1 ELSE 0 END) as is_criador
+      FROM usuarios u
+      JOIN participacoes p ON u.id = p.id_usuario
+      WHERE p.id_clube = ?
+      ORDER BY is_criador DESC, u.nome
+    `, [idCriador, clubeId]);
+    
+    res.json({
+      idCriador: idCriador,
+      membros: membrosRows
+    });
+  } catch (error) {
+    console.error('Erro ao buscar membros do clube:', error);
+    res.status(500).json({ erro: 'Erro ao buscar membros do clube' });
+  }
+});
+
+app.get('/api/clube/:id/permissoes', verificarAutenticacao, async (req, res) => {
+  try {
+    const clubeId = req.params.id;
+    const userId = req.session.userId;
+    
+    const [clubeRows] = await pool.query('SELECT * FROM clubes WHERE id = ?', [clubeId]);
+    
+    if (clubeRows.length === 0) {
+      return res.status(404).json({ erro: 'Clube não encontrado' });
+    }
+    
+    const clube = clubeRows[0];
+    const isCriador = clube.id_criador === parseInt(userId);
+    
+    res.json({
+      isCriador: isCriador,
+      clube: clube
+    });
+  } catch (error) {
+    console.error('Erro ao verificar permissões:', error);
+    res.status(500).json({ erro: 'Erro ao verificar permissões' });
   }
 });
 

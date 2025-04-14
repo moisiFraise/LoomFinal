@@ -1,0 +1,82 @@
+<div class="clube-layout">
+    <!-- Menu lateral -->
+    <div class="clube-menu-lateral">
+        <div class="menu-item menu-item-ativo" data-secao="discussao" onclick="mudarSecaoClube('discussao')">
+            <i class="fa fa-home"></i>
+            <span>Início</span>
+        </div>
+        <div class="menu-item" data-secao="livros-anteriores" onclick="mudarSecaoClube('livros-anteriores')">
+            <i class="fa fa-book"></i>
+            <span>Leitura Atual</span>
+        </div>
+        <div class="menu-item" data-secao="sugestoes-livros" onclick="mudarSecaoClube('sugestoes-livros')">
+            <i class="fa fa-lightbulb-o"></i>
+            <span>Sugestões</span>
+        </div>
+        <div class="menu-item" data-secao="atualizacoes" onclick="mudarSecaoClube('atualizacoes')">
+            <i class="fa fa-bell"></i>
+            <span>Atualizações</span>
+        </div>
+        <div class="menu-item" data-secao="encontros" onclick="mudarSecaoClube('encontros')">
+            <i class="fa fa-calendar"></i>
+            <span>Encontros</span>
+        </div>            
+        <div class="menu-item" data-secao="membros" onclick="mudarSecaoClube('membros')">
+            <i class="fa fa-users"></i>
+            <span>Membros</span>
+        </div>
+        <!-- Opções apenas para o criador do clube -->
+        <div id="opcoes-criador" style="display: none;">
+            <div class="menu-separador"></div>
+            <div class="menu-item" data-secao="decidir-livro" onclick="mudarSecaoClube('decidir-livro')">
+                <i class="fa fa-check-square-o"></i>
+                <span>Decidir Livro</span>
+            </div>
+            <div class="menu-item" data-secao="configuracoes-clube" onclick="mudarSecaoClube('configuracoes-clube')">
+                <i class="fa fa-cog"></i>
+                <span>Configurações</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="menu-mobile-toggle" onclick="toggleMenuMobile()">
+        <i class="fa fa-bars"></i>
+    </div>
+</div>
+
+<script>
+    function toggleMenuMobile() {
+        const menu = document.querySelector('.clube-menu-lateral');
+        menu.classList.toggle('menu-mobile-open');
+        
+        if (menu.classList.contains('menu-mobile-open')) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+    }
+    
+    // Fechar o menu ao clicar em um item (em dispositivos móveis)
+    document.querySelectorAll('.menu-item').forEach(item => {
+        item.addEventListener('click', function() {
+            if (window.innerWidth <= 768) {
+                document.querySelector('.clube-menu-lateral').classList.remove('menu-mobile-open');
+                document.body.style.overflow = '';
+            }
+        });
+    });
+    
+    document.addEventListener('click', function(event) {
+        const menu = document.querySelector('.clube-menu-lateral');
+        const menuToggle = document.querySelector('.menu-mobile-toggle');
+        
+        if (window.innerWidth <= 768 && 
+            menu.classList.contains('menu-mobile-open') && 
+            !menu.contains(event.target) && 
+            !menuToggle.contains(event.target)) {
+            menu.classList.remove('menu-mobile-open');
+            document.body.style.overflow = '';
+        }
+    });
+</script>
+

@@ -1,0 +1,230 @@
+#clube-principal {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.clube-content-wrapper {
+    display: flex;
+    gap: 20px;
+}
+
+.clube-container {
+    flex: 1;
+    background-color: var(--current-line);
+    border-radius: 16px;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.header-container {
+    padding: 15px 20px;
+    background-color: var(--current-line);
+}
+
+.header-container h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--foreground);
+}
+.clube-content-wrapper {
+    display: flex;
+    height: 100%; 
+    overflow: hidden;
+}
+
+.clube-container {
+    flex: 1;
+    background-color: var(--current-line);
+    padding: 20px;
+    overflow-y: auto;
+    height: 100%;
+}
+
+@media (max-width: 768px) {
+    .clube-content-wrapper {
+        flex-direction: column;
+    }
+
+    .clube-container {
+        margin-bottom: 0;
+        height: auto;
+        overflow-y: auto;
+    }
+    
+    #clube-principal {
+        height: auto;
+        min-height: calc(100vh - 60px);
+    }
+}
+.clube-acoes button {
+    background-color: transparent;
+    border: 1px solid var(--roxo);
+    color: var(--roxo);
+    padding: 8px 16px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.clube-acoes button:hover {
+    background-color: rgba(106, 90, 205, 0.1);
+}
+
+.clube-info-card {
+    background-color: var(--current-line);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.clube-info-card h3 {
+    font-size: 20px;
+    margin-bottom: 10px;
+    color: var(--foreground);
+}
+
+.clube-info-card p {
+    color: var(--paragrafo);
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+.clube-meta {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.visibilidade-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    background-color: var(--verde);
+    color: white;
+}
+
+.visibilidade-badge.publico {
+    background-color: var(--verde);
+}
+
+.visibilidade-badge.privado {
+    background-color: var(--roxo);
+}
+.clube-categorias {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.categoria-tag {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    background-color: var(--selection);
+    color: var(--foreground);
+}
+
+.categoria-tag.sem-categoria {
+    color: var(--paragrafo);
+}
+.livro-atual-container {
+    background-color: var(--current-line);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.livro-atual-container h4 {
+    font-size: 18px;
+    margin-bottom: 15px;
+    color: var(--foreground);
+}
+
+.livro-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.livro-info h4 {
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+.livro-info p {
+    color: var(--paragrafo);
+    font-size: 14px;
+}
+#clube-membros-lista-completa {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.membro-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background-color: var(--current-line);
+    border-radius: 8px;
+}
+
+.membro-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--selection);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--foreground);
+}
+
+.membro-info {
+    flex: 1;
+}
+
+.membro-nome {
+    font-weight: 500;
+    display: block;
+}
+
+.badge-criador {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    background-color: var(--roxo);
+    color: white;
+    margin-top: 4px;
+}
+
+.carregando, .erro-carregamento, .mensagem-vazia {
+    padding: 15px;
+    text-align: center;
+    color: var(--paragrafo);
+    font-style: italic;
+}
+
+.erro-carregamento {
+    color: var(--vermelho);
+}
+
+@media (max-width: 768px) {
+    .clube-content-wrapper {
+        flex-direction: column;
+    }
+    
+    .clube-container {
+        margin-bottom: 60px; 
+    }
+}

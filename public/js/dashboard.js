@@ -165,8 +165,8 @@ function renderizarMeusClubes(clubesCriados, clubesParticipando) {
             </div>
             ${ehCriador ? '<span class="criador-badge">Criador</span>' : ''}
             <div class="clube-acoes">
-                <button class="botao-acessar" onclick="acessarClube(${clube.id})">Acessar</button>
-                ${ehCriador ? `<button class="botao-editar" onclick="editarClube(${clube.id})">Editar</button>` : ''}
+            <button class="botao-padrao"onclick="acessarClube(${clube.id})">Acessar</button>
+            ${ehCriador ? `<button class="botao-editar" onclick="editarClube(${clube.id})">Editar</button>` : ''}
             </div>
         `;
         
@@ -195,6 +195,7 @@ function acessarClube(clubeId) {
         window.location.href = `/clube/${clubeId}`;
     }, 500);
 }
+
 //dom carrega os clubes a página automaticamente
 document.addEventListener('DOMContentLoaded', function() {
     carregarMeusClubes();
