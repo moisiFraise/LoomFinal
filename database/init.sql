@@ -85,3 +85,7 @@ CREATE TABLE leituras (
     data_fim DATE,
     FOREIGN KEY (id_clube) REFERENCES clubes(id) ON DELETE CASCADE
 );
+
+ALTER TABLE leituras 
+ADD COLUMN imagemUrl VARCHAR(255),
+ADD COLUMN paginas INT;

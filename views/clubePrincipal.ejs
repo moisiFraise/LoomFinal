@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/css/menu.css">
     <link rel="stylesheet" href="/css/clubePrincipal.css">
     <link rel="stylesheet" href="/css/menuClube.css">
+    <link rel="stylesheet" href="/css/leituras.css">
     <title><%= titulo %></title>
 </head>
 <body>
@@ -42,7 +43,62 @@
                         <div id="livro-atual-info"></div>
                     </div>
                 </div>
+                <div id="secao-livros-anteriores" class="clube-secao" style="display: none;">
+                    <div class="leituras-header">
+                        <h3>Leituras do Clube</h3>
+                        <div id="botao-selecionar-leitura-container" style="display: none;">
+                            <button class="botao-moderno" onclick="abrirModalSelecaoLeitura()">
+                                <i class="fa fa-plus"></i> Selecionar Nova Leitura
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="livro-atual-container">
+                        <h4>Leitura Atual</h4>
+                        <div id="livro-atual-info-completo"></div>
+                    </div>
+                    
+                    <div class="leituras-container">
+                        <h4>Leituras Anteriores</h4>
+                        <div id="leituras-anteriores-grid" class="leituras-grid">
+                        </div>
+                    </div>
+                </div>
                 
+                <div id="overlay" class="overlay" style="display: none;"></div>
+                <div class="form-container" id="modal-selecao-leitura" style="display: none;">
+                    <form id="form-selecao-leitura">
+                        <h2>Selecionar Nova Leitura</h2>            
+                        <div id="tab-buscar" class="tab-content" style="display: block;">
+                            <p class="form-subtitulo">Buscar por título ou autor</p>
+                            <div class="search-container">
+                                <div class="search-input">
+                                    <input type="text" id="busca-livro" placeholder="Digite o título ou autor do livro">
+                                    <button type="button" class="botao-moderno" onclick="buscarLivros()">Buscar</button>
+                                </div>
+                            </div>
+                            
+                            <div id="search-results" class="search-results">
+                            </div>
+                        </div>
+                        <div id="selected-book-container" style="display: none;" class="selected-book">
+                            <div id="selected-book-cover" class="selected-book-cover"></div>
+                            <div class="selected-book-info">
+                                <h4 id="selected-book-title"></h4>
+                                <p id="selected-book-author"></p>
+                                <p id="selected-book-pages"></p>
+                                
+                                <p class="form-subtitulo">Data de Início</p>
+                                <input type="date" id="data-inicio" required>
+                                <p class="form-subtitulo">Data de Término Previsto</p>
+                                <input type="date" id="data-fim">
+                            </div>
+                        </div>
+                        
+                        <button type="button" id="confirmarLeitura" class="botao-moderno" onclick="salvarNovaLeitura()">Confirmar</button>
+                        <button type="button" id="cancelarLeitura" onclick="fecharModalSelecaoLeitura()">Cancelar</button>
+                    </form>
+                </div>
                 <div id="secao-membros" class="clube-secao" style="display: none;">
                     <h3>Membros do Clube</h3>
                     <div id="clube-membros-lista-completa"></div>

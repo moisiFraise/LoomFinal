@@ -1,5 +1,4 @@
 <div class="clube-layout">
-    <!-- Menu lateral -->
     <div class="clube-menu-lateral">
         <div class="menu-item menu-item-ativo" data-secao="discussao" onclick="mudarSecaoClube('discussao')">
             <i class="fa fa-home"></i>
@@ -25,7 +24,7 @@
             <i class="fa fa-users"></i>
             <span>Membros</span>
         </div>
-        <!-- Opções apenas para o criador do clube -->
+        <!--criador do clube -->
         <div id="opcoes-criador" style="display: none;">
             <div class="menu-separador"></div>
             <div class="menu-item" data-secao="decidir-livro" onclick="mudarSecaoClube('decidir-livro')">
@@ -56,7 +55,6 @@
         }
     }
     
-    // Fechar o menu ao clicar em um item (em dispositivos móveis)
     document.querySelectorAll('.menu-item').forEach(item => {
         item.addEventListener('click', function() {
             if (window.innerWidth <= 768) {
@@ -65,7 +63,7 @@
             }
         });
     });
-    
+
     document.addEventListener('click', function(event) {
         const menu = document.querySelector('.clube-menu-lateral');
         const menuToggle = document.querySelector('.menu-mobile-toggle');

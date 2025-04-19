@@ -8,6 +8,7 @@ const Categorias = require('./models/Categorias');
 const Explorar = require('./models/Explorar');
 const pool = require('./config/database');
 const Clube = require('./models/Clube');
+const Leituras = require('./models/Leituras');
 
 
 
@@ -690,8 +691,90 @@ app.get('/api/clube/:id/permissoes', verificarAutenticacao, async (req, res) => 
     res.status(500).json({ erro: 'Erro ao verificar permissões' });
   }
 });
-
-
+app.get('/api/livros/buscar', verificarAutenticacao, async (req, res) => {
+  try {
+      const termoBusca = req.query.q;
+      if (!termoBusca) {
+          return res.status(400).json({ erro: 'Termo de busca é obrigatório' });
+      }
+      
+      const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(termoBusca)}&maxResults=12`;
+      
+      const response = await fetch(url);
+      if (!response.ok) {
+          throw new Error('Erro na API do Google Books');
+      }
+      
+      const data = await response.json();
+      res.json(data);
+  } catch (error) {
+      console.error('Erro ao buscar livros:', error);
+      res.status(500).json({ erro: 'Erro ao buscar livros na API do Google' });
+  }
+});
+app.get('/api/clube/:id/leituras', verificarAutenticacao, async (req, res) => {
+  try {
+      const clubeId = req.params.id;
+        const [participacoes] = await pool.query(
+          'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
+          [req.session.userId, clubeId]
+      );
+      
+      if (participacoes.length === 0) {
+        return res.status(403).json({ erro: 'Você não é membro deste clube' });
+      }
+      const leituraAtual = await Leituras.buscarAtual(clubeId);
+      const leiturasAnteriores = await Leituras.buscarAnteriores(clubeId);
+      
+      res.json({
+        leituraAtual,
+        leiturasAnteriores
+      });
+  } catch (error) {
+      console.error('Erro ao buscar leituras:', error);
+      res.status(500).json({ erro: 'Erro ao buscar leituras do clube' });
+  }
+});
+app.post('/api/clube/:id/leituras', verificarAutenticacao, async (req, res) => {
+  try {
+      const clubeId = req.params.id;
+      const { titulo, autor, paginas, imagemUrl, dataInicio, dataFim } = req.body;
+      
+      const [clubeRows] = await pool.query(
+          'SELECT id_criador FROM clubes WHERE id = ?',
+          [clubeId]
+      );
+      
+      if (clubeRows.length === 0) {
+          return res.status(404).json({ erro: 'Clube não encontrado' });
+      }
+      
+      if (clubeRows[0].id_criador !== parseInt(req.session.userId)) {
+          return res.status(403).json({ erro: 'Apenas o criador do clube pode adicionar leituras' });
+      }
+      
+      const novaLeitura = await Leituras.criar(clubeId, titulo, autor, dataInicio, dataFim);
+      
+      if (paginas || imagemUrl) {
+          await pool.query(
+              'UPDATE leituras SET paginas = ?, imagemUrl = ? WHERE id = ?',
+              [paginas || null, imagemUrl || null, novaLeitura.id]
+          );
+      }
+      
+      res.status(201).json({
+          mensagem: 'Leitura adicionada com sucesso',
+          leitura: {
+              ...novaLeitura,
+              paginas,
+              imagemUrl
+          }
+      });
+  } catch (error) {
+      console.error('Erro ao adicionar leitura:', error);
+      res.status(500).json({ erro: 'Erro ao adicionar nova leitura' });
+  }
+});
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
