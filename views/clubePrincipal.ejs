@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="/css/clubePrincipal.css">
     <link rel="stylesheet" href="/css/menuClube.css">
     <link rel="stylesheet" href="/css/leituras.css">
+    <link rel="stylesheet" href="/css/atualizacoes.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <title><%= titulo %></title>
 </head>
 <body>
@@ -22,27 +24,51 @@
                 </button>
             </div>
         </div>
-
         <div class="clube-content-wrapper">
             <%- include('partials/menuClube') %>
-            
             <div class="clube-container">
                 <div id="secao-discussao" class="clube-secao">
-                    <div class="clube-info-card">
-                        <h3 id="clube-nome"></h3>
-                        <p id="clube-descricao"></p>
-                        <div class="clube-meta">
-                            <span id="clube-visibilidade" class="visibilidade-badge"></span>
-                            <span id="clube-membros-count">0 membros</span>
+                    <div class="clube-info-wrapper">
+                        <div class="clube-info-card">
+                            <h3 id="clube-nome"></h3>
+                            <p id="clube-descricao"></p>
+                            <div class="clube-meta">
+                                <span id="clube-visibilidade" class="visibilidade-badge"></span>
+                                <span id="clube-membros-count">0 membros</span>
+                            </div>
+                            <div id="clube-categorias" class="clube-categorias"></div>
                         </div>
-                        <div id="clube-categorias" class="clube-categorias"></div>
+                        
+                        <div class="livro-atual-container">
+                            <h4>Leitura Atual</h4>
+                            <div id="livro-atual-info"></div>
+                            <div id="leitura-atual-imagem-container" class="leitura-atual-imagem-container"></div>
+                            <div id="leitura-atual-progresso" class="leitura-atual-progresso">
+                                <div class="progresso-barra">
+                                    <div class="progresso-preenchimento" style="width: 0%"></div>
+                                </div>
+                                <span class="progresso-texto">0% concluído</span>
+                            </div>
+                        </div>
                     </div>
                     
-                    <div class="livro-atual-container">
-                        <h4>Leitura Atual</h4>
-                        <div id="livro-atual-info"></div>
+                    <div class="atualizacoes-container">
+                        <div class="atualizacao-form">
+                            <div class="atualizacao-form-header">
+                                <h4>Compartilhe seu progresso de leitura</h4>
+                                <button class="botao-moderno" onclick="abrirModalAtualizacao()">
+                                    <i class="fa fa-plus"></i> Nova Atualização
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="atualizacoes-lista">
+                            <div class="sem-atualizacoes">
+                                Nenhuma atualização de leitura disponível.
+                            </div>
+                        </div>
                     </div>
-                </div>
+                </div>                
                 <div id="secao-livros-anteriores" class="clube-secao" style="display: none;">
                     <div class="leituras-header">
                         <h3>Leituras do Clube</h3>
@@ -99,6 +125,29 @@
                         <button type="button" id="cancelarLeitura" onclick="fecharModalSelecaoLeitura()">Cancelar</button>
                     </form>
                 </div>
+                <div id="overlay-atualizacao" class="overlay"></div>
+                <div id="modal-atualizacao">
+                    <form id="form-atualizacao">
+                        <h2 id="modal-titulo">Nova Atualização de Leitura</h2>
+                        
+                        <p class="form-subtitulo">O que você está achando da leitura?</p>
+                        <textarea id="atualizacao-comentario" class="atualizacao-input" placeholder="Compartilhe seus pensamentos sobre o livro..." required></textarea>
+                        
+                        <div class="pagina-input-container">
+                            <div>
+                                <p class="form-subtitulo">Página atual</p>
+                                <input type="number" id="atualizacao-pagina" class="pagina-input" min="1" required>
+                            </div>
+                            <div id="porcentagem-container" class="porcentagem-leitura">
+                                <span id="porcentagem-valor">0%</span> concluído
+                            </div>
+                        </div>
+                        
+                        <button type="button" id="confirmarAtualizacao" class="botao-moderno" onclick="salvarAtualizacao()">Publicar</button>
+                        <button type="button" id="cancelarAtualizacao" onclick="fecharModalAtualizacao()">Cancelar</button>
+                    </form>
+                </div>
+                
                 <div id="secao-membros" class="clube-secao" style="display: none;">
                     <h3>Membros do Clube</h3>
                     <div id="clube-membros-lista-completa"></div>
@@ -112,6 +161,9 @@
         const userId = '<%= userId %>';
     </script>
     <script src="/js/clubePrincipal.js"></script>
+    <script src="/js/atualizacoes.js"></script>
+    <script src="/js/curtidas.js"></script>
     <%- include('partials/imports') %>
 </body>
 </html>
+

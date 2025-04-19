@@ -287,3 +287,40 @@ h2 {
     font-weight: 600;
     text-shadow: 0 0 8px var(--roxo);
 }
+input[type="date"] {
+    height: 38px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background-color: var(--input-bg);
+    color: var(--text-primary);
+    font-family: inherit;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.7);
+    cursor: pointer;
+    opacity: 0.8;
+    padding: 4px;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+}
+
+input[type="date"]:focus {
+    outline: none;
+    border-color: var(--roxo);
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.25);
+}
+
+input[type="date"]::placeholder {
+    color: var(--text-muted);
+}
+
+.selected-book-info input[type="date"] {
+    margin-top: 5px;
+    margin-bottom: 15px;
+}

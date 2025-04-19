@@ -89,3 +89,19 @@ CREATE TABLE leituras (
 ALTER TABLE leituras 
 ADD COLUMN imagemUrl VARCHAR(255),
 ADD COLUMN paginas INT;
+
+ALTER TABLE atualizacoes 
+ADD COLUMN id_usuario INT NOT NULL,
+ADD FOREIGN KEY (id_usuario) REFERENCES usuarios(id);
+
+
+--curtidas atualizações
+CREATE TABLE IF NOT EXISTS curtidas (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  id_atualizacao INT NOT NULL,
+  id_usuario INT NOT NULL,
+  data_curtida DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (id_atualizacao) REFERENCES atualizacoes(id) ON DELETE CASCADE,
+  FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_curtida (id_atualizacao, id_usuario)
+);

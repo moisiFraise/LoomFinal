@@ -12,13 +12,20 @@ class Leituras {
         'INSERT INTO leituras (id_clube, titulo, autor, status, data_inicio, data_fim) VALUES (?, ?, ?, "atual", ?, ?)',
         [idClube, titulo, autor, dataInicio, dataFim]
       );
-      
-      return { id: result.insertId, idClube, titulo, autor, status: 'atual', dataInicio, dataFim };
-    } catch (error) {
-      console.error('Erro ao criar leitura:', error);
-      throw error;
-    }
-  }
+      return {
+        id: result.insertId,
+        id_clube: clubeId,
+        titulo,
+        autor,
+        data_inicio: dataInicio,
+        data_fim: dataFim,
+        status: 'atual'
+    };
+} catch (error) {
+    console.error('Erro ao criar leitura:', error);
+    throw error;
+}
+}
   
   static async buscarAtual(idClube) {
     try {
