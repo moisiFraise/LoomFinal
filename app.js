@@ -11,7 +11,7 @@ const Clube = require('./models/Clube');
 const Leituras = require('./models/Leituras');
 const Atualizacoes = require('./models/Atualizacoes');
 const Curtidas = require('./models/Curtidas');
-
+const MySQLStore = require('express-mysql-session')(session);
 
 
 
@@ -25,11 +25,23 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+const sessionStore = new MySQLStore({
+  host: process.env.DB_HOST,
+  port: 3306,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME
+});
 app.use(session({
   secret: process.env.SESSION_SECRET,
-  resave: false,
+  store: sessionStore,
+  resave: true,
   saveUninitialized: false,
-  cookie: { secure: process.env.NODE_ENV === 'production', maxAge: 24 * 60 * 60 * 1000 } // 24 horas
+  cookie: { 
+    secure: process.env.NODE_ENV === 'production', 
+    maxAge: 24 * 60 * 60 * 1000 ,
+    sameSite: 'lax'
+  }
 }));
 
 // Rota página inicial
@@ -86,15 +98,25 @@ app.post('/api/login', async (req, res) => {
     }
     
     req.session.userId = usuario.id;
+    console.log('ID do usuário definido na sessão:', req.session.userId);
     
-    res.status(200).json({ 
-      mensagem: 'Login realizado com sucesso!',
-      usuario: { 
-        id: usuario.id, 
-        nome: usuario.nome, 
-        email: usuario.email,
-        tipo: usuario.tipo
+    req.session.save((err) => {
+      if (err) {
+        console.error('Erro ao salvar sessão:', err);
+        return res.status(500).json({ erro: 'Erro ao processar o login. Problema com a sessão.' });
       }
+      
+      console.log('Sessão salva com sucesso');
+      
+      res.status(200).json({ 
+        mensagem: 'Login realizado com sucesso!',
+        usuario: { 
+          id: usuario.id, 
+          nome: usuario.nome, 
+          email: usuario.email,
+          tipo: usuario.tipo
+        }
+      });
     });
   } catch (error) {
     console.error('Erro detalhado no login:', error);
@@ -104,6 +126,7 @@ app.post('/api/login', async (req, res) => {
     });
   }
 });
+
 function verificarAutenticacao(req, res, next) {
   if (!req.session.userId) {
     return res.redirect('/autenticacao');
