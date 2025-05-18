@@ -44,55 +44,57 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 5000);
         }
     }
-    
-    const formularioLogin = document.getElementById('formulario-login');
-    if (formularioLogin) {
-        formularioLogin.addEventListener('submit', async (e) => {
-            e.preventDefault();
+   const formularioLogin = document.getElementById('formulario-login');
+if (formularioLogin) {
+    formularioLogin.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const email = document.getElementById('login-email').value;
+        const senha = document.getElementById('login-senha').value;
+        
+        const botaoSubmit = formularioLogin.querySelector('button[type="submit"]');
+        botaoSubmit.disabled = true;
+        botaoSubmit.textContent = 'Entrando...';
+        
+        try {
+            console.log('Enviando requisição de login...');
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, senha }),
+                credentials: 'same-origin'
+            });
             
-            const email = document.getElementById('login-email').value;
-            const senha = document.getElementById('login-senha').value;
+            console.log('Resposta recebida:', response.status);
+            const data = await response.json();
+            console.log('Dados da resposta:', data);
             
-            const botaoSubmit = formularioLogin.querySelector('button[type="submit"]');
-            botaoSubmit.disabled = true;
-            botaoSubmit.textContent = 'Entrando...';
-            
-            try {
-                const response = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ email, senha })
-                });
-                
-                const data = await response.json();
-                
-                if (!response.ok) {
-                    mostrarMensagem(formularioLogin, 'erro', data.erro);
-                    botaoSubmit.disabled = false;
-                    botaoSubmit.textContent = 'Entrar';
-                    return;
-                }
-                
-                mostrarMensagem(formularioLogin, 'sucesso', data.mensagem);
-                
-                localStorage.setItem('usuarioNome', data.usuario.nome);
-                localStorage.setItem('usuarioEmail', data.usuario.email);
-                
-                setTimeout(() => {
-                    window.location.href = '/dashboard';
-                }, 1000);
-                
-            } catch (error) {
-                console.error('Erro ao fazer login:', error);
-                mostrarMensagem(formularioLogin, 'erro', 'Erro ao conectar com o servidor. Tente novamente.');
+            if (!response.ok) {
+                mostrarMensagem(formularioLogin, 'erro', data.erro);
                 botaoSubmit.disabled = false;
                 botaoSubmit.textContent = 'Entrar';
+                return;
             }
-        });
-    }
-    
+            
+            mostrarMensagem(formularioLogin, 'sucesso', 'Login realizado com sucesso! Redirecionando...');
+            
+            // Aguardar um momento para garantir que a sessão foi estabelecida
+            setTimeout(() => {
+                console.log('Redirecionando para o dashboard...');
+                window.location.href = '/dashboard';
+            }, 1500);
+            
+        } catch (error) {
+            console.error('Erro ao fazer login:', error);
+            mostrarMensagem(formularioLogin, 'erro', 'Erro ao conectar com o servidor. Tente novamente.');
+            botaoSubmit.disabled = false;
+            botaoSubmit.textContent = 'Entrar';
+        }
+    });
+}
+
     const formularioRegistro = document.getElementById('formulario-registro');
     if (formularioRegistro) {
         formularioRegistro.addEventListener('submit', async (e) => {

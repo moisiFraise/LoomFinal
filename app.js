@@ -11,9 +11,7 @@ const Clube = require('./models/Clube');
 const Leituras = require('./models/Leituras');
 const Atualizacoes = require('./models/Atualizacoes');
 const Curtidas = require('./models/Curtidas');
-const session = require('express-session');
-const MySQLStore = require('express-mysql-session')(session);
-
+const MySQLStore = require('express-mysql-session')(session);;
 
 
 const app = express();
@@ -32,6 +30,9 @@ const sessionStore = new MySQLStore({
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
+  clearExpired: true,
+  checkExpirationInterval: 900000, // 15 minutos
+  expiration: 86400000, // 24 horas
   createDatabaseTable: true,
   schema: {
     tableName: 'sessions',
@@ -43,16 +44,23 @@ const sessionStore = new MySQLStore({
   }
 });
 app.use(session({
-  key: 'session_cookie_name',
+  key: 'loom_session',
   secret: process.env.SESSION_SECRET,
   store: sessionStore,
   resave: false,
   saveUninitialized: false,
   cookie: { 
-    secure: process.env.NODE_ENV === 'production', 
-    maxAge: 24 * 60 * 60 * 1000 
+    secure: false,
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000, // 24 horas
+    sameSite: 'lax'
   }
 }));
+app.use((req, res, next) => {
+  console.log('Sessão atual:', req.session);
+  console.log('ID do usuário na sessão:', req.session.userId);
+  next();
+});
 // Rota página inicial
 app.get('/', (req, res) => {
   res.render('index', { title: 'Loom - Home' });
@@ -60,6 +68,14 @@ app.get('/', (req, res) => {
 
 app.get('/autenticacao', (req, res) => {
   res.render('autenticacao', { titulo: 'Loom - Login e Cadastro' });
+});
+app.get('/api/session-check', (req, res) => {
+  res.json({
+    sessionExists: !!req.session,
+    userId: req.session.userId,
+    authenticated: req.session.authenticated,
+    sessionID: req.sessionID
+  });
 });
 
 app.post('/api/cadastro', async (req, res) => {
@@ -106,40 +122,56 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ erro: 'Email ou senha incorretos.' });
     }
     
-    req.session.userId = usuario.id;
-    console.log('ID do usuário definido na sessão:', req.session.userId);
-    
-    req.session.save((err) => {
+    // Limpar a sessão existente
+    req.session.regenerate(function(err) {
       if (err) {
-        console.error('Erro ao salvar sessão:', err);
+        console.error('Erro ao regenerar sessão:', err);
         return res.status(500).json({ erro: 'Erro ao processar o login. Problema com a sessão.' });
       }
       
-      console.log('Sessão salva com sucesso');
+      // Definir dados da sessão
+      req.session.userId = usuario.id;
+      req.session.userType = usuario.tipo;
+      req.session.authenticated = true;
       
-      res.status(200).json({ 
-        mensagem: 'Login realizado com sucesso!',
-        usuario: { 
-          id: usuario.id, 
-          nome: usuario.nome, 
-          email: usuario.email,
-          tipo: usuario.tipo
+      // Salvar a sessão
+      req.session.save(function(err) {
+        if (err) {
+          console.error('Erro ao salvar sessão:', err);
+          return res.status(500).json({ erro: 'Erro ao processar o login. Problema ao salvar a sessão.' });
         }
+        
+        console.log('Sessão salva com sucesso. ID do usuário:', req.session.userId);
+        
+        res.status(200).json({ 
+          mensagem: 'Login realizado com sucesso!',
+          usuario: { 
+            id: usuario.id, 
+            nome: usuario.nome, 
+            email: usuario.email,
+            tipo: usuario.tipo
+          }
+        });
       });
     });
   } catch (error) {
     console.error('Erro detalhado no login:', error);
     res.status(500).json({ 
       erro: 'Erro ao processar o login. Tente novamente.',
-      detalhes: process.env.NODE_ENV === 'development' ? error.message : undefined
+      detalhes: process.env.NODE_ENV === 'production' ? error.message : undefined
     });
   }
 });
-
 function verificarAutenticacao(req, res, next) {
+  console.log('Verificando autenticação, sessão:', req.session);
+  console.log('userId na sessão:', req.session.userId);
+  
   if (!req.session.userId) {
+    console.log('Usuário não autenticado, redirecionando para /autenticacao');
     return res.redirect('/autenticacao');
   }
+  
+  console.log('Usuário autenticado, continuando...');
   next();
 }
 app.get('/dashboard', verificarAutenticacao, async (req, res) => {
