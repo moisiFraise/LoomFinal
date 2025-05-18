@@ -18,7 +18,6 @@ console.log('Tentando conectar ao banco de dados com as configurações:', {
   database: dbConfig.database
 });
 
-// Criar pool de conexões
 const pool = mysql.createPool(dbConfig);
 
 // Testar a conexão
