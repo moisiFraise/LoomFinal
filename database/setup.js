@@ -7,9 +7,9 @@ async function setupDatabase() {
   console.log('Iniciando configuração do banco de dados...');
   
   const config = {
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || ''
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD
   };
   
   console.log('Tentando conectar ao MySQL com as configurações:', {
