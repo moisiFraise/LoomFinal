@@ -11,6 +11,7 @@ const Clube = require('./models/Clube');
 const Leituras = require('./models/Leituras');
 const Atualizacoes = require('./models/Atualizacoes');
 const Curtidas = require('./models/Curtidas');
+const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
 
 
@@ -30,19 +31,28 @@ const sessionStore = new MySQLStore({
   port: 3306,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME
+  database: process.env.DB_NAME,
+  createDatabaseTable: true,
+  schema: {
+    tableName: 'sessions',
+    columnNames: {
+      session_id: 'session_id',
+      expires: 'expires',
+      data: 'data'
+    }
+  }
 });
 app.use(session({
+  key: 'session_cookie_name',
   secret: process.env.SESSION_SECRET,
   store: sessionStore,
-  resave: true,
+  resave: false,
   saveUninitialized: false,
   cookie: { 
     secure: process.env.NODE_ENV === 'production', 
-    maxAge: 24 * 60 * 60 * 1000
+    maxAge: 24 * 60 * 60 * 1000 
   }
 }));
-
 // Rota página inicial
 app.get('/', (req, res) => {
   res.render('index', { title: 'Loom - Home' });
