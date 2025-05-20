@@ -1,32 +1,33 @@
 const pool = require('../config/database');
 
 class Leituras {
-  static async criar(idClube, titulo, autor, dataInicio, dataFim = null) {
-    try {
-      await pool.query(
-        'UPDATE leituras SET status = "anterior" WHERE id_clube = ? AND status = "atual"',
-        [idClube]
-      );
-      
-      const [result] = await pool.query(
-        'INSERT INTO leituras (id_clube, titulo, autor, status, data_inicio, data_fim) VALUES (?, ?, ?, "atual", ?, ?)',
-        [idClube, titulo, autor, dataInicio, dataFim]
-      );
-      return {
-        id: result.insertId,
-        id_clube: clubeId,
-        titulo,
-        autor,
-        data_inicio: dataInicio,
-        data_fim: dataFim,
-        status: 'atual'
+static async criar(idClube, titulo, autor, dataInicio, dataFim = null, paginas = null, imagemUrl = null) {
+  try {
+    await pool.query(
+      'UPDATE leituras SET status = "anterior" WHERE id_clube = ? AND status = "atual"',
+      [idClube]
+    );
+    
+    const [result] = await pool.query(
+      'INSERT INTO leituras (id_clube, titulo, autor, status, data_inicio, data_fim, paginas, imagemUrl) VALUES (?, ?, ?, "atual", ?, ?, ?, ?)',
+      [idClube, titulo, autor, dataInicio, dataFim, paginas, imagemUrl]
+    );
+    return {
+      id: result.insertId,
+      id_clube: idClube,
+      titulo,
+      autor,
+      data_inicio: dataInicio,
+      data_fim: dataFim,
+      paginas,
+      imagemUrl,
+      status: 'atual'
     };
-} catch (error) {
+  } catch (error) {
     console.error('Erro ao criar leitura:', error);
     throw error;
+  }
 }
-}
-  
   static async buscarAtual(idClube) {
     try {
       const [rows] = await pool.query(

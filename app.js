@@ -819,22 +819,19 @@ app.post('/api/clube/:id/leituras', verificarAutenticacao, async (req, res) => {
           return res.status(403).json({ erro: 'Apenas o criador do clube pode adicionar leituras' });
       }
       
-      const novaLeitura = await Leituras.criar(clubeId, titulo, autor, dataInicio, dataFim);
-      
-      if (paginas || imagemUrl) {
-          await pool.query(
-              'UPDATE leituras SET paginas = ?, imagemUrl = ? WHERE id = ?',
-              [paginas || null, imagemUrl || null, novaLeitura.id]
-          );
-      }
+      const novaLeitura = await Leituras.criar(
+          clubeId, 
+          titulo, 
+          autor, 
+          dataInicio, 
+          dataFim, 
+          paginas || null, 
+          imagemUrl || null
+      );
       
       res.status(201).json({
           mensagem: 'Leitura adicionada com sucesso',
-          leitura: {
-              ...novaLeitura,
-              paginas,
-              imagemUrl
-          }
+          leitura: novaLeitura
       });
   } catch (error) {
       console.error('Erro ao adicionar leitura:', error);

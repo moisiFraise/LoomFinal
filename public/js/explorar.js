@@ -5,7 +5,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     configurarDialogoSenha();
 });
-
+window.addEventListener('pageshow', function(event) {
+    const botoesAcesso = document.querySelectorAll('.botao-padrao');
+    botoesAcesso.forEach(botao => {
+        if (botao.innerHTML.includes('Acessando')) {
+            botao.innerHTML = 'Acessar';
+            botao.disabled = false;
+        }
+    });
+});
 async function buscarTodosClubes() {
     try {
         const response = await fetch('/api/explorar/clubes');
@@ -36,13 +44,15 @@ function renderizarClubes(clubes, participacoes) {
         listaElement.appendChild(card);
     });
 }
-
 function criarCardClube(clube, isParticipante) {
     const card = document.createElement('div');
     card.className = 'clube-card';
     card.dataset.id = clube.id;
     
-    const leituraAtual = clube.leitura_atual || 'Nenhuma leitura definida';
+    // Verificar se há leitura atual e formatá-la corretamente
+    const leituraAtual = clube.leitura_atual 
+        ? clube.leitura_atual 
+        : 'Nenhuma leitura definida';
     
     const modelo = clube.modelo || 'online';
     
@@ -59,8 +69,7 @@ function criarCardClube(clube, isParticipante) {
         <p class="clube-leitura">Leitura atual: ${leituraAtual}</p>
         <div class="clube-acoes">
             ${isParticipante 
-                ? `<button class="botao-padrao" onclick="acessarClube(${clube.id})">Acessar</button>
-` 
+                ? `<button class="botao-padrao" onclick="acessarClube(${clube.id})">Acessar</button>` 
                 : clube.visibilidade === 'privado'
                     ? `<button class="btn-senha" onclick="solicitarSenha(${clube.id})">Entrar (Requer Senha)</button>`
                     : `<button class="btn-entrar" onclick="entrarNoClube(${clube.id})">Entrar no Clube</button>`
@@ -70,7 +79,6 @@ function criarCardClube(clube, isParticipante) {
     
     return card;
 }
-
 function verClube(clubeId) {
     window.location.href = `/clube/${clubeId}`;
 }

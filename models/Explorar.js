@@ -2,28 +2,36 @@ const pool = require('../config/database');
 
 class Explorar {
   static async listarTodosClubes() {
-    try {
-      const [rows] = await pool.query(`
-        SELECT c.id, c.nome, c.descricao, c.visibilidade, c.data_criacao,
-               u.nome as nome_criador,
-               (SELECT COUNT(*) FROM participacoes WHERE id_clube = c.id) as total_membros
-        FROM clubes c
-        JOIN usuarios u ON c.id_criador = u.id
-        ORDER BY c.data_criacao DESC
-      `);
+  try {
+    const [rows] = await pool.query(`
+      SELECT c.id, c.nome, c.descricao, c.visibilidade, c.data_criacao,
+             u.nome as nome_criador,
+             (SELECT COUNT(*) FROM participacoes WHERE id_clube = c.id) as total_membros
+      FROM clubes c
+      JOIN usuarios u ON c.id_criador = u.id
+      ORDER BY c.data_criacao DESC
+    `);
+    
+    const clubesComLeituras = [];
+    for (const clube of rows) {
+      const [leituras] = await pool.query(
+        'SELECT titulo, autor FROM leituras WHERE id_clube = ? AND status = "atual" LIMIT 1',
+        [clube.id]
+      );
       
-
-      return rows.map(clube => ({
+      clubesComLeituras.push({
         ...clube,
-        modelo: 'online',  
-        leitura_atual: null 
-      }));
-    } catch (error) {
-      console.error('Erro ao listar todos os clubes:', error);
-      throw error;
+        modelo: clube.modelo || 'online',
+        leitura_atual: leituras.length > 0 ? `${leituras[0].titulo} - ${leituras[0].autor}` : null
+      });
     }
-  }
 
+    return clubesComLeituras;
+  } catch (error) {
+    console.error('Erro ao listar todos os clubes:', error);
+    throw error;
+  }
+}
   static async verificarParticipacao(idUsuario, idClube) {
     try {
       const [rows] = await pool.query(

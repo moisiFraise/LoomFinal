@@ -5,12 +5,34 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.menu-item').forEach(item => 
         item.addEventListener('click', () => mudarSecaoClube(item.dataset.secao)));
     mudarSecaoClube('discussao');
-    
     const hoje = new Date().toISOString().split('T')[0];
-    ['data-inicio', 'data-inicio-manual'].forEach(id => {
-        if (document.getElementById(id)) document.getElementById(id).value = hoje;
+    const camposData = ['data-inicio', 'data-fim', 'data-inicio-manual', 'data-fim-manual'];
+    camposData.forEach(id => {
+        const campo = document.getElementById(id);
+        if (campo) {
+            campo.setAttribute('min', hoje);
+
+            if (id === 'data-inicio' || id === 'data-inicio-manual') {
+                campo.value = hoje;
+            }
+        }
     });
-    
+    const camposInicio = ['data-inicio', 'data-inicio-manual'];
+    camposInicio.forEach(id => {
+        const campoInicio = document.getElementById(id);
+        if (campoInicio) {
+            campoInicio.addEventListener('change', () => {
+                const idFim = id === 'data-inicio' ? 'data-fim' : 'data-fim-manual';
+                const campoFim = document.getElementById(idFim);
+                if (campoFim) {
+                    campoFim.setAttribute('min', campoInicio.value);
+                    if (campoFim.value && campoFim.value < campoInicio.value) {
+                        campoFim.value = campoInicio.value;
+                    }
+                }
+            });
+        }
+    });
     const buscaInput = document.getElementById('busca-livro');
     if (buscaInput) buscaInput.addEventListener('keypress', e => { if (e.key === 'Enter') { e.preventDefault(); buscarLivros(); }});
     
@@ -173,6 +195,20 @@ function abrirModalSelecaoLeitura() {
     document.getElementById('overlay').style.display = 'block';
     document.getElementById('modal-selecao-leitura').style.display = 'block';
     document.getElementById('busca-livro').focus();
+    
+    const hoje = new Date().toISOString().split('T')[0];
+    
+    const dataInicio = document.getElementById('data-inicio');
+    const dataFim = document.getElementById('data-fim');
+    
+    if (dataInicio) {
+        dataInicio.setAttribute('min', hoje);
+        dataInicio.value = hoje;
+    }
+    
+    if (dataFim) {
+        dataFim.setAttribute('min', hoje);
+    }
 }
 
 function fecharModalSelecaoLeitura() {
@@ -354,24 +390,24 @@ async function salvarNovaLeitura() {
                 return;
             }
             
-            dadosLeitura = {...livroSelecionado, dataInicio, dataFim: dataFim || null};
-        } else {
-            const tituloManual = document.getElementById('titulo-manual').value.trim();
-            const autorManual = document.getElementById('autor-manual').value.trim();
-            const paginasManual = document.getElementById('paginas-manual').value;
-            const imagemUrlManual = document.getElementById('imagem-url-manual').value.trim();
-            const dataInicioManual = document.getElementById('data-inicio-manual').value;
-            const dataFimManual = document.getElementById('data-fim-manual').value;
-            
-            if (!tituloManual || !autorManual || !dataInicioManual) {
-                alert('Título, autor e data de início são obrigatórios.');
+            const hoje = new Date().toISOString().split('T')[0];
+            if (dataInicio < hoje) {
+                alert('A data de início não pode ser anterior a hoje.');
                 return;
             }
             
-            dadosLeitura = {
-                titulo: tituloManual, autor: autorManual, paginas: paginasManual || null,
-                imagemUrl: imagemUrlManual || null, dataInicio: dataInicioManual, dataFim: dataFimManual || null
-            };
+            if (dataFim && dataFim < hoje) {
+                alert('A data de término não pode ser anterior a hoje.');
+                return;
+            }
+            
+            if (dataFim && dataFim < dataInicio) {
+                alert('A data de término deve ser posterior à data de início.');
+                return;
+            }
+            
+            dadosLeitura = {...livroSelecionado, dataInicio, dataFim: dataFim || null};
+        } else {
         }
         
         const response = await fetch(`/api/clube/${clubeId}/leituras`, {
@@ -394,7 +430,6 @@ async function salvarNovaLeitura() {
         alert(`Erro ao salvar leitura: ${error.message}`);
     }
 }
-
 function abrirModalAtualizacao() {
     document.getElementById('atualizacao-comentario').value = '';
     document.getElementById('atualizacao-pagina').value = '';

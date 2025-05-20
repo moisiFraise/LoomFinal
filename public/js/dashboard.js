@@ -1,3 +1,12 @@
+window.addEventListener('pageshow', function(event) {
+    const botoesAcesso = document.querySelectorAll('.botao-padrao');
+    botoesAcesso.forEach(botao => {
+        if (botao.innerHTML.includes('Acessando')) {
+            botao.innerHTML = 'Acessar';
+            botao.disabled = false;
+        }
+    });
+});
 async function formClubeDoLivro() {
     document.getElementById('overlay').style.display = 'block';
     document.getElementById('modal-criar-clube').style.display = 'block';
@@ -120,6 +129,8 @@ async function carregarMeusClubes() {
             return;
         }
         
+        document.getElementById('meus-clubes').innerHTML = '<p class="carregando">Carregando seus clubes...</p>';
+        
         const response = await fetch(`/api/clubes/${userId}`);
         
         if (!response.ok) {
@@ -127,7 +138,11 @@ async function carregarMeusClubes() {
         }
         
         const data = await response.json();
-        renderizarMeusClubes(data.clubesCriados, data.clubesParticipando);
+        
+        // Verificar se os dados estão corretos
+        console.log('Dados recebidos:', data);
+        
+        renderizarMeusClubes(data.clubesCriados || [], data.clubesParticipando || []);
         
     } catch (error) {
         console.error('Erro ao carregar clubes:', error);
@@ -135,7 +150,6 @@ async function carregarMeusClubes() {
         clubesGrid.innerHTML = '<p class="mensagem-erro">Não foi possível carregar seus clubes.</p>';
     }
 }
-
 function renderizarMeusClubes(clubesCriados, clubesParticipando) {
     const clubesGrid = document.getElementById('meus-clubes');
     clubesGrid.innerHTML = '';
@@ -165,8 +179,8 @@ function renderizarMeusClubes(clubesCriados, clubesParticipando) {
             </div>
             ${ehCriador ? '<span class="criador-badge">Criador</span>' : ''}
             <div class="clube-acoes">
-            <button class="botao-padrao"onclick="acessarClube(${clube.id})">Acessar</button>
-            ${ehCriador ? `<button class="botao-editar" onclick="editarClube(${clube.id})">Editar</button>` : ''}
+                <button class="botao-padrao" onclick="acessarClube(${clube.id})">Acessar</button>
+                ${ehCriador ? `<button class="botao-editar" onclick="editarClube(${clube.id})">Editar</button>` : ''}
             </div>
         `;
         
@@ -186,18 +200,18 @@ function editarClube(clubeId) {
     }, 500);
 }
 function acessarClube(clubeId) {
-    const botao = event.target.closest('.botao-acessar');
-    const textoOriginal = botao.innerHTML;
+    if (!clubeId) {
+        console.error('ID do clube inválido:', clubeId);
+        return;
+    }
+    const botao = event.target;
     botao.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Acessando...';
     botao.disabled = true;
     
-    setTimeout(() => { //delay para impressionar
+    setTimeout(() => {
         window.location.href = `/clube/${clubeId}`;
     }, 500);
 }
-
-//dom carrega os clubes a página automaticamente
 document.addEventListener('DOMContentLoaded', function() {
     carregarMeusClubes();
 });
-
