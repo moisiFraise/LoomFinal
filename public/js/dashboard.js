@@ -9,7 +9,10 @@ window.addEventListener('pageshow', function(event) {
 });
 async function formClubeDoLivro() {
     document.getElementById('overlay').style.display = 'block';
-    document.getElementById('modal-criar-clube').style.display = 'block';
+    const modalElement = document.getElementById('modal-criar-clube');
+    modalElement.style.display = 'block';
+    
+    modalElement.scrollTop = 0;
     
     const categoriasContainer = document.getElementById('categorias-clube');
     categoriasContainer.innerHTML = '<p class="carregando"><i class="fas fa-spinner fa-spin"></i> Carregando categorias...</p>';
@@ -29,12 +32,33 @@ async function formClubeDoLivro() {
             categorias.forEach(categoria => {
                 const div = document.createElement('div');
                 div.className = 'categoria-item';
+                div.dataset.id = categoria.id;
+                div.dataset.nome = categoria.nome.toLowerCase();
+                
                 div.innerHTML = `
                     <input type="checkbox" id="cat-${categoria.id}" name="categorias" value="${categoria.id}">
                     <label for="cat-${categoria.id}">${categoria.nome}</label>
                 `;
+                
+                div.addEventListener('click', function(e) {
+                    if (e.target.tagName !== 'INPUT') {
+                        const checkbox = this.querySelector('input[type="checkbox"]');
+                        checkbox.checked = !checkbox.checked;
+                    }
+                    
+                    if (this.querySelector('input[type="checkbox"]').checked) {
+                        this.classList.add('selected');
+                    } else {
+                        this.classList.remove('selected');
+                    }
+                    
+                    atualizarContadorCategorias();
+                });
+                
                 categoriasContainer.appendChild(div);
             });
+            
+            document.getElementById('busca-categoria').addEventListener('input', filtrarCategorias);
         }
     } catch (error) {
         console.error('Erro ao carregar categorias:', error);
@@ -43,9 +67,26 @@ async function formClubeDoLivro() {
     
     document.getElementById('publico').checked = true;
     toggleSenhaClube();
+    atualizarContadorCategorias();
 }
 
-
+function atualizarContadorCategorias() {
+    const categoriasChecked = document.querySelectorAll('input[name="categorias"]:checked').length;
+    document.getElementById('contador-categorias').textContent = `${categoriasChecked} selecionada${categoriasChecked !== 1 ? 's' : ''}`;
+}
+function filtrarCategorias() {
+    const termoBusca = document.getElementById('busca-categoria').value.toLowerCase();
+    const categorias = document.querySelectorAll('.categoria-item');
+    
+    categorias.forEach(categoria => {
+        const nomeCategoria = categoria.dataset.nome;
+        if (nomeCategoria.includes(termoBusca)) {
+            categoria.style.display = 'flex';
+        } else {
+            categoria.style.display = 'none';
+        }
+    });
+}
 function toggleSenhaClube() {
     const visibilidade = document.querySelector('input[name="visibilidade"]:checked').value;
     const senhaContainer = document.getElementById('senha-clube-container');
@@ -53,22 +94,101 @@ function toggleSenhaClube() {
     if (visibilidade === 'privado') {
         senhaContainer.style.display = 'block';
         document.getElementById('senha-clube').setAttribute('required', 'required');
+        setTimeout(() => {
+            senhaContainer.style.opacity = '1';
+            senhaContainer.style.transform = 'translateY(0)';
+        }, 10);
     } else {
-        senhaContainer.style.display = 'none';
-        document.getElementById('senha-clube').removeAttribute('required');
+        senhaContainer.style.opacity = '0';
+        senhaContainer.style.transform = 'translateY(-10px)';
+        setTimeout(() => {
+            senhaContainer.style.display = 'none';
+            document.getElementById('senha-clube').removeAttribute('required');
+        }, 300);
+    }
+}
+function toggleSenhaVisibilidade() {
+    const senhaInput = document.getElementById('senha-clube');
+    const toggleBtn = document.getElementById('toggle-senha');
+    
+    if (senhaInput.type === 'password') {
+        senhaInput.type = 'text';
+        toggleBtn.innerHTML = '<i class="fas fa-eye-slash"></i>';
+    } else {
+        senhaInput.type = 'password';
+        toggleBtn.innerHTML = '<i class="fas fa-eye"></i>';
     }
 }
 
+document.addEventListener('DOMContentLoaded', function() {
+    carregarMeusClubes();
+        const toggleSenhaBtn = document.getElementById('toggle-senha');
+    if (toggleSenhaBtn) {
+        toggleSenhaBtn.addEventListener('click', toggleSenhaVisibilidade);
+    }
+        const senhaContainer = document.getElementById('senha-clube-container');
+    if (senhaContainer) {
+        senhaContainer.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        senhaContainer.style.opacity = '0';
+        senhaContainer.style.transform = 'translateY(-10px)';
+    }
+});
 function cancelarCriacaoClube() {
     document.getElementById('overlay').style.display = 'none';
     document.getElementById('modal-criar-clube').style.display = 'none';
+    
     document.getElementById('form-criar-clube').reset();
+    
+    document.querySelectorAll('.categoria-item').forEach(item => {
+        item.classList.remove('selected');
+    });
+    atualizarContadorCategorias();
+    document.getElementById('publico').checked = true;
+    toggleSenhaClube();
+    
+    const buscaCategoria = document.getElementById('busca-categoria');
+    if (buscaCategoria) {
+        buscaCategoria.value = '';
+        filtrarCategorias();
+    }
 }
-
+document.addEventListener('DOMContentLoaded', function() {
+    carregarMeusClubes();
+    
+    const toggleSenhaBtn = document.getElementById('toggle-senha');
+    if (toggleSenhaBtn) {
+        toggleSenhaBtn.addEventListener('click', toggleSenhaVisibilidade);
+    }
+    
+    const senhaContainer = document.getElementById('senha-clube-container');
+    if (senhaContainer) {
+        senhaContainer.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        senhaContainer.style.opacity = '0';
+        senhaContainer.style.transform = 'translateY(-10px)';
+    }
+    
+    const overlay = document.getElementById('overlay');
+    const modal = document.getElementById('modal-criar-clube');
+    
+    if (overlay && modal) {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) {
+                cancelarCriacaoClube();
+            }
+        });
+        
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && modal.style.display === 'block') {
+                cancelarCriacaoClube();
+            }
+        });
+    }
+});
 async function criarClube() {
     const nome = document.getElementById('nome-clube').value;
     const descricao = document.getElementById('descricao-clube').value;
     const visibilidade = document.querySelector('input[name="visibilidade"]:checked').value;
+    const modalidade = document.querySelector('input[name="modalidade"]:checked').value;
     
     let senha = null;
     if (visibilidade === 'privado') {
@@ -89,6 +209,11 @@ async function criarClube() {
         return;
     }
     
+    if (categoriasSelecionadas.length === 0) {
+        alert('Por favor, selecione pelo menos uma categoria para o clube.');
+        return;
+    }
+    
     try {
         const response = await fetch('/api/clubes', {
             method: 'POST',
@@ -101,6 +226,7 @@ async function criarClube() {
                 idCriador: userId,
                 visibilidade,
                 senha,
+                modelo: modalidade,
                 categorias: categoriasSelecionadas
             })
         });
@@ -139,7 +265,6 @@ async function carregarMeusClubes() {
         
         const data = await response.json();
         
-        // Verificar se os dados estão corretos
         console.log('Dados recebidos:', data);
         
         renderizarMeusClubes(data.clubesCriados || [], data.clubesParticipando || []);
@@ -170,10 +295,22 @@ function renderizarMeusClubes(clubesCriados, clubesParticipando) {
         const iconeVisibilidade = clube.visibilidade === 'privado' 
             ? '<i class="fas fa-lock" title="Clube Privado"></i>' 
             : '<i class="fas fa-globe" title="Clube Público"></i>';
+            
+        let iconeModalidade = '';
+        if (clube.modelo === 'online') {
+            iconeModalidade = '<span class="modalidade-badge online"><i class="fas fa-laptop"></i> Online</span>';
+        } else if (clube.modelo === 'presencial') {
+            iconeModalidade = '<span class="modalidade-badge presencial"><i class="fas fa-users"></i> Presencial</span>';
+        } else if (clube.modelo === 'hibrido') {
+            iconeModalidade = '<span class="modalidade-badge hibrido"><i class="fas fa-sync-alt"></i> Híbrido</span>';
+        }
         
         clubeCard.innerHTML = `
             <h3 class="clube-nome">${clube.nome} ${iconeVisibilidade}</h3>
             <p class="clube-descricao">${clube.descricao || 'Sem descrição'}</p>
+            <div class="clube-info">
+                ${iconeModalidade}
+            </div>
             <div class="clube-tags">
                 ${clube.categorias ? clube.categorias.map(cat => `<span class="tag">${cat}</span>`).join('') : ''}
             </div>

@@ -1,10 +1,10 @@
 const pool = require('../config/database');
 
 class Explorar {
-  static async listarTodosClubes() {
+static async listarTodosClubes() {
   try {
     const [rows] = await pool.query(`
-      SELECT c.id, c.nome, c.descricao, c.visibilidade, c.data_criacao,
+      SELECT c.id, c.nome, c.descricao, c.visibilidade, c.modelo, c.data_criacao,
              u.nome as nome_criador,
              (SELECT COUNT(*) FROM participacoes WHERE id_clube = c.id) as total_membros
       FROM clubes c
@@ -19,10 +19,18 @@ class Explorar {
         [clube.id]
       );
       
+      const [categorias] = await pool.query(`
+        SELECT cat.nome
+        FROM categorias cat
+        JOIN clube_categorias cc ON cat.id = cc.id_categoria
+        WHERE cc.id_clube = ?
+      `, [clube.id]);
+      
       clubesComLeituras.push({
         ...clube,
         modelo: clube.modelo || 'online',
-        leitura_atual: leituras.length > 0 ? `${leituras[0].titulo} - ${leituras[0].autor}` : null
+        leitura_atual: leituras.length > 0 ? `${leituras[0].titulo} - ${leituras[0].autor}` : null,
+        categorias: categorias.map(cat => cat.nome)
       });
     }
 

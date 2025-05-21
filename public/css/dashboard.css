@@ -53,6 +53,7 @@ input {
     cursor: pointer;
     transition: all 0.3s ease;
 }
+
 .botao-editar {
     background: linear-gradient(45deg, var(--laranja), var(--vermelho));
     color: var(--current-line);
@@ -69,11 +70,9 @@ p {
     font-size: 13px; 
 }
 
-
 #senha-clube-container {
     margin-bottom: 15px; 
 }
-
 .senha-info {
     font-size: 11px;
     margin-top: 3px;
@@ -100,6 +99,47 @@ input[type="password"] {
     font-size: 13px;
 }
 
+@media (max-width: 768px) {
+    .form-container {
+        padding: 15px;
+        width: 95%;
+    }
+    
+    h2 {
+        font-size: 20px;
+        margin-bottom: 10px;
+    }
+    
+    .form-subtitulo {
+        font-size: 12px;
+    }
+    
+    input, input[type="password"] {
+        padding: 8px 10px;
+        font-size: 13px;
+    }
+    
+    .botao-padrao, .botao-editar {
+        padding: 10px;
+        font-size: 14px;
+    }
+}
+
+@media (max-height: 700px) {
+    #modal-criar-clube {
+        top: 0;
+        transform: translate(-50%, 0);
+        height: 100vh;
+        border-radius: 0;
+    }
+    
+    .form-container {
+        height: 100%;
+        border-radius: 0;
+        max-height: 100vh;
+    }
+}
+
 .clubes-grid {
     display: flex !important;
     flex-direction: column !important;
@@ -116,6 +156,42 @@ input[type="password"] {
     border-radius: 0 !important; 
 }
 
+.modalidade-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+}
+
+.modalidade-badge i {
+    margin-right: 4px;
+    font-size: 11px;
+}
+
+.modalidade-badge.online {
+    background-color: var(--roxo);
+    color: var(--foreground);
+}
+
+.modalidade-badge.presencial {
+    background-color: var(--verde);
+    color: var(--background);
+}
+
+.modalidade-badge.hibrido {
+    background-color: var(--laranja);
+    color: var(--background);
+}
+
+.clube-info {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
 .header-container {
     width: 100% !important;
     max-width: 100% !important;
@@ -127,6 +203,7 @@ input[type="password"] {
     max-width: 100% !important;
     padding: 0 !important;
 }
+
 .full-width {
     width: 100% !important;
     max-width: 100% !important;

@@ -12,8 +12,36 @@
     <%- include('partials/menu') %>  
     <section id="explorar" style="display: none;">
         <h2 class="explorar-clubes">Explorar Clubes</h2>
+        
+        <div class="pesquisa-container">
+            <div class="campo-pesquisa">
+                <input type="text" id="pesquisa-clubes" placeholder="Pesquisar clubes por nome, descrição ou categoria...">
+                <button id="btn-pesquisar" class="btn-pesquisar">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+            <div class="filtros-container">
+                <select id="filtro-visibilidade" class="filtro-select">
+                    <option value="todos">Todos</option>
+                    <option value="publico">Públicos</option>
+                    <option value="privado">Privados</option>
+                </select>
+                <select id="filtro-modelo" class="filtro-select">
+                    <option value="todos">Todos os modelos</option>
+                    <option value="online">Online</option>
+                    <option value="presencial">Presencial</option>
+                    <option value="hibrido">Híbrido</option>
+                </select>
+            </div>
+        </div>
+        
         <div id="lista-clubes">
             <!--clubes criados(get all clubes)-->
+        </div>
+        
+        <div id="sem-resultados" class="sem-resultados" style="display: none;">
+            <i class="fas fa-search"></i>
+            <p>Nenhum clube encontrado com esses critérios.</p>
         </div>
     </section>
     <script src="/js/explorar.js"></script>

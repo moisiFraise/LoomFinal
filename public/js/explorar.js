@@ -1,164 +1,173 @@
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('explorar').style.display = 'block';
     
-    buscarTodosClubes();
+    carregarClubes();
     
-    configurarDialogoSenha();
-});
-window.addEventListener('pageshow', function(event) {
-    const botoesAcesso = document.querySelectorAll('.botao-padrao');
-    botoesAcesso.forEach(botao => {
-        if (botao.innerHTML.includes('Acessando')) {
-            botao.innerHTML = 'Acessar';
-            botao.disabled = false;
+    document.getElementById('btn-pesquisar').addEventListener('click', pesquisarClubes);
+    document.getElementById('pesquisa-clubes').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            pesquisarClubes();
         }
     });
+    
+    document.getElementById('filtro-visibilidade').addEventListener('change', pesquisarClubes);
+    document.getElementById('filtro-modelo').addEventListener('change', pesquisarClubes);
 });
-async function buscarTodosClubes() {
+
+let todosClubes = [];
+let participacoes = [];
+
+async function carregarClubes() {
     try {
         const response = await fetch('/api/explorar/clubes');
         if (!response.ok) {
-            throw new Error('Erro ao buscar clubes');
+            throw new Error('Erro ao carregar clubes');
         }
         
         const data = await response.json();
-        renderizarClubes(data.clubes, data.participacoes);
+        todosClubes = data.clubes;
+        participacoes = data.participacoes;
+        
+        renderizarClubes(todosClubes);
     } catch (error) {
         console.error('Erro:', error);
-        alert('Não foi possível carregar os clubes. Tente novamente mais tarde.');
+        mostrarErro('Não foi possível carregar os clubes. Tente novamente mais tarde.');
     }
 }
 
-function renderizarClubes(clubes, participacoes) {
+function pesquisarClubes() {
+    const termoPesquisa = document.getElementById('pesquisa-clubes').value.toLowerCase().trim();
+    const filtroVisibilidade = document.getElementById('filtro-visibilidade').value;
+    const filtroModelo = document.getElementById('filtro-modelo').value;
+    
+    let resultados = todosClubes;
+    
+    if (termoPesquisa) {
+        resultados = resultados.filter(clube => 
+            clube.nome.toLowerCase().includes(termoPesquisa) || 
+            clube.descricao.toLowerCase().includes(termoPesquisa) ||
+            (clube.leitura_atual && clube.leitura_atual.toLowerCase().includes(termoPesquisa))
+        );
+    }
+    
+    if (filtroVisibilidade !== 'todos') {
+        resultados = resultados.filter(clube => clube.visibilidade === filtroVisibilidade);
+    }
+    
+    if (filtroModelo !== 'todos') {
+        resultados = resultados.filter(clube => clube.modelo === filtroModelo);
+    }
+    
+    renderizarClubes(resultados);
+}
+function renderizarClubes(clubes) {
     const listaElement = document.getElementById('lista-clubes');
+    const semResultadosElement = document.getElementById('sem-resultados');
+    
     listaElement.innerHTML = '';
     
     if (clubes.length === 0) {
-        listaElement.innerHTML = '<p class="sem-clubes">Nenhum clube encontrado.</p>';
+        semResultadosElement.style.display = 'block';
         return;
     }
     
+    semResultadosElement.style.display = 'none';
+    
     clubes.forEach(clube => {
-        const isParticipante = participacoes.includes(clube.id);
-        const card = criarCardClube(clube, isParticipante);
-        listaElement.appendChild(card);
-    });
-}
-function criarCardClube(clube, isParticipante) {
-    const card = document.createElement('div');
-    card.className = 'clube-card';
-    card.dataset.id = clube.id;
-    
-    // Verificar se há leitura atual e formatá-la corretamente
-    const leituraAtual = clube.leitura_atual 
-        ? clube.leitura_atual 
-        : 'Nenhuma leitura definida';
-    
-    const modelo = clube.modelo || 'online';
-    
-    card.innerHTML = `
-        <div class="clube-header">
-            <h3 class="clube-titulo">${clube.nome}</h3>
-            <span class="clube-visibilidade ${clube.visibilidade}">${clube.visibilidade}</span>
-        </div>
-        <p class="clube-descricao">${clube.descricao || 'Sem descrição'}</p>
-        <div class="clube-info">
-            <span class="clube-modelo ${modelo}">${modelo}</span>
-            <span class="clube-membros"><i class="fas fa-users"></i> ${clube.total_membros} membros</span>
-        </div>
-        <p class="clube-leitura">Leitura atual: ${leituraAtual}</p>
-        <div class="clube-acoes">
-            ${isParticipante 
-                ? `<button class="botao-padrao" onclick="acessarClube(${clube.id})">Acessar</button>` 
-                : clube.visibilidade === 'privado'
-                    ? `<button class="btn-senha" onclick="solicitarSenha(${clube.id})">Entrar (Requer Senha)</button>`
-                    : `<button class="btn-entrar" onclick="entrarNoClube(${clube.id})">Entrar no Clube</button>`
-            }
-        </div>
-    `;
-    
-    return card;
-}
-function verClube(clubeId) {
-    window.location.href = `/clube/${clubeId}`;
-}
-
-async function entrarNoClube(clubeId) {
-    try {
-        const response = await fetch('/api/explorar/entrar', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ clubeId })
-        });
+        const jaParticipa = participacoes.includes(clube.id);
         
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.erro || 'Erro ao entrar no clube');
+        const clubeElement = document.createElement('div');
+        clubeElement.className = 'clube-card';
+        
+        let modeloClass = '';
+        switch (clube.modelo) {
+            case 'online': modeloClass = 'online'; break;
+            case 'presencial': modeloClass = 'presencial'; break;
+            case 'hibrido': modeloClass = 'hibrido'; break;
+            default: modeloClass = 'online';
         }
         
-        const result = await response.json();
-        alert(result.mensagem);
+        const iconeVisibilidade = clube.visibilidade === 'privado' 
+            ? '<i class="fas fa-lock" title="Clube Privado"></i>' 
+            : '<i class="fas fa-globe" title="Clube Público"></i>';
         
-        // Recarregar a lista de clubes
-        buscarTodosClubes();
-    } catch (error) {
-        console.error('Erro:', error);
-        alert(error.message || 'Não foi possível entrar no clube. Tente novamente.');
-    }
-}
-
-// Funções para lidar com clubes privados
-function solicitarSenha(clubeId) {
-    const dialog = document.getElementById('senha-dialog');
-    const form = document.getElementById('senha-form');
-    
-    form.dataset.clubeId = clubeId;
-    dialog.style.display = 'flex';
-    document.getElementById('senha-input').focus();
-}
-
-function configurarDialogoSenha() {
-    // Criar o diálogo de senha se não existir
-    if (!document.getElementById('senha-dialog')) {
-        const dialog = document.createElement('div');
-        dialog.id = 'senha-dialog';
-        dialog.className = 'senha-dialog';
-        
-        dialog.innerHTML = `
-            <div class="senha-content">
-                <h3>Digite a senha do clube</h3>
-                <form id="senha-form">
-                    <input type="password" id="senha-input" placeholder="Senha do clube" required>
-                    <div class="senha-buttons">
-                        <button type="button" class="senha-cancelar" onclick="fecharDialogoSenha()">Cancelar</button>
-                        <button type="submit" class="senha-confirmar">Confirmar</button>
-                    </div>
-                </form>
+        clubeElement.innerHTML = `
+            <h3 class="clube-nome">${clube.nome} ${iconeVisibilidade}</h3>
+            <p class="clube-descricao">${clube.descricao || 'Sem descrição'}</p>
+            <div class="clube-tags">
+                ${clube.categorias ? clube.categorias.map(cat => `<span class="tag">${cat}</span>`).join('') : ''}
+            </div>
+            <div class="clube-info">
+                <span class="clube-modelo ${modeloClass}">${clube.modelo.charAt(0).toUpperCase() + clube.modelo.slice(1)}</span>
+                <span class="clube-membros"><i class="fas fa-users"></i> ${clube.total_membros} membros</span>
+            </div>
+            ${clube.leitura_atual ? `<div class="clube-leitura">Lendo: ${clube.leitura_atual}</div>` : '<div class="clube-leitura sem-leitura">Sem leitura atual</div>'}
+            <div class="clube-acoes">
+                ${jaParticipa 
+                    ? `<button class="botao-padrao" onclick="verClube(${clube.id})">Ver Clube</button>` 
+                    : clube.visibilidade === 'privado' 
+                        ? `<button class="botao-editar" onclick="abrirDialogSenha(${clube.id})">Entrar com Senha</button>` 
+                        : `<button class="botao-padrao" onclick="entrarClube(${clube.id})">Entrar</button>`
+                }
             </div>
         `;
         
-        document.body.appendChild(dialog);
+        listaElement.appendChild(clubeElement);
+    });
+}
+
+function abrirDialogSenha(clubeId) {
+    let senhaDialog = document.getElementById('senha-dialog');
+    if (!senhaDialog) {
+        senhaDialog = document.createElement('div');
+        senhaDialog.id = 'senha-dialog';
+        senhaDialog.className = 'senha-dialog';
         
-        document.getElementById('senha-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const clubeId = this.dataset.clubeId;
-            const senha = document.getElementById('senha-input').value;
-            
-            await entrarNoClubeSenha(clubeId, senha);
-        });
+        senhaDialog.innerHTML = `
+            <div class="senha-content">
+                <h3>Digite a senha do clube</h3>
+                <input type="password" id="senha-clube" placeholder="Senha do clube">
+                <div class="senha-buttons">
+                    <button class="senha-cancelar" onclick="fecharDialogSenha()">Cancelar</button>
+                    <button class="senha-confirmar" id="btn-confirmar-senha">Confirmar</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(senhaDialog);
+    }
+    
+    document.getElementById('btn-confirmar-senha').onclick = function() {
+        confirmarSenha(clubeId);
+    };
+    
+    senhaDialog.style.display = 'flex';
+    
+    document.getElementById('senha-clube').focus();
+    
+    document.getElementById('senha-clube').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            confirmarSenha(clubeId);
+        }
+    });
+}
+
+function fecharDialogSenha() {
+    const senhaDialog = document.getElementById('senha-dialog');
+    if (senhaDialog) {
+        senhaDialog.style.display = 'none';
+        document.getElementById('senha-clube').value = '';
     }
 }
 
-function fecharDialogoSenha() {
-    const dialog = document.getElementById('senha-dialog');
-    dialog.style.display = 'none';
-    document.getElementById('senha-input').value = '';
-}
-
-async function entrarNoClubeSenha(clubeId, senha) {
+async function confirmarSenha(clubeId) {
+    const senha = document.getElementById('senha-clube').value;
+    
+    if (!senha) {
+        alert('Por favor, digite a senha do clube.');
+        return;
+    }
+    
     try {
         const response = await fetch('/api/explorar/entrar-privado', {
             method: 'POST',
@@ -168,28 +177,55 @@ async function entrarNoClubeSenha(clubeId, senha) {
             body: JSON.stringify({ clubeId, senha })
         });
         
-        const result = await response.json();
+        const data = await response.json();
         
         if (!response.ok) {
-            throw new Error(result.erro || 'Erro ao entrar no clube');
+            throw new Error(data.erro || 'Erro ao entrar no clube');
         }
         
-        alert(result.mensagem);
-        fecharDialogoSenha();
+        fecharDialogSenha();
+        alert(data.mensagem);
         
-        buscarTodosClubes();
+        participacoes.push(clubeId);
+        renderizarClubes(todosClubes);
+        
     } catch (error) {
-        console.error('Erro:', error);
-        alert(error.message || 'Não foi possível entrar no clube. Verifique a senha e tente novamente.');
+        alert(error.message);
     }
 }
-function acessarClube(clubeId) {
-    const botao = event.target;
-    const textoOriginal = botao.innerHTML;
-    botao.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Acessando...';
-    botao.disabled = true;
-    
-    setTimeout(() => {
-        window.location.href = `/clube/${clubeId}`;
-    }, 500);
+
+async function entrarClube(clubeId) {
+    try {
+        const response = await fetch('/api/explorar/entrar', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ clubeId })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.erro || 'Erro ao entrar no clube');
+        }
+        
+        alert(data.mensagem);
+        
+        participacoes.push(clubeId);
+        
+        renderizarClubes(todosClubes);
+        
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+function verClube(clubeId) {
+    window.location.href = `/clube/${clubeId}`;
+}
+
+function mostrarErro(mensagem) {
+    const listaElement = document.getElementById('lista-clubes');
+    listaElement.innerHTML = `<div class="erro-mensagem">${mensagem}</div>`;
 }

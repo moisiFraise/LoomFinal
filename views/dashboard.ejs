@@ -22,34 +22,91 @@
         <div id="meus-clubes" class="clubes-grid">
         </div>
     </section>
-
-    <div id="overlay" class="overlay" style="display: none;"></div>
-    <div class="form-container" id="modal-criar-clube" style="display: none;">
-        <form id="form-criar-clube">
-            <h2>Criar Clube do Livro</h2>
-            <p class="form-subtitulo">Nome do Clube do Livro</p>
-            <input type="text" id="nome-clube" placeholder="Nome do Clube" required>
-            <p class="form-subtitulo">Descrição do Clube</p>
-            <input type="text" id="descricao-clube" placeholder="Descrição do Clube" required>
-            <p class="form-subtitulo">Categorias do Clube</p>
+<div id="overlay" class="overlay" style="display: none;"></div>
+<div class="form-container" id="modal-criar-clube" style="display: none;">
+    <form id="form-criar-clube">
+        <h2>Criar Clube de Leitura</h2>
+        
+        <p class="form-subtitulo">Nome do Clube de Leitura</p>
+        <input type="text" id="nome-clube" placeholder="Nome do Clube" required>
+        
+        <p class="form-subtitulo">Descrição do Clube</p>
+        <input type="text" id="descricao-clube" placeholder="Descrição do Clube" required>
+        
+        <p class="form-subtitulo">Categorias do Clube</p>
+        <div class="categorias-container">
+            <input type="text" class="categoria-busca" id="busca-categoria" placeholder="Buscar categorias...">
             <div class="categorias-selecao" id="categorias-clube">
+                <p class="carregando"><i class="fas fa-spinner fa-spin"></i> Carregando categorias...</p>
             </div>
-            <p class="form-subtitulo">Visibilidade do clube</p>
-            <div class="radio-group">
+            <div class="categorias-contador" id="contador-categorias">0 selecionadas</div>
+        </div>
+        
+        <p class="form-subtitulo">Visibilidade do clube</p>
+        <div class="radio-group">
+            <div class="radio-option">
                 <input type="radio" id="publico" class="visibilidade" name="visibilidade" value="publico" checked onchange="toggleSenhaClube()">
-                <label for="publico">Público</label>
+                <label for="publico">
+                    <i class="fas fa-globe"></i>
+                    Público
+                    <span class="option-description">Qualquer pessoa pode encontrar e entrar</span>
+                </label>
+            </div>
+            <div class="radio-option">
                 <input type="radio" id="privado" class="visibilidade" name="visibilidade" value="privado" onchange="toggleSenhaClube()">
-                <label for="privado">Privado</label>
+                <label for="privado">
+                    <i class="fas fa-lock"></i>
+                    Privado
+                    <span class="option-description">Requer senha para entrar</span>
+                </label>
             </div>
-            <div id="senha-clube-container" style="display: none;">
-                <p class="form-subtitulo">Senha de acesso ao clube</p>
+        </div>
+        
+        <div id="senha-clube-container" style="display: none;">
+            <p class="form-subtitulo">Senha de acesso ao clube</p>
+            <div class="senha-input-container">
                 <input type="password" id="senha-clube" placeholder="Defina uma senha para o clube">
-                <p class="senha-info">Esta senha será necessária para novos membros entrarem no clube.</p>
+                <button type="button" id="toggle-senha" class="toggle-senha">
+                    <i class="fas fa-eye"></i>
+                </button>
             </div>
+            <p class="senha-info">Esta senha será necessária para novos membros entrarem no clube.</p>
+        </div>
+        
+        <p class="form-subtitulo">Modalidade do clube</p>
+        <div class="radio-group">
+            <div class="radio-option">
+                <input type="radio" id="online" class="modalidade" name="modalidade" value="online" checked>
+                <label for="online">
+                    <i class="fas fa-laptop"></i>
+                    Online
+                    <span class="option-description">Encontros virtuais</span>
+                </label>
+            </div>
+            <div class="radio-option">
+                <input type="radio" id="presencial" class="modalidade" name="modalidade" value="presencial">
+                <label for="presencial">
+                    <i class="fas fa-users"></i>
+                    Presencial
+                    <span class="option-description">Encontros físicos</span>
+                </label>
+            </div>
+            <div class="radio-option">
+                <input type="radio" id="hibrido" class="modalidade" name="modalidade" value="hibrido">
+                <label for="hibrido">
+                    <i class="fas fa-sync-alt"></i>
+                    Híbrido
+                    <span class="option-description">Ambos os formatos</span>
+                </label>
+            </div>
+        </div>
+        
+        <div class="form-buttons">
             <button type="button" id="confirmarClube" class="botao-padrao" onclick="criarClube()">Criar Clube</button>
             <button type="button" id="cancelarClube" onclick="cancelarCriacaoClube()">Cancelar</button>
-        </form>
-    </div>    
+        </div>
+    </form>
+</div>
     <script> // define o user id
         const userId = '<%= typeof userId !== "undefined" && userId ? userId : null %>';
         console.log('userId definido para JavaScript:', userId);

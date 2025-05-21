@@ -1,56 +1,56 @@
 const pool = require('../config/database');
 
 class Clube {
-  static async criar(nome, descricao, idCriador, visibilidade, senha, categorias = []) {
+static async criar(nome, descricao, idCriador, visibilidade, senha, categorias = [], modelo = 'online') {
+  try {
+    const connection = await pool.getConnection();
+    
     try {
-      const connection = await pool.getConnection();
+      await connection.beginTransaction();
       
-      try {
-        await connection.beginTransaction();
-        
-        const senhaAcesso = visibilidade === 'privado' ? senha : null;
-        
-        const [result] = await connection.query(
-          'INSERT INTO clubes (nome, descricao, id_criador, visibilidade, senha_acesso) VALUES (?, ?, ?, ?, ?)',
-          [nome, descricao, idCriador, visibilidade, senhaAcesso]
-        );
-        
-        const clubeId = result.insertId;
-        
+      const senhaAcesso = visibilidade === 'privado' ? senha : null;
+      
+      const [result] = await connection.query(
+        'INSERT INTO clubes (nome, descricao, id_criador, visibilidade, senha_acesso, modelo) VALUES (?, ?, ?, ?, ?, ?)',
+        [nome, descricao, idCriador, visibilidade, senhaAcesso, modelo]
+      );
+      
+      const clubeId = result.insertId;
+      
+      await connection.query(
+        'INSERT INTO participacoes (id_usuario, id_clube) VALUES (?, ?)',
+        [idCriador, clubeId]
+      );
+      
+      if (categorias && categorias.length > 0) {
+        const valoresSQL = categorias.map(categoriaId => `(${clubeId}, ${categoriaId})`).join(', ');
         await connection.query(
-          'INSERT INTO participacoes (id_usuario, id_clube) VALUES (?, ?)',
-          [idCriador, clubeId]
+          `INSERT INTO clube_categorias (id_clube, id_categoria) VALUES ${valoresSQL}`
         );
-        
-        if (categorias && categorias.length > 0) {
-          const valoresSQL = categorias.map(categoriaId => `(${clubeId}, ${categoriaId})`).join(', ');
-          await connection.query(
-            `INSERT INTO clube_categorias (id_clube, id_categoria) VALUES ${valoresSQL}`
-          );
-        }
-        
-        await connection.commit();
-        
-        return { 
-          id: clubeId, 
-          nome, 
-          descricao, 
-          id_criador: idCriador,
-          visibilidade,
-          categorias
-        };
-      } catch (error) {
-        await connection.rollback();
-        throw error;
-      } finally {
-        connection.release();
       }
+      
+      await connection.commit();
+      
+      return { 
+        id: clubeId, 
+        nome, 
+        descricao, 
+        id_criador: idCriador,
+        visibilidade,
+        modelo,
+        categorias
+      };
     } catch (error) {
-      console.error('Erro ao criar clube:', error);
+      await connection.rollback();
       throw error;
+    } finally {
+      connection.release();
     }
+  } catch (error) {
+    console.error('Erro ao criar clube:', error);
+    throw error;
   }
-  
+}
   static async buscarPorCriador(idCriador) {
     try {
       const [rows] = await pool.query(

@@ -122,19 +122,16 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ erro: 'Email ou senha incorretos.' });
     }
     
-    // Limpar a sessão existente
     req.session.regenerate(function(err) {
       if (err) {
         console.error('Erro ao regenerar sessão:', err);
         return res.status(500).json({ erro: 'Erro ao processar o login. Problema com a sessão.' });
       }
       
-      // Definir dados da sessão
       req.session.userId = usuario.id;
       req.session.userType = usuario.tipo;
       req.session.authenticated = true;
       
-      // Salvar a sessão
       req.session.save(function(err) {
         if (err) {
           console.error('Erro ao salvar sessão:', err);
@@ -211,10 +208,9 @@ app.get('/api/clubes/:userId', async (req, res) => {
     res.status(500).json({ erro: 'Erro ao buscar informações dos clubes.' });
   }
 });
-
 app.post('/api/clubes', async (req, res) => {
   try {
-    const { nome, descricao, idCriador, visibilidade, senha, categorias } = req.body;
+    const { nome, descricao, idCriador, visibilidade, senha, categorias, modelo } = req.body;
     
     if (!nome || !idCriador) {
       return res.status(400).json({ erro: 'Nome do clube e ID do criador são obrigatórios.' });
@@ -224,13 +220,19 @@ app.post('/api/clubes', async (req, res) => {
       return res.status(400).json({ erro: 'Clubes privados precisam de uma senha de acesso.' });
     }
     
+    const modelosValidos = ['online', 'presencial', 'hibrido'];
+    if (modelo && !modelosValidos.includes(modelo)) {
+      return res.status(400).json({ erro: 'Modalidade inválida. Deve ser online, presencial ou híbrido.' });
+    }
+    
     const novoClube = await Clube.criar(
       nome, 
       descricao || '', 
       idCriador, 
       visibilidade || 'publico', 
       senha,
-      categorias || []
+      categorias || [],
+      modelo || 'online'
     );
     
     res.status(201).json({
@@ -242,7 +244,6 @@ app.post('/api/clubes', async (req, res) => {
     res.status(500).json({ erro: 'Erro ao criar clube. Tente novamente.' });
   }
 });
-
 app.get('/explorar', verificarAutenticacao, async (req, res) => {
   try {
     const usuario = await Usuario.buscarPorId(req.session.userId);
