@@ -430,63 +430,6 @@ async function salvarNovaLeitura() {
         alert(`Erro ao salvar leitura: ${error.message}`);
     }
 }
-function abrirModalAtualizacao() {
-    document.getElementById('atualizacao-comentario').value = '';
-    document.getElementById('atualizacao-pagina').value = '';
-    document.getElementById('porcentagem-valor').textContent = '0%';
-    document.getElementById('overlay-atualizacao').style.display = 'block';
-    document.getElementById('modal-atualizacao').style.display = 'block';
-    const paginaInput = document.getElementById('atualizacao-pagina');
-    if (paginaInput) paginaInput.addEventListener('input', calcularPorcentagemLeitura);
-}
-
-function fecharModalAtualizacao() {
-    document.getElementById('overlay-atualizacao').style.display = 'none';
-    document.getElementById('modal-atualizacao').style.display = 'none';
-}
-
-function calcularPorcentagemLeitura() {
-    const paginaAtual = parseInt(document.getElementById('atualizacao-pagina').value) || 0;
-    const totalPaginas = 100;
-    const porcentagem = Math.min(Math.round((paginaAtual / totalPaginas) * 100), 100);
-    document.getElementById('porcentagem-valor').textContent = `${porcentagem}%`;
-}
-
-async function salvarAtualizacao() {
-    const comentario = document.getElementById('atualizacao-comentario').value.trim();
-    const paginaAtual = parseInt(document.getElementById('atualizacao-pagina').value);
-    
-    if (!comentario) {
-        alert('Por favor, compartilhe seus pensamentos sobre o livro.');
-        return;
-    }
-    
-    if (!paginaAtual || paginaAtual <= 0) {
-        alert('Por favor, informe a página atual de leitura.');
-        return;
-    }
-    
-    try {
-        const response = await fetch(`/api/clube/${clubeId}/atualizacoes`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({idLeitura: 0, conteudo: comentario, paginaAtual})
-        });
-        
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.erro || 'Erro ao salvar atualização');
-        }
-        
-        fecharModalAtualizacao();
-        carregarAtualizacoes(clubeId);
-        atualizarProgressoLeitura(paginaAtual, 100);
-        alert('Atualização publicada com sucesso!');
-    } catch (error) {
-        console.error('Erro:', error);
-        alert(`Erro ao publicar atualização: ${error.message}`);
-    }
-}
 async function carregarAtualizacoes(clubeId) {
     try {
         const atualizacoesLista = document.getElementById('atualizacoes-lista');

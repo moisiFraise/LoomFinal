@@ -1,3 +1,9 @@
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('overlay-atualizacao').style.display = 'none';
+    document.getElementById('modal-atualizacao').style.display = 'none';
+    
+    carregarAtualizacoes();
+});
 let leituraAtualInfo = null, atualizacaoParaEditar = null;
 
 async function carregarAtualizacoes() {
@@ -14,7 +20,6 @@ async function carregarAtualizacoes() {
             `<div class="erro-carregamento">Erro ao carregar atualizações. Tente novamente mais tarde.</div>`;
     }
 }
-
 async function renderizarImagemLeituraAtual(leituraAtual) {
     if (!leituraAtual || !document.getElementById('leitura-atual-imagem-container')) return;
     const imagemUrl = leituraAtual.imagemUrl || '/img/capa-padrao.jpg';
@@ -30,7 +35,6 @@ async function renderizarImagemLeituraAtual(leituraAtual) {
             </div>
         </div>`;
 }
-
 async function calcularProgressoGeral(leituraAtual) {
     try {
         const response = await fetch(`/api/clube/${clubeId}/atualizacoes/usuario/${userId}/leitura/${leituraAtual.id}`);
@@ -86,6 +90,9 @@ function renderizarAtualizacoes(atualizacoes) {
                         <button class="botao-curtir" data-id="${a.id}" onclick="alternarCurtida(${a.id})">
                             <i class="fa fa-heart-o"></i>
                         </button>
+                        <span class="contador-curtidas"data-id="${a.id}" onclick="alternarCurtida(${a.id})">
+                            <i class="fa fa-heart-o"></i>
+                        </button>
                         <span class="contador-curtidas" data-id="${a.id}"></span>
                     </div>
                 </div>
@@ -96,7 +103,11 @@ function renderizarAtualizacoes(atualizacoes) {
         carregarEstadoCurtidas(a.id);
     });
 }
-async function abrirModalAtualizacao() {
+async function abrirModalAtualizacao(event) {
+       if (!event || event.type !== 'click' || !event.isTrusted) {
+        console.log('Tentativa de abrir modal automaticamente bloqueada');
+        return;
+    }
     if (!leituraAtualInfo) {
         try {
             const response = await fetch(`/api/clube/${clubeId}/atualizacoes`);
@@ -125,13 +136,17 @@ async function abrirModalAtualizacao() {
     document.getElementById('overlay-atualizacao').style.display = 'block';
     document.getElementById('modal-atualizacao').style.display = 'block';
     
+    setTimeout(() => {
+        const comentarioInput = document.getElementById('atualizacao-comentario');
+        if (comentarioInput) comentarioInput.focus();
+    }, 300);
+    
     const paginaInput = document.getElementById('atualizacao-pagina');
     if (paginaInput) {
         paginaInput.removeEventListener('input', calcularPorcentagem);
         paginaInput.addEventListener('input', calcularPorcentagem);
     }
 }
-
 function editarAtualizacao(id) {
     fetch(`/api/clube/${clubeId}/atualizacoes/${id}`)
         .then(response => {
@@ -157,6 +172,14 @@ function editarAtualizacao(id) {
             document.getElementById('overlay-atualizacao').style.display = 'block';
             document.getElementById('modal-atualizacao').style.display = 'block';
             
+            setTimeout(() => {
+                const comentarioInput = document.getElementById('atualizacao-comentario');
+                if (comentarioInput) {
+                    comentarioInput.focus();
+                    comentarioInput.selectionStart = comentarioInput.selectionEnd = comentarioInput.value.length;
+                }
+            }, 300);
+            
             const paginaInput = document.getElementById('atualizacao-pagina');
             if (paginaInput) {
                 paginaInput.removeEventListener('input', calcularPorcentagem);
@@ -168,7 +191,6 @@ function editarAtualizacao(id) {
             alert('Erro ao carregar dados da atualização. Tente novamente.');
         });
 }
-
 function excluirAtualizacao(id) {
     if (confirm('Tem certeza que deseja excluir esta atualização?')) {
         fetch(`/api/clube/${clubeId}/atualizacoes/${id}`, { method: 'DELETE' })
@@ -176,14 +198,20 @@ function excluirAtualizacao(id) {
                 if (!response.ok) throw new Error('Erro ao excluir atualização');
                 return response.json();
             })
-            .then(() => carregarAtualizacoes())
+            .then(() => {
+                carregarAtualizacoes();
+                const mensagem = document.createElement('div');
+                mensagem.className = 'mensagem-sucesso';
+                mensagem.textContent = 'Atualização excluída com sucesso!';
+                document.body.appendChild(mensagem);
+                setTimeout(() => document.body.removeChild(mensagem), 3000);
+            })
             .catch(error => {
                 console.error('Erro ao excluir atualização:', error);
                 alert('Erro ao excluir atualização. Tente novamente.');
             });
     }
 }
-
 function fecharModalAtualizacao() {
     document.getElementById('overlay-atualizacao').style.display = 'none';
     document.getElementById('modal-atualizacao').style.display = 'none';
@@ -193,7 +221,21 @@ function calcularPorcentagem() {
     const paginaAtual = parseInt(document.getElementById('atualizacao-pagina').value) || 0;
     const totalPaginas = leituraAtualInfo?.paginas || 100;
     let porcentagem = Math.min(Math.round((paginaAtual / totalPaginas) * 100), 100);
+    
     document.getElementById('porcentagem-valor').textContent = `${isNaN(porcentagem) ? 0 : porcentagem}%`;
+    
+    const porcentagemContainer = document.getElementById('porcentagem-container');
+    if (porcentagemContainer) {
+        if (porcentagem < 25) {
+            porcentagemContainer.style.color = '#FF5733';
+        } else if (porcentagem < 50) {
+            porcentagemContainer.style.color = '#FFC107';
+        } else if (porcentagem < 75) {
+            porcentagemContainer.style.color = '#2196F3';
+        } else {
+            porcentagemContainer.style.color = '#4CAF50';
+        }
+    }
 }
 
 async function salvarAtualizacao() {
@@ -203,13 +245,20 @@ async function salvarAtualizacao() {
         
         if (!comentario) {
             alert('Por favor, compartilhe seus pensamentos sobre o livro');
+            document.getElementById('atualizacao-comentario').focus();
             return;
         }
         
         if (!paginaAtual || paginaAtual <= 0) {
             alert('Por favor, informe uma página válida');
+            document.getElementById('atualizacao-pagina').focus();
             return;
         }
+        
+        const botaoConfirmar = document.getElementById('confirmarAtualizacao');
+        const textoOriginal = botaoConfirmar.textContent;
+        botaoConfirmar.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Salvando...';
+        botaoConfirmar.disabled = true;
         
         const url = atualizacaoParaEditar 
             ? `/api/clube/${clubeId}/atualizacoes/${atualizacaoParaEditar.id}`
@@ -226,10 +275,24 @@ async function salvarAtualizacao() {
         
         fecharModalAtualizacao();
         carregarAtualizacoes();
+        
+        const mensagem = document.createElement('div');
+        mensagem.className = 'mensagem-sucesso';
+        mensagem.textContent = atualizacaoParaEditar 
+            ? 'Atualização editada com sucesso!' 
+            : 'Atualização publicada com sucesso!';
+        document.body.appendChild(mensagem);
+        setTimeout(() => document.body.removeChild(mensagem), 3000);
+        
     } catch (error) {
         alert(error.message || 'Erro ao publicar atualização. Tente novamente.');
         console.error('Erro ao salvar atualização:', error);
+    } finally {
+        const botaoConfirmar = document.getElementById('confirmarAtualizacao');
+        if (botaoConfirmar) {
+            botaoConfirmar.textContent = atualizacaoParaEditar ? 'Salvar Alterações' : 'Publicar';
+            botaoConfirmar.disabled = false;
+        }
     }
 }
 
-document.addEventListener('DOMContentLoaded', carregarAtualizacoes);
