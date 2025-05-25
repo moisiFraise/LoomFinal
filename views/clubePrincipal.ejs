@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="/css/menuClube.css">
     <link rel="stylesheet" href="/css/leituras.css">
     <link rel="stylesheet" href="/css/atualizacoes.css">
+    <link rel="stylesheet" href="/css/encontros.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <title><%= titulo %></title>
 </head>
@@ -91,7 +92,33 @@
                     </div>
                 </div>
                 
+                <!-- Seção de Encontros -->
+                <div id="secao-encontros" class="clube-secao" style="display: none;">
+                    <div class="encontros-header">
+                        <h3>Encontros do Clube</h3>
+                        <div id="botao-agendar-encontro-container" style="display: none;">
+                            <button class="botao-moderno" onclick="abrirModalCriarEncontro()">
+                                <i class="fa fa-plus"></i> Agendar Novo Encontro
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="encontros-lista" class="encontros-lista">
+                        <div class="sem-encontros">
+                            Carregando encontros...
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="secao-membros" class="clube-secao" style="display: none;">
+                    <h3>Membros do Clube</h3>
+                    <div id="clube-membros-lista-completa"></div>
+                </div>
+                
+                <!-- Overlay e Modais -->
                 <div id="overlay" class="overlay" style="display: none;"></div>
+                
+                <!-- Modal de Seleção de Leitura -->
                 <div class="form-container" id="modal-selecao-leitura" style="display: none;">
                     <form id="form-selecao-leitura">
                         <h2>Selecionar Nova Leitura</h2>            
@@ -125,47 +152,118 @@
                         <button type="button" id="cancelarLeitura" onclick="fecharModalSelecaoLeitura()">Cancelar</button>
                     </form>
                 </div>
+                
+                <!-- Modal de Atualização -->
                 <div id="overlay-atualizacao" class="overlay"></div>
-                    <div id="modal-atualizacao">
-                        <form id="form-atualizacao">
-                            <h2 id="modal-titulo">Nova Atualização de Leitura</h2>
-                            
-                            <div class="form-group">
-                                <p class="form-subtitulo">O que você está achando da leitura?</p>
-                                <textarea id="atualizacao-comentario" class="atualizacao-input" 
-                                    placeholder="Compartilhe seus pensamentos, impressões ou citações favoritas do livro..." required></textarea>
-                            </div>
-                            
-                            <div class="form-group">
-                                <div class="pagina-input-container">
-                                    <div>
-                                        <label for="atualizacao-pagina">Página atual</label>
-                                        <input type="number" id="atualizacao-pagina" class="pagina-input" min="1" required>
-                                    </div>
-                                    <div id="porcentagem-container" class="porcentagem-leitura">
-                                        <span id="porcentagem-valor">0%</span> concluído
-                                    </div>
+                <div id="modal-atualizacao">
+                    <form id="form-atualizacao">
+                        <h2 id="modal-titulo">Nova Atualização de Leitura</h2>
+                        
+                        <div class="form-group">
+                            <p class="form-subtitulo">O que você está achando da leitura?</p>
+                            <textarea id="atualizacao-comentario" class="atualizacao-input" 
+                                placeholder="Compartilhe seus pensamentos, impressões ou citações favoritas do livro..." required></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="pagina-input-container">
+                                <div>
+                                    <label for="atualizacao-pagina">Página atual</label>
+                                    <input type="number" id="atualizacao-pagina" class="pagina-input" min="1" required>
                                 </div>
-                                <div class="progresso-visualizacao">
-                                    <div class="progresso-barra">
-                                        <div id="progresso-preview" class="progresso-preenchimento" style="width: 0%"></div>
-                                    </div>
+                                <div id="porcentagem-container" class="porcentagem-leitura">
+                                    <span id="porcentagem-valor">0%</span> concluído
                                 </div>
                             </div>
-                            
-                            <div class="form-actions">
-                                <button type="button" id="confirmarAtualizacao" class="botao-moderno" onclick="salvarAtualizacao()">
-                                    <i class="fa fa-check"></i> Publicar Atualização
-                                </button>
-                                <button type="button" id="cancelarAtualizacao" onclick="fecharModalAtualizacao()">
-                                    <i class="fa fa-times"></i> Cancelar
-                                </button>
+                            <div class="progresso-visualizacao">
+                                <div class="progresso-barra">
+                                    <div id="progresso-preview" class="progresso-preenchimento" style="width: 0%"></div>
+                                </div>
                             </div>
-                        </form>
-                    </div>
-                <div id="secao-membros" class="clube-secao" style="display: none;">
-                    <h3>Membros do Clube</h3>
-                    <div id="clube-membros-lista-completa"></div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" id="confirmarAtualizacao" class="botao-moderno" onclick="salvarAtualizacao()">
+                                <i class="fa fa-check"></i> Publicar Atualização
+                            </button>
+                            <button type="button" id="cancelarAtualizacao" onclick="fecharModalAtualizacao()">
+                                <i class="fa fa-times"></i> Cancelar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Modal de Encontro -->
+                <div id="modal-encontro" class="modal-encontro" style="display: none;">
+                    <h2 id="modal-titulo-encontro">Agendar Novo Encontro</h2>
+                    <form id="form-encontro" class="form-encontro" onsubmit="salvarEncontro(event)">
+                        <input type="hidden" id="encontro-id">
+                    
+                        <div class="form-group">
+                            <label for="titulo-encontro">Título*</label>
+                            <input type="text" id="titulo-encontro" placeholder="Ex: Discussão do capítulo 5" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="descricao-encontro">Descrição</label>
+                            <textarea id="descricao-encontro" rows="3" placeholder="Detalhes sobre o encontro..."></textarea>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="data-encontro">Data*</label>
+                                <input type="date" id="data-encontro" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="hora-inicio">Horário de início*</label>
+                                <input type="time" id="hora-inicio" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="hora-fim">Horário de término</label>
+                                <input type="time" id="hora-fim">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group tipo-encontro-container">
+                            <label>Tipo de encontro*</label>
+                            <div class="tipo-encontro-opcoes">
+                                <label class="tipo-encontro-opcao">
+                                    <input type="radio" name="tipo-encontro" value="online" checked> Online
+                                </label>
+                                <label class="tipo-encontro-opcao">
+                                    <input type="radio" name="tipo-encontro" value="presencial"> Presencial
+                                </label>
+                                <label class="tipo-encontro-opcao">
+                                    <input type="radio" name="tipo-encontro" value="hibrido"> Híbrido
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="campos-local">
+                            <div class="form-group">
+                                <label for="local-encontro">Local do encontro*</label>
+                                <input type="text" id="local-encontro" placeholder="Ex: Biblioteca Municipal, Sala 3">
+                            </div>
+                        </div>
+                        
+                        <div class="campos-link">
+                            <div class="form-group">
+                                <label for="link-encontro">Link do encontro*</label>
+                                <input type="url" id="link-encontro" placeholder="Ex: https://meet.google.com/...">
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="botao-moderno">
+                                <i class="fa fa-save"></i> Salvar
+                            </button>
+                            <button type="button" class="botao-cancelar" onclick="fecharModalEncontro()">
+                                <i class="fa fa-times"></i> Cancelar
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -177,8 +275,8 @@
     </script>
     <script src="/js/clubePrincipal.js"></script>
     <script src="/js/atualizacoes.js"></script>
+    <script src="/js/encontros.js"></script>
     <script src="/js/curtidas.js"></script>
     <%- include('partials/imports') %>
 </body>
 </html>
-

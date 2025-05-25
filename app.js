@@ -11,7 +11,8 @@ const Clube = require('./models/Clube');
 const Leituras = require('./models/Leituras');
 const Atualizacoes = require('./models/Atualizacoes');
 const Curtidas = require('./models/Curtidas');
-const MySQLStore = require('express-mysql-session')(session);;
+const MySQLStore = require('express-mysql-session')(session);
+const Encontros = require('./models/Encontros');
 
 
 const app = express();
@@ -52,7 +53,7 @@ app.use(session({
   cookie: { 
     secure: false,
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000, // 24 horas
+    maxAge: 24 * 60 * 60 * 1000, 
     sameSite: 'lax'
   }
 }));
@@ -61,7 +62,6 @@ app.use((req, res, next) => {
   console.log('ID do usuário na sessão:', req.session.userId);
   next();
 });
-// Rota página inicial
 app.get('/', (req, res) => {
   res.render('index', { title: 'Loom - Home' });
 });
@@ -1098,7 +1098,6 @@ app.get('/api/clube/:id/atualizacoes/usuario/:userId/leitura/:leituraId', verifi
     res.status(500).json({ erro: 'Erro ao buscar última atualização' });
   }
 });
-//curtir/recurtir atualizaxcao
 app.post('/api/clube/:id/atualizacoes/:atualizacaoId/curtir', verificarAutenticacao, async (req, res) => {
   try {
     const clubeId = req.params.id;
@@ -1141,6 +1140,371 @@ app.get('/api/clube/:id/atualizacoes/:atualizacaoId/curtidas', verificarAutentic
   } catch (error) {
     console.error('Erro ao verificar curtidas:', error);
     res.status(500).json({ erro: 'Erro ao verificar curtidas' });
+  }
+});
+app.get('/api/clube/:id/encontros', verificarAutenticacao, async (req, res) => {
+    try {
+        const clubeId = req.params.id;
+        const userId = req.session.userId;
+        
+        const [participacoes] = await pool.query(
+            'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
+            [userId, clubeId]
+        );
+        
+        if (participacoes.length === 0) {
+            return res.status(403).json({ erro: 'Você não é membro deste clube' });
+        }
+        
+        const [clubeRows] = await pool.query(
+            'SELECT id_criador FROM clubes WHERE id = ?',
+            [clubeId]
+        );
+        
+        if (clubeRows.length === 0) {
+            return res.status(404).json({ erro: 'Clube não encontrado' });
+        }
+        
+        const isCriador = clubeRows[0].id_criador === parseInt(userId);
+        
+        const encontros = await Encontros.listarPorClube(clubeId);
+        
+        const [participacoesEncontros] = await pool.query(
+            'SELECT * FROM participantes_encontro WHERE id_usuario = ? AND id_encontro IN (?)',
+            [userId, encontros.length > 0 ? encontros.map(e => e.id) : [0]]
+        );
+        
+        res.json({
+            encontros,
+            isCriador,
+            participacoes: participacoesEncontros
+        });
+    } catch (error) {
+        console.error('Erro ao listar encontros:', error);
+        res.status(500).json({ erro: 'Erro ao listar encontros do clube' });
+    }
+});
+app.post('/api/clube/:id/encontros', verificarAutenticacao, async (req, res) => {
+    try {
+        const clubeId = req.params.id;
+        const userId = req.session.userId;
+        
+        const [clubeRows] = await pool.query(
+            'SELECT id_criador, modelo FROM clubes WHERE id = ?',
+            [clubeId]
+        );
+        
+        if (clubeRows.length === 0) {
+            return res.status(404).json({ erro: 'Clube não encontrado' });
+        }
+        
+        if (clubeRows[0].id_criador !== parseInt(userId)) {
+            return res.status(403).json({ erro: 'Apenas o criador do clube pode agendar encontros' });
+        }
+        
+        const modeloClube = clubeRows[0].modelo;
+        const { tipo } = req.body;
+        
+        if ((modeloClube === 'online' && tipo === 'presencial') || 
+            (modeloClube === 'presencial' && tipo === 'online')) {
+            return res.status(400).json({ 
+                erro: `O tipo de encontro deve ser compatível com o modelo do clube (${modeloClube})` 
+            });
+        }
+        
+        const { 
+            titulo, descricao, dataEncontro, horaInicio, horaFim, local, link, tipo: tipoEncontro 
+        } = req.body;
+        
+        if (!titulo || !dataEncontro || !horaInicio || !tipoEncontro) {
+            return res.status(400).json({ erro: 'Campos obrigatórios não preenchidos' });
+        }
+        
+        if ((tipoEncontro === 'presencial' || tipoEncontro === 'hibrido') && !local) {
+            return res.status(400).json({ erro: 'Local é obrigatório para encontros presenciais ou híbridos' });
+        }
+        
+        if ((tipoEncontro === 'online' || tipoEncontro === 'hibrido') && !link) {
+            return res.status(400).json({ erro: 'Link é obrigatório para encontros online ou híbridos' });
+        }
+          try {
+            const novoEncontro = await Encontros.criar(
+                clubeId,
+                titulo,
+                descricao || '',
+                dataEncontro,
+                horaInicio,
+                horaFim || null,
+                local || null,
+                link || null,
+                tipoEncontro
+            );
+        await Encontros.confirmarParticipacao(novoEncontro.id, userId, 'confirmado');        
+         res.status(201).json({
+                mensagem: 'Encontro agendado com sucesso',
+                encontro: novoEncontro
+            });
+        } catch (createError) {
+            console.error('Erro detalhado ao criar encontro:', createError);
+            return res.status(500).json({ 
+                erro: 'Erro ao agendar encontro', 
+                detalhes: createError.message 
+            });
+        }
+    } catch (error) {
+        console.error('Erro ao processar requisição de encontro:', error);
+        res.status(500).json({ 
+            erro: 'Erro ao agendar encontro',
+            detalhes: error.message
+        });
+    }
+});
+
+app.get('/api/clube/:id/encontros/:encontroId', verificarAutenticacao, async (req, res) => {
+    try {
+        const clubeId = req.params.id;
+        const encontroId = req.params.encontroId;
+        const userId = req.session.userId;
+        
+        const [participacoes] = await pool.query(
+            'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
+            [userId, clubeId]
+        );
+        
+        if (participacoes.length === 0) {
+            return res.status(403).json({ erro: 'Você não é membro deste clube' });
+        }
+        
+        const encontro = await Encontros.buscarPorId(encontroId);
+        
+        if (!encontro || encontro.id_clube !== parseInt(clubeId)) {
+            return res.status(404).json({ erro: 'Encontro não encontrado' });
+        }
+        
+        const participantes = await Encontros.listarParticipantes(encontroId);
+        encontro.participantes = participantes;
+        
+        res.json(encontro);
+    } catch (error) {
+        console.error('Erro ao buscar encontro:', error);
+        res.status(500).json({ erro: 'Erro ao buscar detalhes do encontro' });
+    }
+});
+app.put('/api/clube/:id/encontros/:encontroId', verificarAutenticacao, async (req, res) => {
+    try {
+        const clubeId = req.params.id;
+        const encontroId = req.params.encontroId;
+        const userId = req.session.userId;
+        
+        const [clubeRows] = await pool.query(
+            'SELECT id_criador, modelo FROM clubes WHERE id = ?',
+            [clubeId]
+        );
+        
+        if (clubeRows.length === 0) {
+            return res.status(404).json({ erro: 'Clube não encontrado' });
+        }
+        
+        if (clubeRows[0].id_criador !== parseInt(userId)) {
+            return res.status(403).json({ erro: 'Apenas o criador do clube pode editar encontros' });
+        }
+        
+        const encontro = await Encontros.buscarPorId(encontroId);
+        
+        if (!encontro || encontro.id_clube !== parseInt(clubeId)) {
+            return res.status(404).json({ erro: 'Encontro não encontrado' });
+        }
+        
+        const modeloClube = clubeRows[0].modelo;
+        const { tipo } = req.body;
+        
+        if ((modeloClube === 'online' && tipo === 'presencial') || 
+            (modeloClube === 'presencial' && tipo === 'online')) {
+            return res.status(400).json({ 
+                erro: `O tipo de encontro deve ser compatível com o modelo do clube (${modeloClube})` 
+            });
+        }
+        
+        const { 
+            titulo, descricao, dataEncontro, horaInicio, horaFim, local, link, tipo: tipoEncontro 
+        } = req.body;
+        
+        if (!titulo || !dataEncontro || !horaInicio || !tipoEncontro) {
+            return res.status(400).json({ erro: 'Campos obrigatórios não preenchidos' });
+        }
+        
+        if ((tipoEncontro === 'presencial' || tipoEncontro === 'hibrido') && !local) {
+            return res.status(400).json({ erro: 'Local é obrigatório para encontros presenciais ou híbridos' });
+        }
+        
+        if ((tipoEncontro === 'online' || tipoEncontro === 'hibrido') && !link) {
+            return res.status(400).json({ erro: 'Link é obrigatório para encontros online ou híbridos' });
+        }
+        
+        const encontroAtualizado = await Encontros.atualizar(
+            encontroId,
+            titulo,
+            descricao || '',
+            dataEncontro,
+            horaInicio,
+            horaFim || null,
+            local || null,
+            link || null,
+            tipoEncontro
+        );
+        
+        res.json({
+            mensagem: 'Encontro atualizado com sucesso',
+            encontro: encontroAtualizado
+        });
+    } catch (error) {
+        console.error('Erro ao atualizar encontro:', error);
+        res.status(500).json({ erro: 'Erro ao atualizar encontro' });
+    }
+});
+app.delete('/api/clube/:id/encontros/:encontroId', verificarAutenticacao, async (req, res) => {
+    try {
+        const clubeId = req.params.id;
+        const encontroId = req.params.encontroId;
+        const userId = req.session.userId;
+        
+        const [clubeRows] = await pool.query(
+            'SELECT id_criador FROM clubes WHERE id = ?',
+            [clubeId]
+        );
+        
+        if (clubeRows.length === 0) {
+            return res.status(404).json({ erro: 'Clube não encontrado' });
+        }
+        
+        if (clubeRows[0].id_criador !== parseInt(userId)) {
+            return res.status(403).json({ erro: 'Apenas o criador do clube pode excluir encontros' });
+        }
+        
+        const encontro = await Encontros.buscarPorId(encontroId);
+        
+        if (!encontro || encontro.id_clube !== parseInt(clubeId)) {
+            return res.status(404).json({ erro: 'Encontro não encontrado' });
+        }
+        
+        await Encontros.excluir(encontroId);
+        
+        res.json({ mensagem: 'Encontro excluído com sucesso' });
+    } catch (error) {
+        console.error('Erro ao excluir encontro:', error);
+        res.status(500).json({ erro: 'Erro ao excluir encontro' });
+    }
+});
+app.post('/api/clube/:id/encontros/:encontroId/participacao', verificarAutenticacao, async (req, res) => {
+    try {
+        const clubeId = req.params.id;
+        const encontroId = req.params.encontroId;
+        const userId = req.session.userId;
+        const { status } = req.body;
+        
+        if (!status || !['confirmado', 'talvez', 'recusado'].includes(status)) {
+            return res.status(400).json({ erro: 'Status de participação inválido' });
+        }
+        
+        const [participacoes] = await pool.query(
+            'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
+            [userId, clubeId]
+        );
+        
+        if (participacoes.length === 0) {
+            return res.status(403).json({ erro: 'Você não é membro deste clube' });
+        }
+        
+        const encontro = await Encontros.buscarPorId(encontroId);
+        
+        if (!encontro || encontro.id_clube !== parseInt(clubeId)) {
+            return res.status(404).json({ erro: 'Encontro não encontrado' });
+        }
+        
+        const dataEncontro = new Date(encontro.data_encontro);
+        dataEncontro.setHours(0, 0, 0, 0);
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        
+        if (dataEncontro < hoje) {
+            return res.status(400).json({ erro: 'Não é possível confirmar participação em encontros passados' });
+        }
+        
+        await Encontros.confirmarParticipacao(encontroId, userId, status);
+        
+        res.json({ mensagem: 'Participação atualizada com sucesso' });
+    } catch (error) {
+        console.error('Erro ao confirmar participação:', error);
+        res.status(500).json({ erro: 'Erro ao confirmar participação no encontro' });
+    }
+});
+app.get('/api/clube/:id/encontros/:encontroId/participantes', verificarAutenticacao, async (req, res) => {
+    try {
+        const clubeId = req.params.id;
+        const encontroId = req.params.encontroId;
+        const userId = req.session.userId;
+        
+        const [participacoes] = await pool.query(
+            'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
+            [userId, clubeId]
+        );
+        
+        if (participacoes.length === 0) {
+            return res.status(403).json({ erro: 'Você não é membro deste clube' });
+        }
+        
+        const encontro = await Encontros.buscarPorId(encontroId);
+        
+        if (!encontro || encontro.id_clube !== parseInt(clubeId)) {
+            return res.status(404).json({ erro: 'Encontro não encontrado' });
+        }
+        
+        const participantes = await Encontros.listarParticipantes(encontroId);
+        
+        res.json(participantes);
+    } catch (error) {
+        console.error('Erro ao listar participantes:', error);
+        res.status(500).json({ erro: 'Erro ao listar participantes do encontro' });
+    }
+});
+app.get('/api/debug/encontros', verificarAutenticacao, async (req, res) => {
+  try {
+    const Encontros = require('./models/Encontros');
+    const resultado = await Encontros.debug();
+    res.json(resultado);
+  } catch (error) {
+    console.error('Erro na rota de debug:', error);
+    res.status(500).json({ erro: 'Erro na depuração', detalhes: error.message });
+  }
+});
+app.get('/api/debug/encontros/criar', verificarAutenticacao, async (req, res) => {
+  try {
+    const Encontros = require('./models/Encontros');
+    const hoje = new Date().toISOString().split('T')[0];
+    
+    const encontroTeste = await Encontros.criar(
+      req.query.clubeId || 1,
+      'Encontro de Teste API',
+      'Descrição de teste via API',
+      hoje,
+      '15:00',
+      '17:00',
+      'Local de teste',
+      'https://meet.google.com/test-api',
+      'hibrido'
+    );
+    
+    res.json({
+      mensagem: 'Encontro de teste criado com sucesso',
+      encontro: encontroTeste
+    });
+  } catch (error) {
+    console.error('Erro ao criar encontro de teste:', error);
+    res.status(500).json({ 
+      erro: 'Erro ao criar encontro de teste', 
+      detalhes: error.message,
+      stack: error.stack
+    });
   }
 });
 app.listen(PORT, () => {

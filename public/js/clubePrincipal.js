@@ -144,7 +144,6 @@ async function carregarMembrosClube(clubeId) {
             '<p class="erro-carregamento">Erro ao carregar membros do clube.</p>';
     }
 }
-
 async function verificarPermissoesCriador(clubeId) {
     try {
         const response = await fetch(`/api/clube/${clubeId}/permissoes`);
@@ -178,17 +177,44 @@ async function verificarPermissoesCriador(clubeId) {
         console.error('Erro ao verificar permissões:', error);
     }
 }
-
 function mudarSecaoClube(secao) {
-    document.querySelectorAll('.clube-secao').forEach(el => el.style.display = 'none');
-    document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('menu-item-ativo'));
+    console.log('Mudando para seção:', secao);
     
-    if (document.getElementById(`secao-${secao}`)) 
-        document.getElementById(`secao-${secao}`).style.display = 'block';
-    if (document.querySelector(`.menu-item[data-secao="${secao}"]`))
-        document.querySelector(`.menu-item[data-secao="${secao}"]`).classList.add('menu-item-ativo');
+    // Esconder todas as seções
+    document.querySelectorAll('.clube-secao').forEach(el => {
+        el.style.display = 'none';
+    });
+    
+    // Remover classe ativa de todos os itens de menu
+    document.querySelectorAll('.menu-item').forEach(el => {
+        el.classList.remove('menu-item-ativo');
+    });
+    
+    // Mostrar a seção selecionada
+    const secaoElement = document.getElementById(`secao-${secao}`);
+    if (secaoElement) {
+        secaoElement.style.display = 'block';
+        console.log(`Seção ${secao} exibida`);
+    } else {
+        console.error(`Elemento secao-${secao} não encontrado`);
+    }
+    
+    // Adicionar classe ativa ao item de menu
+    const menuItem = document.querySelector(`.menu-item[data-secao="${secao}"]`);
+    if (menuItem) {
+        menuItem.classList.add('menu-item-ativo');
+    }
+    if (secao === 'encontros') {
+        carregarEncontros(clubeId);
+    } else if (secao === 'livros-anteriores') {
+        carregarLeiturasClube(clubeId);
+    } else if (secao === 'discussao') {
+        carregarAtualizacoes(clubeId);
+    } else if (secao === 'membros') {
+        carregarMembrosClube(clubeId);
+    }
+    window.location.hash = secao;
 }
-
 function voltarParaTelaAnterior() { window.history.back(); }
 
 function abrirModalSelecaoLeitura() {
@@ -513,4 +539,8 @@ async function excluirAtualizacao(idAtualizacao) {
         console.error('Erro:', error);
         alert(`Erro ao excluir atualização: ${error.message}`);
     }
+}
+function fecharModalEncontro() {
+    document.getElementById('modal-encontro').style.display = 'none';
+    document.getElementById('overlay').style.display = 'none';
 }

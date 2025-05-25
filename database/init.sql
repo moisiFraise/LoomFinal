@@ -105,3 +105,27 @@ CREATE TABLE IF NOT EXISTS curtidas (
   FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE CASCADE,
   UNIQUE KEY unique_curtida (id_atualizacao, id_usuario)
 );
+CREATE TABLE IF NOT EXISTS encontros (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  id_clube INT NOT NULL,
+  titulo VARCHAR(255) NOT NULL,
+  descricao TEXT,
+  data_encontro DATE NOT NULL,
+  hora_inicio TIME NOT NULL,
+  hora_fim TIME,
+  local VARCHAR(255),
+  link VARCHAR(255),
+  tipo ENUM('presencial', 'online', 'hibrido') NOT NULL,
+  data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (id_clube) REFERENCES clubes(id) ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS participantes_encontro (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  id_encontro INT NOT NULL,
+  id_usuario INT NOT NULL,
+  status ENUM('confirmado', 'talvez', 'recusado') DEFAULT 'confirmado',
+  data_resposta DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (id_encontro) REFERENCES encontros(id) ON DELETE CASCADE,
+  FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_participante_encontro (id_encontro, id_usuario)
+);
