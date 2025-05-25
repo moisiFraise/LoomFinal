@@ -55,34 +55,134 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
-    if (uploadFoto) {
-        uploadFoto.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const formData = new FormData();
-                formData.append('fotoPerfil', file);
-                
-                fetch('/api/perfil/foto', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Erro ao enviar foto');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    fotoPerfil.src = `/uploads/perfil/${data.fotoNome}?t=${new Date().getTime()}`;
-                    mostrarNotificacao('Foto de perfil atualizada com sucesso!', 'sucesso');
-                })
-                .catch(error => {
-                    console.error('Erro:', error);
-                    mostrarNotificacao('Erro ao atualizar foto de perfil.', 'erro');
-                });
+if (uploadFoto) {
+    uploadFoto.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+            const maxSize = 5 * 1024 * 1024; // 5MB
+            
+            if (!validTypes.includes(file.type)) {
+                mostrarNotificacao('Apenas imagens JPEG, PNG e GIF são permitidas.', 'erro');
+                return;
             }
-        });
-    }
+            
+            if (file.size > maxSize) {
+                mostrarNotificacao('O tamanho máximo da imagem é 5MB.', 'erro');
+                return;
+            }
+            
+            const loadingIndicator = document.createElement('div');
+            loadingIndicator.className = 'loading-indicator';
+            loadingIndicator.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            document.querySelector('.foto-perfil-container').appendChild(loadingIndicator);
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', 'loom_perfil');
+            
+            fetch(`https://api.cloudinary.com/v1_1/dhz1cbipj/image/upload`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error.message);
+                }
+                
+                return fetch('/api/perfil/atualizar-foto', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ fotoUrl: data.secure_url })
+                });
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.querySelector('.loading-indicator')?.remove();
+                
+                fotoPerfil.src = data.fotoNome;
+                mostrarNotificacao('Foto de perfil atualizada com sucesso!', 'sucesso');
+            })
+            .catch(error => {
+                document.querySelector('.loading-indicator')?.remove();
+                
+                console.error('Erro completo:', error);
+                mostrarNotificacao(error.message || 'Erro ao atualizar foto de perfil.', 'erro');
+            });
+        }
+    });
+}
+
+function mostrarNotificacao(mensagem, tipo) {
+    const notificacao = document.createElement('div');
+    notificacao.className = `notificacao ${tipo}`;
+    notificacao.textContent = mensagem;
+    
+    document.querySelectorAll('.notificacao').forEach(n => n.remove());
+    
+    document.body.appendChild(notificacao);
+    
+    setTimeout(() => {
+        notificacao.classList.add('mostrar');
+    }, 10);
+    
+    setTimeout(() => {
+        notificacao.classList.remove('mostrar');
+        setTimeout(() => {
+            notificacao.remove();
+        }, 300);
+    }, 3000);
+}
+
+document.head.insertAdjacentHTML('beforeend', `
+<style>
+.loading-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+}
+
+.notificacao {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 4px;
+    color: white;
+    font-weight: bold;
+    z-index: 1000;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+.notificacao.mostrar {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.notificacao.sucesso {
+    background-color: #2ecc71;
+}
+
+.notificacao.erro {
+    background-color: #e74c3c;
+}
+</style>
+`);
+
     if (formEditarPerfil) {
         formEditarPerfil.addEventListener('submit', function(e) {
             e.preventDefault();

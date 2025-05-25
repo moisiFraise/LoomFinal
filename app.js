@@ -1,25 +1,52 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
-const Usuario = require('./models/Usuario');
 require('dotenv').config();
 const session = require('express-session');
-const Categorias = require('./models/Categorias');
-const Explorar = require('./models/Explorar');
 const pool = require('./config/database');
-const Clube = require('./models/Clube');
-const Leituras = require('./models/Leituras');
-const Atualizacoes = require('./models/Atualizacoes');
-const Curtidas = require('./models/Curtidas');
 const MySQLStore = require('express-mysql-session')(session);
-const Encontros = require('./models/Encontros');
 const fs = require('fs');
 const multer = require('multer');
+const streamifier = require('streamifier');
+const fileUpload = require('express-fileupload');
+const cloudinary = require('cloudinary').v2;
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Tipo de arquivo não suportado'), false);
+    }
+  }
+});
+
+app.use(fileUpload({
+  useTempFiles: false,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  abortOnLimit: true,
+  createParentPath: true
+}));
 
 const uploadDir = path.join(__dirname, 'public', 'uploads', 'perfil');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
+
 const storage = multer.diskStorage({
   destination: function(req, file, cb) {
     cb(null, uploadDir);
@@ -30,20 +57,15 @@ const storage = multer.diskStorage({
     cb(null, 'user-' + req.session.userId + '-' + uniqueSuffix + ext);
   }
 });
-const upload = multer({ 
-  storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter: function(req, file, cb) {
-    if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
-      return cb(new Error('Apenas imagens são permitidas!'), false);
-    }
-    cb(null, true);
-  }
-});
 
-
-const app = express();
-const PORT = process.env.PORT || 3000;
+const Usuario = require('./models/Usuario');
+const Categorias = require('./models/Categorias');
+const Explorar = require('./models/Explorar');
+const Clube = require('./models/Clube');
+const Leituras = require('./models/Leituras');
+const Atualizacoes = require('./models/Atualizacoes');
+const Curtidas = require('./models/Curtidas');
+const Encontros = require('./models/Encontros');
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -71,6 +93,7 @@ const sessionStore = new MySQLStore({
     }
   }
 });
+
 app.use(session({
   key: 'loom_session',
   secret: process.env.SESSION_SECRET,
@@ -84,11 +107,42 @@ app.use(session({
     sameSite: 'lax'
   }
 }));
+
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
+
+const requiredEnvVars = [
+  'DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME', 
+  'SESSION_SECRET', 'CLOUDINARY_CLOUD_NAME', 
+  'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET'
+];
+
+const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
+if (missingEnvVars.length > 0) {
+  console.error('Variáveis de ambiente ausentes:', missingEnvVars.join(', '));
+}
+
 app.use((req, res, next) => {
   console.log('Sessão atual:', req.session);
   console.log('ID do usuário na sessão:', req.session.userId);
   next();
 });
+
+function verificarAutenticacao(req, res, next) {
+  console.log('Verificando autenticação, sessão:', req.session);
+  console.log('userId na sessão:', req.session.userId);
+  
+  if (!req.session.userId) {
+    console.log('Usuário não autenticado, redirecionando para /autenticacao');
+    return res.redirect('/autenticacao');
+  }
+  
+  console.log('Usuário autenticado, continuando...');
+  next();
+}
+
 app.get('/', (req, res) => {
   res.render('index', { title: 'Loom - Home' });
 });
@@ -96,6 +150,7 @@ app.get('/', (req, res) => {
 app.get('/autenticacao', (req, res) => {
   res.render('autenticacao', { titulo: 'Loom - Login e Cadastro' });
 });
+
 app.get('/api/session-check', (req, res) => {
   res.json({
     sessionExists: !!req.session,
@@ -223,9 +278,7 @@ app.get('/meuPerfil', verificarAutenticacao, async (req, res) => {
     if (!usuario) {
       return res.redirect('/autenticacao');
     }
-    
-    // Get user's clubs
-    const [clubesCriados] = await pool.query(
+      const [clubesCriados] = await pool.query(
       'SELECT id FROM clubes WHERE id_criador = ?',
       [req.session.userId]
     );
@@ -239,9 +292,7 @@ app.get('/meuPerfil', verificarAutenticacao, async (req, res) => {
       ...clubesCriados.map(c => c.id),
       ...clubesParticipando.map(c => c.id_clube)
     ];
-    
-    // Get user's publications
-    const [publicacoes] = await pool.query(`
+      const [publicacoes] = await pool.query(`
       SELECT a.*, c.nome as nome_clube, c.visibilidade, 
              (SELECT COUNT(*) FROM curtidas WHERE id_atualizacao = a.id) as curtidas
       FROM atualizacoes a
@@ -263,8 +314,6 @@ app.get('/meuPerfil', verificarAutenticacao, async (req, res) => {
     res.redirect('/dashboard');
   }
 });
-
-// API endpoint to update profile
 app.put('/api/perfil', verificarAutenticacao, async (req, res) => {
   try {
     const { nome, email, biografia, senha } = req.body;
@@ -273,7 +322,6 @@ app.put('/api/perfil', verificarAutenticacao, async (req, res) => {
       return res.status(400).json({ erro: 'Nome e email são obrigatórios' });
     }
     
-    // Check if email is already in use by another user
     if (email !== req.session.email) {
       const [usuariosExistentes] = await pool.query(
         'SELECT id FROM usuarios WHERE email = ? AND id != ?',
@@ -284,21 +332,15 @@ app.put('/api/perfil', verificarAutenticacao, async (req, res) => {
         return res.status(400).json({ erro: 'Este email já está em uso por outro usuário' });
       }
     }
-    
-    // Update user data
-    const dadosAtualizacao = {
+      const dadosAtualizacao = {
       nome,
       email,
       biografia: biografia || null
     };
-    
-    // If password is provided, hash it
-    if (senha) {
+      if (senha) {
       const bcrypt = require('bcrypt');
       dadosAtualizacao.senha = await bcrypt.hash(senha, 10);
     }
-    
-    // Update in database
     const campos = Object.keys(dadosAtualizacao).map(campo => `${campo} = ?`).join(', ');
     const valores = Object.values(dadosAtualizacao);
     valores.push(req.session.userId);
@@ -307,9 +349,7 @@ app.put('/api/perfil', verificarAutenticacao, async (req, res) => {
       `UPDATE usuarios SET ${campos} WHERE id = ?`,
       valores
     );
-    
-    // Get updated user data
-    const [usuarioAtualizado] = await pool.query(
+        const [usuarioAtualizado] = await pool.query(
       'SELECT id, nome, email, biografia, foto_perfil FROM usuarios WHERE id = ?',
       [req.session.userId]
     );
@@ -320,28 +360,33 @@ app.put('/api/perfil', verificarAutenticacao, async (req, res) => {
     res.status(500).json({ erro: 'Erro ao atualizar perfil' });
   }
 });
-
-// API endpoint to upload profile photo
-app.post('/api/perfil/foto', verificarAutenticacao, upload.single('fotoPerfil'), async (req, res) => {
+app.post('/api/perfil/atualizar-foto', verificarAutenticacao, async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ erro: 'Nenhuma imagem enviada' });
+    console.log('Iniciando atualização de foto de perfil');
+    const { fotoUrl } = req.body;
+    
+    if (!fotoUrl) {
+      console.log('URL da foto não fornecida');
+      return res.status(400).json({ erro: 'URL da foto é obrigatória' });
     }
     
-    const fotoNome = req.file.filename;
-    
+    console.log('Atualizando foto no banco de dados para usuário:', req.session.userId);
     await pool.query(
       'UPDATE usuarios SET foto_perfil = ? WHERE id = ?',
-      [fotoNome, req.session.userId]
+      [fotoUrl, req.session.userId]
     );
     
-    res.json({ 
+    console.log('Foto atualizada com sucesso');
+    res.status(200).json({ 
       mensagem: 'Foto de perfil atualizada com sucesso',
-      fotoNome: fotoNome
+      fotoNome: fotoUrl
     });
   } catch (error) {
-    console.error('Erro ao atualizar foto de perfil:', error);
-    res.status(500).json({ erro: 'Erro ao atualizar foto de perfil' });
+    console.error('Erro detalhado ao atualizar foto:', error);
+    res.status(500).json({ 
+      erro: 'Erro ao atualizar foto de perfil',
+      detalhes: process.env.NODE_ENV === 'production' ? undefined : error.message
+    });
   }
 });
 
@@ -1713,6 +1758,20 @@ app.get('/api/debug/encontros/criar', verificarAutenticacao, async (req, res) =>
     });
   }
 });
+
+app.use((err, req, res, next) => {
+  console.error('Erro global:', err);
+  res.status(500).json({ 
+    erro: 'Erro interno do servidor', 
+    mensagem: process.env.NODE_ENV === 'production' ? 'Ocorreu um erro ao processar sua solicitação.' : err.message,
+    stack: process.env.NODE_ENV === 'production' ? undefined : err.stack
+  });
+});
+
+app.use((req, res) => {
+  res.status(404).json({ erro: 'Rota não encontrada' });
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });

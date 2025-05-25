@@ -138,6 +138,24 @@ static async atualizar(id, dados) { //crUd
       throw error;
     }
   }
+static async atualizarFotoPerfil(userId, fotoUrl) {
+  try {
+    const [result] = await pool.query(
+      'UPDATE usuarios SET foto_perfil = ? WHERE id = ?',
+      [fotoUrl, userId]
+    );
+    
+    if (result.affectedRows === 0) {
+      throw new Error('Usuário não encontrado');
+    }
+    
+    return { id: userId, foto_perfil: fotoUrl };
+  } catch (error) {
+    console.error('Erro ao atualizar foto de perfil:', error);
+    throw error;
+  }
+}
+
 }
 
 module.exports = Usuario;
