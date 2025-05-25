@@ -13,6 +13,33 @@ const Atualizacoes = require('./models/Atualizacoes');
 const Curtidas = require('./models/Curtidas');
 const MySQLStore = require('express-mysql-session')(session);
 const Encontros = require('./models/Encontros');
+const fs = require('fs');
+const multer = require('multer');
+
+const uploadDir = path.join(__dirname, 'public', 'uploads', 'perfil');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+const storage = multer.diskStorage({
+  destination: function(req, file, cb) {
+    cb(null, uploadDir);
+  },
+  filename: function(req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, 'user-' + req.session.userId + '-' + uniqueSuffix + ext);
+  }
+});
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: function(req, file, cb) {
+    if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
+      return cb(new Error('Apenas imagens são permitidas!'), false);
+    }
+    cb(null, true);
+  }
+});
 
 
 const app = express();
@@ -189,8 +216,181 @@ app.get('/dashboard', verificarAutenticacao, async (req, res) => {
     });
   }
 });
+app.get('/meuPerfil', verificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    
+    if (!usuario) {
+      return res.redirect('/autenticacao');
+    }
+    
+    // Get user's clubs
+    const [clubesCriados] = await pool.query(
+      'SELECT id FROM clubes WHERE id_criador = ?',
+      [req.session.userId]
+    );
+    
+    const [clubesParticipando] = await pool.query(
+      'SELECT id_clube FROM participacoes WHERE id_usuario = ?',
+      [req.session.userId]
+    );
+    
+    const clubesIds = [
+      ...clubesCriados.map(c => c.id),
+      ...clubesParticipando.map(c => c.id_clube)
+    ];
+    
+    // Get user's publications
+    const [publicacoes] = await pool.query(`
+      SELECT a.*, c.nome as nome_clube, c.visibilidade, 
+             (SELECT COUNT(*) FROM curtidas WHERE id_atualizacao = a.id) as curtidas
+      FROM atualizacoes a
+      JOIN clubes c ON a.id_clube = c.id
+      WHERE a.id_usuario = ?
+      ORDER BY a.data_postagem DESC
+    `, [req.session.userId]);
+    
+    res.render('meuPerfil', { 
+      titulo: 'Loom - Meu Perfil',
+      userId: req.session.userId,
+      userType: usuario.tipo,
+      usuario: usuario,
+      clubes: clubesIds,
+      publicacoes: publicacoes
+    });
+  } catch (error) {
+    console.error('Erro ao carregar perfil:', error);
+    res.redirect('/dashboard');
+  }
+});
 
+// API endpoint to update profile
+app.put('/api/perfil', verificarAutenticacao, async (req, res) => {
+  try {
+    const { nome, email, biografia, senha } = req.body;
+    
+    if (!nome || !email) {
+      return res.status(400).json({ erro: 'Nome e email são obrigatórios' });
+    }
+    
+    // Check if email is already in use by another user
+    if (email !== req.session.email) {
+      const [usuariosExistentes] = await pool.query(
+        'SELECT id FROM usuarios WHERE email = ? AND id != ?',
+        [email, req.session.userId]
+      );
+      
+      if (usuariosExistentes.length > 0) {
+        return res.status(400).json({ erro: 'Este email já está em uso por outro usuário' });
+      }
+    }
+    
+    // Update user data
+    const dadosAtualizacao = {
+      nome,
+      email,
+      biografia: biografia || null
+    };
+    
+    // If password is provided, hash it
+    if (senha) {
+      const bcrypt = require('bcrypt');
+      dadosAtualizacao.senha = await bcrypt.hash(senha, 10);
+    }
+    
+    // Update in database
+    const campos = Object.keys(dadosAtualizacao).map(campo => `${campo} = ?`).join(', ');
+    const valores = Object.values(dadosAtualizacao);
+    valores.push(req.session.userId);
+    
+    await pool.query(
+      `UPDATE usuarios SET ${campos} WHERE id = ?`,
+      valores
+    );
+    
+    // Get updated user data
+    const [usuarioAtualizado] = await pool.query(
+      'SELECT id, nome, email, biografia, foto_perfil FROM usuarios WHERE id = ?',
+      [req.session.userId]
+    );
+    
+    res.json(usuarioAtualizado[0]);
+  } catch (error) {
+    console.error('Erro ao atualizar perfil:', error);
+    res.status(500).json({ erro: 'Erro ao atualizar perfil' });
+  }
+});
 
+// API endpoint to upload profile photo
+app.post('/api/perfil/foto', verificarAutenticacao, upload.single('fotoPerfil'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ erro: 'Nenhuma imagem enviada' });
+    }
+    
+    const fotoNome = req.file.filename;
+    
+    await pool.query(
+      'UPDATE usuarios SET foto_perfil = ? WHERE id = ?',
+      [fotoNome, req.session.userId]
+    );
+    
+    res.json({ 
+      mensagem: 'Foto de perfil atualizada com sucesso',
+      fotoNome: fotoNome
+    });
+  } catch (error) {
+    console.error('Erro ao atualizar foto de perfil:', error);
+    res.status(500).json({ erro: 'Erro ao atualizar foto de perfil' });
+  }
+});
+
+app.delete('/api/perfil', verificarAutenticacao, async (req, res) => {
+  try {
+    const [clubesCriados] = await pool.query(
+      'SELECT id FROM clubes WHERE id_criador = ?',
+      [req.session.userId]
+    );
+    
+    if (clubesCriados.length > 0) {
+      return res.status(400).json({ 
+        erro: 'Você não pode excluir sua conta porque é criador de um ou mais clubes. Transfira a propriedade ou exclua os clubes primeiro.' 
+      });
+    }
+    
+    await pool.query(
+      'DELETE FROM participacoes WHERE id_usuario = ?',
+      [req.session.userId]
+    );
+    
+    await pool.query(
+      'DELETE FROM curtidas WHERE id_usuario = ?',
+      [req.session.userId]
+    );
+    
+    await pool.query(
+      'DELETE FROM participantes_encontro WHERE id_usuario = ?',
+      [req.session.userId]
+    );
+    
+    await pool.query(
+      'DELETE FROM atualizacoes WHERE id_usuario = ?',
+      [req.session.userId]
+    );
+    
+    await pool.query(
+      'DELETE FROM usuarios WHERE id = ?',
+      [req.session.userId]
+    );
+    
+    req.session.destroy();
+    
+    res.json({ mensagem: 'Conta excluída com sucesso' });
+  } catch (error) {
+    console.error('Erro ao excluir conta:', error);
+    res.status(500).json({ erro: 'Erro ao excluir conta' });
+  }
+});
 app.get('/api/clubes/:userId', async (req, res) => {
   try {
     const userId = req.params.userId;

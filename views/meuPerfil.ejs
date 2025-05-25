@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loom - Meu Perfil</title>
+    <link rel="stylesheet" href="/css/meuPerfil.css">
+    <link rel="stylesheet" href="/css/menu.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+<body>
+    <%- include('partials/menu') %>
+    <%- include('partials/imports') %>
+    
+    <div class="container">
+        <div class="perfil-header">
+            <div class="foto-perfil-container">
+                <img src="/uploads/perfil/<%= usuario.foto_perfil || 'default-profile.jpg' %>" alt="Foto de perfil" id="foto-perfil">
+                <div class="editar-foto">
+                    <label for="upload-foto">
+                        <i class="fas fa-camera"></i>
+                    </label>
+                    <input type="file" id="upload-foto" accept="image/*" style="display: none;">
+                </div>
+            </div>
+            <div class="info-perfil">
+                <h1 id="nome-usuario"><%= usuario.nome %></h1>
+                <p id="email-usuario"><%= usuario.email %></p>
+                <button id="btn-editar-perfil" class="btn-editar">Editar Perfil</button>
+            </div>
+        </div>
+        
+        <div class="biografia-container">
+            <h3>Biografia</h3>
+            <p id="biografia-texto"><%= usuario.biografia || 'Adicione uma biografia para que outros usuários conheçam você melhor.' %></p>
+        </div>
+        
+        <div class="estatisticas">
+            <div class="estatistica">
+                <span class="numero"><%= clubes.length || 0 %></span>
+                <span class="label">Clubes</span>
+            </div>
+            <div class="estatistica">
+                <span class="numero"><%= publicacoes.length || 0 %></span>
+                <span class="label">Publicações</span>
+            </div>
+        </div>
+        
+        <h2 class="publicacoes-titulo">Minhas Publicações</h2>
+        <div class="filtro-publicacoes">
+            <button class="btn-filtro ativo" data-filtro="todas">Todas</button>
+            <button class="btn-filtro" data-filtro="publicas">Públicas</button>
+            <button class="btn-filtro" data-filtro="privadas">Privadas</button>
+        </div>
+        
+        <div class="lista-publicacoes">
+            <% if (!publicacoes || publicacoes.length === 0) { %>
+                <div class="sem-publicacoes">
+                    <p>Você ainda não fez nenhuma publicação.</p>
+                </div>
+            <% } else { %>
+                <% publicacoes.forEach(pub => { %>
+                    <div class="publicacao-item <%= pub.visibilidade %>" data-clube-id="<%= pub.id_clube %>" data-porcentagem="<%= pub.porcentagem_leitura || 0 %>">
+                        <div class="publicacao-header">
+                            <div class="clube-info">
+                                <% if (pub.visibilidade === 'privado') { %>
+                                    <span class="clube-nome">Publicação Privada</span>
+                                    <span class="clube-privado"><i class="fas fa-lock"></i></span>
+                                <% } else { %>
+                                    <span class="clube-nome"><%= pub.nome_clube %></span>
+                                    <span class="clube-publico"><i class="fas fa-globe"></i></span>
+                                <% } %>
+                            </div>
+                            <span class="data-publicacao"><%= new Date(pub.data_postagem).toLocaleDateString('pt-BR') %></span>
+                        </div>
+                        <div class="publicacao-conteudo">
+                            <p><%= pub.conteudo %></p>
+                        </div>
+                        <div class="publicacao-footer">
+                            <div class="progresso-leitura">
+                                <div class="barra-progresso">
+                                    <div class="progresso" style="width: 0%;"></div>
+                                </div>
+                                <span class="porcentagem"><%= typeof pub.porcentagem_leitura === 'number' ? pub.porcentagem_leitura : 0 %>% concluído</span>
+                            </div>
+                            <div class="acoes-publicacao">
+                                <span class="curtidas"><i class="far fa-heart"></i> <%= pub.curtidas || 0 %></span>
+                                <% if (pub.id_usuario === userId) { %>
+                                    <button class="btn-editar-publicacao" data-id="<%= pub.id %>">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn-excluir-publicacao" data-id="<%= pub.id %>">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                <% }); %>
+            <% } %>
+        </div>
+    </div>
+    
+    <!-- Modal de Edição de Perfil -->
+    <div id="modal-editar-perfil" class="modal">
+        <div class="modal-conteudo">
+            <span class="fechar-modal">&times;</span>
+            <h2>Editar Perfil</h2>
+            <form id="form-editar-perfil">
+                <div class="form-grupo">
+                    <label for="editar-nome">Nome</label>
+                    <input type="text" id="editar-nome" value="<%= usuario.nome %>" required>
+                </div>
+                <div class="form-grupo">
+                    <label for="editar-email">Email</label>
+                    <input type="email" id="editar-email" value="<%= usuario.email %>" required>
+                </div>
+                <div class="form-grupo">
+                    <label for="editar-biografia">Biografia</label>
+                    <textarea id="editar-biografia" rows="4"><%= usuario.biografia || '' %></textarea>
+                </div>
+                <div class="form-grupo">
+                    <label for="editar-senha">Nova Senha (deixe em branco para manter a atual)</label>
+                    <input type="password" id="editar-senha">
+                </div>
+                <div class="form-grupo">
+                    <label for="confirmar-senha">Confirmar Nova Senha</label>
+                    <input type="password" id="confirmar-senha">
+                </div>
+                <div class="acoes-form">
+                    <button type="submit" class="btn-salvar">Salvar Alterações</button>
+                    <button type="button" id="btn-excluir-conta" class="btn-excluir">Excluir Conta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Modal de Confirmação de Exclusão -->
+    <div id="modal-confirmar-exclusao" class="modal">
+        <div class="modal-conteudo">
+            <span class="fechar-modal">&times;</span>
+            <h2>Confirmar Exclusão</h2>
+            <p>Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita.</p>
+            <div class="acoes-form">
+                <button id="btn-confirmar-exclusao" class="btn-excluir">Sim, Excluir Minha Conta</button>
+                <button id="btn-cancelar-exclusao" class="btn-cancelar">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="notificacao" style="display: none;"></div>
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.publicacao-item').forEach(item => {
+    const progressBar = item.querySelector('.progresso');
+    const percentageText = item.querySelector('.porcentagem');
+    
+    try {
+      const percentage = parseInt(item.getAttribute('data-porcentagem') || '0');
+      const safePercentage = isNaN(percentage) ? 0 : Math.max(0, Math.min(100, percentage));
+      
+      progressBar.style.width = safePercentage + '%';
+      percentageText.textContent = safePercentage + '% concluído';
+    } catch (e) {
+      console.error('Error setting progress bar:', e);
+      progressBar.style.width = '0%';
+      percentageText.textContent = '0% concluído';
+    }
+  });
+});
+</script>
+    <script src="/js/meuPerfil.js"></script>
+</body>
+</html>

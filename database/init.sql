@@ -129,3 +129,6 @@ CREATE TABLE IF NOT EXISTS participantes_encontro (
   FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE CASCADE,
   UNIQUE KEY unique_participante_encontro (id_encontro, id_usuario)
 );
+ALTER TABLE usuarios 
+ADD COLUMN biografia TEXT,
+ADD COLUMN foto_perfil VARCHAR(255) DEFAULT 'default-profile.jpg';

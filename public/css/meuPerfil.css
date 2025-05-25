@@ -1,0 +1,543 @@
+:root {
+    --background: #ffffff;
+    --current-line: #f5f5f5;
+    --selection: #e8e8e8;
+    --foreground: #2d3436;
+    --paragrafo: #636e72;
+    --ciano: #00b894;
+    --verde: #00cec9;
+    --laranja: #fdcb6e;
+    --rosa: #e84393;
+    --roxo: #6c5ce7;
+    --vermelho: #d63031;
+    --vinho: #b71540;
+    --amarelo: #ffeaa7;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    background-color: var(--current-line);
+    color: var(--foreground);
+    padding-top: 60px;
+    min-height: 100vh;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 0 20px;
+    width: 100%;
+}
+
+/* Perfil Header */
+.perfil-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+    background-color: var(--current-line);
+    padding: 20px;
+    border-radius: 16px;
+}
+
+.foto-perfil-container {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    margin-right: 30px;
+}
+
+#foto-perfil {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--roxo);
+}
+
+.editar-foto {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: linear-gradient(45deg, var(--roxo), var(--rosa));
+    color: var(--background);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.editar-foto:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(108, 92, 231, 0.4);
+}
+
+.info-perfil {
+    flex: 1;
+}
+
+#nome-usuario {
+    font-size: 28px;
+    margin-bottom: 5px;
+    color: var(--roxo);
+}
+
+#email-usuario {
+    color: var(--paragrafo);
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+.btn-editar {
+    background: linear-gradient(45deg, var(--roxo), var(--rosa));
+    color: var(--background);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.btn-editar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(108, 92, 231, 0.4);
+}
+
+/* Biografia */
+.biografia-container {
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: var(--current-line);
+    border-radius: 16px;
+}
+
+.biografia-container h3 {
+    margin-bottom: 10px;
+    color: var(--roxo);
+}
+
+#biografia-texto {
+    line-height: 1.6;
+    color: var(--paragrafo);
+}
+
+/* Estatísticas */
+.estatisticas {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: var(--current-line);
+    border-radius: 16px;
+}
+
+.estatistica {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.estatistica .numero {
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--roxo);
+}
+
+.estatistica .label {
+    color: var(--paragrafo);
+    font-size: 14px;
+}
+
+/* Publicações */
+.publicacoes-titulo {
+    margin-bottom: 20px;
+    color: var(--roxo);
+}
+
+.filtro-publicacoes {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    background-color: var(--current-line);
+    padding: 15px;
+    border-radius: 16px;
+}
+
+.btn-filtro {
+    background-color: var(--selection);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.btn-filtro.ativo {
+    background: linear-gradient(45deg, var(--roxo), var(--rosa));
+    color: var(--background);
+}
+
+.btn-filtro:hover {
+    transform: translateY(-2px);
+}
+
+.lista-publicacoes {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.sem-publicacoes {
+    text-align: center;
+    padding: 30px;
+    color: var(--paragrafo);
+    background-color: var(--current-line);
+    border-radius: 16px;
+}
+
+.publicacao-item {
+    background-color: var(--current-line);
+    border-radius: 16px;
+    padding: 20px;
+    transition: all 0.3s ease;
+    border: 1px solid var(--selection);
+}
+
+.publicacao-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 32px rgba(108, 92, 231, 0.1);
+}
+
+.publicacao-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+.clube-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.clube-nome {
+    font-weight: bold;
+    color: var(--roxo);
+}
+
+.clube-privado {
+    color: var(--vermelho);
+}
+
+.clube-publico {
+    color: var(--verde);
+}
+
+.data-publicacao {
+    color: var(--paragrafo);
+    font-size: 14px;
+}
+
+.publicacao-conteudo {
+    margin-bottom: 15px;
+    line-height: 1.6;
+    color: var(--foreground);
+}
+
+.publicacao-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.progresso-leitura {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width: 60%;
+}
+
+.barra-progresso {
+    height: 8px;
+    background-color: var(--selection);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progresso {
+    height: 100%;
+    background: linear-gradient(45deg, var(--roxo), var(--rosa));
+    border-radius: 4px;
+}
+
+.porcentagem {
+    font-size: 12px;
+    color: var(--paragrafo);
+}
+
+.acoes-publicacao {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.curtidas {
+    color: var(--paragrafo);
+    font-size: 14px;
+}
+
+.curtidas i {
+    color: var(--rosa);
+    margin-right: 5px;
+}
+
+.btn-editar-publicacao,
+.btn-excluir-publicacao {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.btn-editar-publicacao {
+    color: var(--roxo);
+}
+
+.btn-excluir-publicacao {
+    color: var(--vermelho);
+}
+
+.btn-editar-publicacao:hover,
+.btn-excluir-publicacao:hover {
+    transform: translateY(-2px);
+}
+
+/* Modal Styles - Based on criarClube.css */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(40, 42, 54, 0.8);
+    backdrop-filter: blur(5px);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal.ativo {
+    display: flex;
+}
+
+.modal-conteudo {
+    max-width: 450px;
+    width: 85%;
+    padding: 20px;
+    background: var(--current-line);
+    border: 2px solid var(--roxo);
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(108, 92, 231, 0.3);
+    position: relative;
+    margin: 15px auto;
+    overflow-y: auto;
+    max-height: 90vh;
+    scrollbar-width: thin;
+    scrollbar-color: var(--roxo) var(--current-line);
+}
+
+.modal-conteudo::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-conteudo::-webkit-scrollbar-track {
+    background: var(--current-line);
+    border-radius: 10px;
+}
+
+.modal-conteudo::-webkit-scrollbar-thumb {
+    background-color: var(--roxo);
+    border-radius: 10px;
+    border: 2px solid var(--current-line);
+}
+
+.fechar-modal {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--paragrafo);
+    transition: color 0.3s ease;
+}
+
+.fechar-modal:hover {
+    color: var(--roxo);
+}
+
+.modal-conteudo h2 {
+    margin-bottom: 20px;
+    color: var(--roxo);
+}
+
+.form-grupo {
+    margin-bottom: 20px;
+}
+
+.form-grupo label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--foreground);
+}
+
+.form-grupo input,
+.form-grupo textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--selection);
+    border-radius: 15px;
+    font-size: 16px;
+    background-color: var(--selection);
+    color: var(--foreground);
+    transition: all 0.3s ease;
+}
+
+.form-grupo input:focus,
+.form-grupo textarea:focus {
+    border-color: var(--roxo);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(108, 92, 231, 0.2);
+}
+
+.form-grupo textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.acoes-form {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px;
+}
+
+.btn-salvar {
+    background: linear-gradient(45deg, var(--roxo), var(--rosa));
+    color: var(--background);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.btn-salvar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(108, 92, 231, 0.4);
+}
+
+.btn-excluir {
+    background: linear-gradient(45deg, var(--vermelho), var(--laranja));
+    color: var(--background);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.btn-excluir:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(214, 48, 49, 0.4);
+}
+
+.btn-cancelar {
+    background-color: var(--paragrafo);
+    color: var(--background);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.btn-cancelar:hover {
+    transform: translateY(-2px);
+    background-color: var(--foreground);
+}
+
+/* Notificação */
+.notificacao {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    border-radius: 15px;
+    color: var(--background);
+    font-size: 14px;
+    z-index: 2000;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.notificacao.sucesso {
+    background: linear-gradient(45deg, var(--verde), var(--ciano));
+}
+
+.notificacao.erro {
+    background: linear-gradient(45deg, var(--vermelho), var(--vinho));
+}
+
+.notificacao.mostrar {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+    .perfil-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .foto-perfil-container {
+        margin-right: 0;
+        margin-bottom: 20px;
+    }
+    
+    .estatisticas {
+        justify-content: center;
+    }
+    
+    .publicacao-footer {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .progresso-leitura {
+        width: 100%;
+    }
+    
+    .acoes-publicacao {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
