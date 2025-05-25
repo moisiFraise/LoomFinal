@@ -151,6 +151,8 @@ function criarCardEncontro(encontro, isCriador, participacoes, isPassado = false
         `;
     }
     
+    const participantes = Array.isArray(encontro.participantes) ? encontro.participantes : [];
+    
     card.innerHTML = `
         <div class="encontro-header">
             <div>
@@ -175,15 +177,40 @@ function criarCardEncontro(encontro, isCriador, participacoes, isPassado = false
         <div class="encontro-acoes">
             <div class="encontro-participantes">
                 <div class="encontro-participantes-avatars">
-                    ${gerarAvatarsParticipantes(encontro.participantes || [])}
+                    ${gerarAvatarsParticipantes(participantes)}
                 </div>
-                <span class="participante-count">${(encontro.participantes || []).length} participantes</span>
+                <span class="participante-count">${participantes.length} participantes</span>
             </div>
             ${botoesParticipacao}
         </div>
     `;
     
     return card;
+}
+
+function gerarAvatarsParticipantes(participantes) {
+    if (!Array.isArray(participantes) || participantes.length === 0) {
+        return '';
+    }
+    
+    const maxAvatars = 3;
+    let html = '';
+    
+    for (let i = 0; i < Math.min(participantes.length, maxAvatars); i++) {
+        if (participantes[i] && participantes[i].nome) {
+            const iniciais = participantes[i].nome.split(' ')
+                .map(n => n[0])
+                .join('')
+                .toUpperCase();
+            html += `<div class="participante-avatar" title="${participantes[i].nome}">${iniciais}</div>`;
+        }
+    }
+    
+    if (participantes.length > maxAvatars) {
+        html += `<div class="participante-avatar" title="Mais participantes">+${participantes.length - maxAvatars}</div>`;
+    }
+    
+    return html;
 }
 
 function gerarAvatarsParticipantes(participantes) {
@@ -442,7 +469,6 @@ async function excluirEncontro(encontroId) {
         alert(`Erro ao excluir encontro: ${error.message}`);
     }
 }
-
 async function confirmarParticipacao(encontroId, status) {
     try {
         const response = await fetch(`/api/clube/${clubeId}/encontros/${encontroId}/participacao`, {
@@ -456,7 +482,7 @@ async function confirmarParticipacao(encontroId, status) {
             throw new Error(errorData.erro || 'Erro ao confirmar participação');
         }
         
-        carregarEncontros(clubeId);
+        await carregarEncontros(clubeId);
     } catch (error) {
         console.error('Erro:', error);
         alert(`Erro ao confirmar participação: ${error.message}`);

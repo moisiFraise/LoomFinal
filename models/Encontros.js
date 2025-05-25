@@ -138,25 +138,23 @@ class Encontros {
             throw error;
         }
     }
-
     static async listarParticipantes(idEncontro) {
-        try {
-            const [rows] = await pool.query(
-                `SELECT pe.*, u.nome, u.email 
-                FROM participantes_encontro pe
-                JOIN usuarios u ON pe.id_usuario = u.id
-                WHERE pe.id_encontro = ?
-                ORDER BY pe.status, u.nome`,
-                [idEncontro]
-            );
-            
-            return rows;
-        } catch (error) {
-            console.error('Erro ao listar participantes do encontro:', error);
-            throw error;
-        }
+    try {
+        const [rows] = await pool.query(
+            `SELECT pe.*, u.nome, u.email 
+            FROM participantes_encontro pe
+            JOIN usuarios u ON pe.id_usuario = u.id
+            WHERE pe.id_encontro = ?
+            ORDER BY pe.status, u.nome`,
+            [idEncontro]
+        );
+        
+        return rows;
+    } catch (error) {
+        console.error('Erro ao listar participantes do encontro:', error);
+        throw error;
     }
-
+}
     static async verificarParticipacao(idEncontro, idUsuario) {
         try {
             const [rows] = await pool.query(

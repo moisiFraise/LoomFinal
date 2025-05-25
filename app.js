@@ -1169,6 +1169,11 @@ app.get('/api/clube/:id/encontros', verificarAutenticacao, async (req, res) => {
         
         const encontros = await Encontros.listarPorClube(clubeId);
         
+        for (const encontro of encontros) {
+            const participantes = await Encontros.listarParticipantes(encontro.id);
+            encontro.participantes = participantes.filter(p => p.status === 'confirmado' || p.status === 'talvez');
+        }
+        
         const [participacoesEncontros] = await pool.query(
             'SELECT * FROM participantes_encontro WHERE id_usuario = ? AND id_encontro IN (?)',
             [userId, encontros.length > 0 ? encontros.map(e => e.id) : [0]]
@@ -1184,6 +1189,7 @@ app.get('/api/clube/:id/encontros', verificarAutenticacao, async (req, res) => {
         res.status(500).json({ erro: 'Erro ao listar encontros do clube' });
     }
 });
+
 app.post('/api/clube/:id/encontros', verificarAutenticacao, async (req, res) => {
     try {
         const clubeId = req.params.id;
