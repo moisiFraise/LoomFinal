@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Elementos do DOM
     const btnEditarPerfil = document.getElementById('btn-editar-perfil');
     const modalEditarPerfil = document.getElementById('modal-editar-perfil');
     const modalConfirmarExclusao = document.getElementById('modal-confirmar-exclusao');
@@ -59,6 +58,8 @@ if (uploadFoto) {
     uploadFoto.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
+            console.log('Arquivo selecionado:', file.name, file.type, file.size);
+            
             const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
             const maxSize = 5 * 1024 * 1024; // 5MB
             
@@ -72,45 +73,74 @@ if (uploadFoto) {
                 return;
             }
             
+            const fotoContainer = document.querySelector('.foto-perfil-container');
+            if (!fotoContainer) {
+                console.error('Container da foto não encontrado');
+                mostrarNotificacao('Erro: Container da foto não encontrado.', 'erro');
+                return;
+            }
+            
+            const existingLoading = document.querySelector('.loading-indicator');
+            if (existingLoading) {
+                existingLoading.remove();
+            }
+            
             const loadingIndicator = document.createElement('div');
             loadingIndicator.className = 'loading-indicator';
             loadingIndicator.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            document.querySelector('.foto-perfil-container').appendChild(loadingIndicator);
+            fotoContainer.appendChild(loadingIndicator);
             
             const formData = new FormData();
-            formData.append('file', file);
-            formData.append('upload_preset', 'loom_perfil');
+            formData.append('foto', file);
             
-            fetch(`https://api.cloudinary.com/v1_1/dhz1cbipj/image/upload`, {
+            console.log('Enviando arquivo para o servidor...');
+            
+            fetch('/api/upload-foto-perfil', {
                 method: 'POST',
-                body: formData
+                body: formData,
+                credentials: 'same-origin' 
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    throw new Error(data.error.message);
+            .then(response => {
+                console.log('Resposta recebida:', response.status, response.statusText);
+                
+                const loading = document.querySelector('.loading-indicator');
+                if (loading) {
+                    loading.remove();
                 }
                 
-                return fetch('/api/perfil/atualizar-foto', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ fotoUrl: data.secure_url })
-                });
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        console.error('Erro do servidor:', err);
+                        throw new Error(err.erro || `Erro ${response.status}: ${response.statusText}`);
+                    });
+                }
+                return response.json();
             })
-            .then(response => response.json())
             .then(data => {
-                document.querySelector('.loading-indicator')?.remove();
+                console.log('Upload bem-sucedido:', data);
                 
-                fotoPerfil.src = data.fotoNome;
+                if (fotoPerfil && data.fotoUrl) {
+                    const imageUrl = data.fotoUrl + '?t=' + Date.now();
+                    fotoPerfil.src = imageUrl;
+                    console.log('Foto atualizada na interface');
+                }
+                
                 mostrarNotificacao('Foto de perfil atualizada com sucesso!', 'sucesso');
+                
+                uploadFoto.value = '';
             })
             .catch(error => {
-                document.querySelector('.loading-indicator')?.remove();
+                console.error('Erro completo no upload:', error);
                 
-                console.error('Erro completo:', error);
+                const loading = document.querySelector('.loading-indicator');
+                if (loading) {
+                    loading.remove();
+                }
+                
                 mostrarNotificacao(error.message || 'Erro ao atualizar foto de perfil.', 'erro');
+                
+
+                uploadFoto.value = '';
             });
         }
     });

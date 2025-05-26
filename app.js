@@ -20,43 +20,6 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB
-  },
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Tipo de arquivo não suportado'), false);
-    }
-  }
-});
-
-app.use(fileUpload({
-  useTempFiles: false,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-  abortOnLimit: true,
-  createParentPath: true
-}));
-
-const uploadDir = path.join(__dirname, 'public', 'uploads', 'perfil');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: function(req, file, cb) {
-    cb(null, uploadDir);
-  },
-  filename: function(req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    cb(null, 'user-' + req.session.userId + '-' + uniqueSuffix + ext);
-  }
-});
 
 const Usuario = require('./models/Usuario');
 const Categorias = require('./models/Categorias');
@@ -71,8 +34,17 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use(fileUpload({
+  useTempFiles: false,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  abortOnLimit: true,
+  createParentPath: true
+}));
+
+
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+
 
 const sessionStore = new MySQLStore({
   host: process.env.DB_HOST,
@@ -360,36 +332,93 @@ app.put('/api/perfil', verificarAutenticacao, async (req, res) => {
     res.status(500).json({ erro: 'Erro ao atualizar perfil' });
   }
 });
-app.post('/api/perfil/atualizar-foto', verificarAutenticacao, async (req, res) => {
+app.post('/api/upload-foto-perfil', verificarAutenticacao, (req, res) => {
+
+  
+  if (!req.files || !req.files.foto) {
+
+    return res.status(400).json({ erro: 'Nenhum arquivo enviado' });
+  }
   try {
-    console.log('Iniciando atualização de foto de perfil');
-    const { fotoUrl } = req.body;
+    const file = req.files.foto;
     
-    if (!fotoUrl) {
-      console.log('URL da foto não fornecida');
-      return res.status(400).json({ erro: 'URL da foto é obrigatória' });
-    }
-    
-    console.log('Atualizando foto no banco de dados para usuário:', req.session.userId);
-    await pool.query(
-      'UPDATE usuarios SET foto_perfil = ? WHERE id = ?',
-      [fotoUrl, req.session.userId]
-    );
-    
-    console.log('Foto atualizada com sucesso');
-    res.status(200).json({ 
-      mensagem: 'Foto de perfil atualizada com sucesso',
-      fotoNome: fotoUrl
+    console.log('Arquivo processado:', {
+      name: file.name,
+      mimetype: file.mimetype,
+      size: file.size
     });
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    if (!allowedTypes.includes(file.mimetype)) {
+      return res.status(400).json({ erro: 'Tipo de arquivo não suportado' });
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      return res.status(400).json({ erro: 'Arquivo muito grande. Máximo 5MB.' });
+    }
+
+    if (!process.env.CLOUDINARY_CLOUD_NAME) {
+      console.error('Cloudinary não configurado');
+      return res.status(500).json({ erro: 'Serviço de upload não configurado' });
+    }
+
+    console.log('Iniciando upload para Cloudinary...');
+    
+    const uploadPromise = new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'loom_perfil',
+          public_id: `user-${req.session.userId}-${Date.now()}`,
+          transformation: [
+            { width: 300, height: 300, crop: 'fill', quality: 'auto' }
+          ]
+        },
+        (error, result) => {
+          if (error) {
+            console.error('Erro no Cloudinary:', error);
+            reject(error);
+          } else {
+            console.log('Upload bem-sucedido:', result.secure_url);
+            resolve(result);
+          }
+        }
+      );
+      
+      streamifier.createReadStream(file.data).pipe(uploadStream);
+    });
+
+    uploadPromise
+      .then(async (result) => {
+        console.log('Atualizando banco de dados...');
+        
+        await pool.query(
+          'UPDATE usuarios SET foto_perfil = ? WHERE id = ?',
+          [result.secure_url, req.session.userId]
+        );
+        
+        console.log('Banco atualizado com sucesso');
+
+        res.json({
+          mensagem: 'Foto atualizada com sucesso',
+          fotoUrl: result.secure_url
+        });
+      })
+      .catch((error) => {
+        console.error('Erro detalhado:', error);
+        res.status(500).json({ 
+          erro: 'Erro ao processar upload',
+          detalhes: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+      });
+
   } catch (error) {
-    console.error('Erro detalhado ao atualizar foto:', error);
+    console.error('Erro geral:', error);
     res.status(500).json({ 
-      erro: 'Erro ao atualizar foto de perfil',
-      detalhes: process.env.NODE_ENV === 'production' ? undefined : error.message
+      erro: 'Erro ao processar upload',
+      detalhes: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
-
 app.delete('/api/perfil', verificarAutenticacao, async (req, res) => {
   try {
     const [clubesCriados] = await pool.query(
