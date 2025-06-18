@@ -58,15 +58,27 @@ function renderizarAtualizacoes(atualizacoes) {
         const dataFormatada = data.toLocaleDateString('pt-BR') + ' às ' + 
                              data.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
         const isAutor = a.id_usuario == userId;
+        
         const botoesAcao = isAutor ? `
             <div class="atualizacao-acoes">
-                <button class="botao-editar" onclick="editarAtualizacao(${a.id})"><i class="fa fa-edit"></i></button>
-                <button class="botao-excluir" onclick="excluirAtualizacao(${a.id})"><i class="fa fa-trash"></i></button>
+                <button class="botao-editar" onclick="editarAtualizacao(${a.id})" title="Editar">
+                    <i class="fa fa-edit"></i>
+                </button>
+                <button class="botao-excluir" onclick="excluirAtualizacao(${a.id})" title="Excluir">
+                    <i class="fa fa-trash"></i>
+                </button>
             </div>` : `
             <div class="atualizacao-acoes">
-                <button class="botao-denunciar" onclick="abrirMenuDenuncia(${a.id})">
-                    <i class="fa fa-ellipsis-v"></i>
-                </button>
+                <div class="menu-opcoes" data-id="${a.id}">
+                    <button class="botao-opcoes" onclick="toggleMenuOpcoes(${a.id})" title="Opções">
+                        <i class="fa fa-ellipsis-v"></i>
+                    </button>
+                    <div class="dropdown-opcoes" id="dropdown-${a.id}" style="display: none;">
+                        <button onclick="abrirModalDenuncia(${a.id}, '${a.nome_usuario.replace(/'/g, "\\'")}'); event.stopPropagation();" class="opcao-denuncia">
+                            <i class="fa fa-flag"></i> Denunciar
+                        </button>
+                    </div>
+                </div>
             </div>`;
         
         return `
@@ -90,21 +102,224 @@ function renderizarAtualizacoes(atualizacoes) {
                         <button class="botao-curtir" data-id="${a.id}" onclick="alternarCurtida(${a.id})">
                             <i class="fa fa-heart-o"></i>
                         </button>
-                        <span class="contador-curtidas"data-id="${a.id}" onclick="alternarCurtida(${a.id})">
-                            <i class="fa fa-heart-o"></i>
-                        </button>
                         <span class="contador-curtidas" data-id="${a.id}"></span>
                     </div>
                 </div>
             </div>`;
     }).join('');
     
+    // Carregar estado das curtidas
     atualizacoes.forEach(a => {
         carregarEstadoCurtidas(a.id);
     });
 }
+
+// Certifique-se de que o evento de clique fora do dropdown funcione corretamente
+document.addEventListener('click', (event) => {
+    if (!event.target.closest('.menu-opcoes')) {
+        document.querySelectorAll('.dropdown-opcoes').forEach(dropdown => {
+            dropdown.style.display = 'none';
+        });
+    }
+});
+function toggleMenuOpcoes(atualizacaoId) {
+    const dropdown = document.getElementById(`dropdown-${atualizacaoId}`);
+    const todosDropdowns = document.querySelectorAll('.dropdown-opcoes');
+    
+    todosDropdowns.forEach(d => {
+        if (d.id !== `dropdown-${atualizacaoId}`) {
+            d.style.display = 'none';
+        }
+    });
+    
+    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+}
+
+document.addEventListener('click', (event) => {
+    if (!event.target.closest('.menu-opcoes')) {
+        document.querySelectorAll('.dropdown-opcoes').forEach(dropdown => {
+            dropdown.style.display = 'none';
+        });
+    }
+});
+function criarModalDenuncia() {
+    const modalHTML = `
+        <div id="overlay-denuncia" class="overlay" onclick="fecharModalDenuncia()"></div>
+        <div id="modal-denuncia" class="modal modal-denuncia" tabindex="-1">
+            <div class="modal-header">
+                <h3>Denunciar Comentário</h3>
+                <button class="modal-close" onclick="fecharModalDenuncia()" type="button">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="denuncia-atualizacao-id">
+                <p>Você está denunciando o comentário de: <strong id="denuncia-usuario-nome"></strong></p>
+                
+                <div class="form-group">
+                    <label for="denuncia-motivo">Motivo da denúncia:</label>
+                    <select id="denuncia-motivo" required>
+                        <option value="">Selecione um motivo</option>
+                        <option value="spam">Spam</option>
+                        <option value="conteudo_inadequado">Conteúdo inadequado</option>
+                        <option value="assedio">Assédio</option>
+                        <option value="discurso_odio">Discurso de ódio</option>
+                        <option value="outro">Outro</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="denuncia-descricao">Descrição (opcional):</label>
+                    <textarea id="denuncia-descricao" placeholder="Descreva o problema com mais detalhes..." rows="4"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancelar" onclick="fecharModalDenuncia()">Cancelar</button>
+                <button type="button" class="btn-confirmar" onclick="enviarDenuncia()">Enviar Denúncia</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    console.log('Modal HTML inserido no DOM');
+}
+function abrirModalDenuncia(atualizacaoId, nomeUsuario) {
+    console.log('Abrindo modal de denúncia para:', atualizacaoId, nomeUsuario);
+    
+    const dropdown = document.getElementById(`dropdown-${atualizacaoId}`);
+    if (dropdown) {
+        dropdown.style.display = 'none';
+    }
+    
+    const modalExistente = document.getElementById('modal-denuncia');
+    const overlayExistente = document.getElementById('overlay-denuncia');
+    if (modalExistente) modalExistente.remove();
+    if (overlayExistente) overlayExistente.remove();
+    
+    criarModalDenuncia();
+    
+    requestAnimationFrame(() => {
+        const atualizacaoIdInput = document.getElementById('denuncia-atualizacao-id');
+        const usuarioNomeSpan = document.getElementById('denuncia-usuario-nome');
+        const motivoSelect = document.getElementById('denuncia-motivo');
+        const descricaoTextarea = document.getElementById('denuncia-descricao');
+        
+        if (atualizacaoIdInput) atualizacaoIdInput.value = atualizacaoId;
+        if (usuarioNomeSpan) usuarioNomeSpan.textContent = nomeUsuario;
+        if (motivoSelect) motivoSelect.value = '';
+        if (descricaoTextarea) descricaoTextarea.value = '';
+        
+        const overlay = document.getElementById('overlay-denuncia');
+        const modal = document.getElementById('modal-denuncia');
+        
+        if (overlay && modal) {
+            overlay.classList.add('show');
+            modal.classList.add('show');
+            
+            const overlayStyles = window.getComputedStyle(overlay);
+            const modalStyles = window.getComputedStyle(modal);
+            
+            console.log('Overlay display:', overlayStyles.display);
+            console.log('Modal display:', modalStyles.display);
+            console.log('Overlay z-index:', overlayStyles.zIndex);
+            console.log('Modal z-index:', modalStyles.zIndex);
+            
+            modal.focus();
+            
+            console.log('Modal de denúncia aberto com classes');
+        } else {
+            console.error('Elementos do modal não encontrados após criação');
+        }
+    });
+}
+
+function fecharModalDenuncia() {
+    const overlay = document.getElementById('overlay-denuncia');
+    const modal = document.getElementById('modal-denuncia');
+    
+    if (overlay) {
+        overlay.classList.remove('show');
+        setTimeout(() => {
+            if (overlay.parentNode) {
+                overlay.remove();
+            }
+        }, 300);
+    }
+    
+    if (modal) {
+        modal.classList.remove('show');
+        setTimeout(() => {
+            if (modal.parentNode) {
+                modal.remove();
+            }
+        }, 300);
+    }
+}
+
+async function enviarDenuncia() {
+    try {
+        const atualizacaoId = document.getElementById('denuncia-atualizacao-id').value;
+        const motivo = document.getElementById('denuncia-motivo').value;
+        const descricao = document.getElementById('denuncia-descricao').value;
+        
+        if (!motivo) {
+            alert('Por favor, selecione um motivo para a denúncia');
+            return;
+        }
+        
+        const botaoEnviar = document.querySelector('.btn-confirmar');
+        const textoOriginal = botaoEnviar.textContent;
+        botaoEnviar.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Enviando...';
+        botaoEnviar.disabled = true;
+        
+        const response = await fetch('/api/denuncias', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                idAtualizacao: atualizacaoId,
+                motivo: motivo,
+                descricao: descricao
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.erro || 'Erro ao enviar denúncia');
+        }
+        
+        fecharModalDenuncia();
+        
+        // Mostrar mensagem de sucesso
+        mostrarMensagemSucesso('Denúncia enviada com sucesso! Será analisada em breve.');
+        
+    } catch (error) {
+        console.error('Erro ao enviar denúncia:', error);
+        alert(error.message || 'Erro ao enviar denúncia. Tente novamente.');
+    } finally {
+        const botaoEnviar = document.querySelector('.btn-confirmar');
+        if (botaoEnviar) {
+            botaoEnviar.textContent = 'Enviar Denúncia';
+            botaoEnviar.disabled = false;
+        }
+    }
+}
+function mostrarMensagemSucesso(mensagem) {
+    const mensagemDiv = document.createElement('div');
+    mensagemDiv.className = 'mensagem-sucesso';
+    mensagemDiv.textContent = mensagem;
+    document.body.appendChild(mensagemDiv);
+    
+    setTimeout(() => {
+        if (document.body.contains(mensagemDiv)) {
+            document.body.removeChild(mensagemDiv);
+        }
+    }, 5000);
+}
 async function abrirModalAtualizacao(event) {
-       if (!event || event.type !== 'click' || !event.isTrusted) {
+    if (!event || event.type !== 'click' || !event.isTrusted) {
         console.log('Tentativa de abrir modal automaticamente bloqueada');
         return;
     }
@@ -140,8 +355,7 @@ async function abrirModalAtualizacao(event) {
         const comentarioInput = document.getElementById('atualizacao-comentario');
         if (comentarioInput) comentarioInput.focus();
     }, 300);
-    
-    const paginaInput = document.getElementById('atualizacao-pagina');
+      const paginaInput = document.getElementById('atualizacao-pagina');
     if (paginaInput) {
         paginaInput.removeEventListener('input', calcularPorcentagem);
         paginaInput.addEventListener('input', calcularPorcentagem);
@@ -237,7 +451,6 @@ function calcularPorcentagem() {
         }
     }
 }
-
 async function salvarAtualizacao() {
     try {
         const comentario = document.getElementById('atualizacao-comentario').value.trim();

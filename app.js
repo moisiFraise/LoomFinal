@@ -29,6 +29,8 @@ const Leituras = require('./models/Leituras');
 const Atualizacoes = require('./models/Atualizacoes');
 const Curtidas = require('./models/Curtidas');
 const Encontros = require('./models/Encontros');
+const Denuncias = require('./models/Denuncias');
+
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -1787,7 +1789,132 @@ app.get('/api/debug/encontros/criar', verificarAutenticacao, async (req, res) =>
     });
   }
 });
-
+app.get('/denuncias', verificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    
+    if (!usuario || usuario.tipo !== 'admin') {
+      return res.redirect('/dashboard');
+    }
+    
+    res.render('denuncias', { 
+      titulo: 'Loom - Gerenciar Denúncias',
+      userId: req.session.userId,
+      userType: usuario.tipo
+    });
+  } catch (error) {
+    console.error('Erro ao carregar página de denúncias:', error);
+    res.redirect('/painelAdmin');
+  }
+});
+app.get('/api/admin/denuncias', verificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    if (!usuario || usuario.tipo !== 'admin') {
+      return res.status(403).json({ erro: 'Acesso negado' });
+    }
+    
+    const denuncias = await Denuncias.listarTodas();
+    const contadores = await Denuncias.contarPorStatus();
+    
+    res.json({ denuncias, contadores });
+  } catch (error) {
+    console.error('Erro ao listar denúncias:', error);
+    res.status(500).json({ erro: 'Erro ao listar denúncias' });
+  }
+});
+app.get('/api/admin/denuncias/:id', verificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    if (!usuario || usuario.tipo !== 'admin') {
+      return res.status(403).json({ erro: 'Acesso negado' });
+    }
+    
+    const { id } = req.params;
+    const denuncia = await Denuncias.buscarPorId(id);
+    
+    if (!denuncia) {
+      return res.status(404).json({ erro: 'Denúncia não encontrada' });
+    }
+    
+    res.json(denuncia);
+  } catch (error) {
+    console.error('Erro ao buscar denúncia:', error);
+    res.status(500).json({ erro: 'Erro ao buscar denúncia' });
+  }
+});
+app.post('/api/admin/denuncias/:id/processar', verificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    if (!usuario || usuario.tipo !== 'admin') {
+      return res.status(403).json({ erro: 'Acesso negado' });
+    }
+    
+    const { id } = req.params;
+    const { acao, observacoes } = req.body;
+    
+    if (!acao || !['suspender_usuario', 'remover_atualizacao', 'rejeitar'].includes(acao)) {
+      return res.status(400).json({ erro: 'Ação inválida' });
+    }
+    
+    let denunciaAtualizada;
+    
+    if (acao === 'rejeitar') {
+      denunciaAtualizada = await Denuncias.analisar(id, req.session.userId, 'rejeitada', observacoes);
+    } else {
+      denunciaAtualizada = await Denuncias.processarDenuncia(id, req.session.userId, acao, observacoes);
+    }
+    
+    res.json({
+      mensagem: 'Denúncia processada com sucesso',
+      denuncia: denunciaAtualizada
+    });
+  } catch (error) {
+    console.error('Erro ao processar denúncia:', error);
+    res.status(500).json({ erro: error.message || 'Erro ao processar denúncia' });
+  }
+});
+app.post('/api/denuncias', verificarAutenticacao, async (req, res) => {
+  try {
+    const { idAtualizacao, motivo, descricao } = req.body;
+    
+    if (!idAtualizacao || !motivo) {
+      return res.status(400).json({ erro: 'ID da atualização e motivo são obrigatórios' });
+    }
+    
+    // Buscar informações da atualização
+    const [atualizacoes] = await pool.query(
+      'SELECT id_usuario FROM atualizacoes WHERE id = ?',
+      [idAtualizacao]
+    );
+    
+    if (atualizacoes.length === 0) {
+      return res.status(404).json({ erro: 'Atualização não encontrada' });
+    }
+    
+    const idDenunciado = atualizacoes[0].id_usuario;
+    
+    if (idDenunciado === req.session.userId) {
+      return res.status(400).json({ erro: 'Você não pode denunciar sua própria atualização' });
+    }
+    
+    const novaDenuncia = await Denuncias.criar(
+      req.session.userId,
+      idDenunciado,
+      idAtualizacao,
+      motivo,
+      descricao
+    );
+    
+    res.status(201).json({
+      mensagem: 'Denúncia enviada com sucesso',
+      denuncia: novaDenuncia
+    });
+  } catch (error) {
+    console.error('Erro ao criar denúncia:', error);
+    res.status(500).json({ erro: error.message || 'Erro ao enviar denúncia' });
+  }
+});
 app.use((err, req, res, next) => {
   console.error('Erro global:', err);
   res.status(500).json({ 

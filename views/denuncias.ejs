@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= titulo %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/menu.css">
+    <link rel="stylesheet" href="/css/denuncias.css">
+    <%- include('partials/imports') %>
+</head>
+<body>
+    <%- include('partials/menu') %>
+
+    <div class="denuncias-container">
+        <div class="denuncias-header">
+            <h1>Gerenciar Denúncias</h1>
+            <p>Análise e moderação de denúncias de usuários</p>
+        </div>
+
+        <div class="denuncias-stats">
+            <div class="stat-card pendente">
+                <h3 id="stat-pendente">0</h3>
+                <p>Pendentes</p>
+            </div>
+            <div class="stat-card analisada">
+                <h3 id="stat-analisada">0</h3>
+                <p>Analisadas</p>
+            </div>
+            <div class="stat-card rejeitada">
+                <h3 id="stat-rejeitada">0</h3>
+                <p>Rejeitadas</p>
+            </div>
+        </div>
+
+        <div class="denuncias-filtros">
+            <div class="filtro-grupo">
+                <label for="filtro-status">Status:</label>
+                <select id="filtro-status" onchange="filtrarDenuncias()">
+                    <option value="">Todos</option>
+                    <option value="pendente">Pendentes</option>
+                    <option value="analisada">Analisadas</option>
+                    <option value="rejeitada">Rejeitadas</option>
+                </select>
+            </div>
+            <div class="filtro-grupo">
+                <label for="filtro-motivo">Motivo:</label>
+                <select id="filtro-motivo" onchange="filtrarDenuncias()">
+                    <option value="">Todos</option>
+                    <option value="spam">Spam</option>
+                    <option value="conteudo_inadequado">Conteúdo inadequado</option>
+                    <option value="assedio">Assédio</option>
+                    <option value="discurso_odio">Discurso de ódio</option>
+                    <option value="outro">Outro</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="denuncias-lista">
+            <div class="loading">Carregando denúncias...</div>
+        </div>
+    </div>
+
+    <script>
+        const userId = '<%= userId %>';
+        const userType = '<%= userType %>';
+    </script>
+    <script src="/js/denuncias.js"></script>
+    <%- include('partials/imports') %>
+</body>
+</html>

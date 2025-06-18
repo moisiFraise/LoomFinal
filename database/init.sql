@@ -1,6 +1,6 @@
 -- Criar o banco de dados se não existir
-CREATE DATABASE IF NOT EXISTS loom_db;
-USE loom_db;
+CREATE DATABASE IF NOT EXISTS teste_loom;
+USE teste_loom;
 
 -- Tabela de usuários
 CREATE TABLE IF NOT EXISTS usuarios (
@@ -132,3 +132,72 @@ CREATE TABLE IF NOT EXISTS participantes_encontro (
 ALTER TABLE usuarios 
 ADD COLUMN biografia TEXT,
 ADD COLUMN foto_perfil VARCHAR(255) DEFAULT 'default-profile.jpg';
+
+CREATE TABLE IF NOT EXISTS denuncias (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  id_denunciante INT NOT NULL,
+  id_denunciado INT NOT NULL,
+  id_atualizacao INT NOT NULL,
+  motivo ENUM('spam', 'conteudo_inadequado', 'assedio', 'discurso_odio', 'outro') NOT NULL,
+  descricao TEXT,
+  status ENUM('pendente', 'analisada', 'rejeitada') DEFAULT 'pendente',
+  data_denuncia DATETIME DEFAULT CURRENT_TIMESTAMP,
+  data_analise DATETIME NULL,
+  id_admin_analise INT NULL,
+  observacoes_admin TEXT NULL,
+  FOREIGN KEY (id_denunciante) REFERENCES usuarios(id) ON DELETE CASCADE,
+  FOREIGN KEY (id_denunciado) REFERENCES usuarios(id) ON DELETE CASCADE,
+  FOREIGN KEY (id_atualizacao) REFERENCES atualizacoes(id) ON DELETE CASCADE,
+  FOREIGN KEY (id_admin_analise) REFERENCES usuarios(id) ON DELETE SET NULL
+);
+-- Adiciona campos cidade e estado em clubes
+ALTER TABLE clubes
+ADD COLUMN cidade VARCHAR(100),
+ADD COLUMN estado VARCHAR(100);
+
+-- Tabela de sugestões de leitura
+CREATE TABLE IF NOT EXISTS sugestoes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  id_clube INT NOT NULL,
+  id_usuario INT NOT NULL,
+  titulo VARCHAR(255) NOT NULL,
+  autor VARCHAR(255),
+  justificativa TEXT,
+  data_sugestao DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (id_clube) REFERENCES clubes(id) ON DELETE CASCADE,
+  FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE CASCADE
+);
+
+-- Tabela de votações
+CREATE TABLE IF NOT EXISTS votacoes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  id_clube INT NOT NULL,
+  titulo VARCHAR(255) NOT NULL,
+  descricao TEXT,
+  data_inicio DATETIME NOT NULL,
+  data_fim DATETIME NOT NULL,
+  encerrada BOOLEAN DEFAULT FALSE,
+  FOREIGN KEY (id_clube) REFERENCES clubes(id) ON DELETE CASCADE
+);
+
+-- Tabela de opções de votação (cada opção representa uma sugestão de leitura)
+CREATE TABLE IF NOT EXISTS opcoes_votacao (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  id_votacao INT NOT NULL,
+  id_sugestao INT NOT NULL,
+  FOREIGN KEY (id_votacao) REFERENCES votacoes(id) ON DELETE CASCADE,
+  FOREIGN KEY (id_sugestao) REFERENCES sugestoes(id) ON DELETE CASCADE
+);
+
+-- Tabela de votos
+CREATE TABLE IF NOT EXISTS votos (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  id_votacao INT NOT NULL,
+  id_usuario INT NOT NULL,
+  id_opcao INT NOT NULL,
+  data_voto DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (id_votacao) REFERENCES votacoes(id) ON DELETE CASCADE,
+  FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE CASCADE,
+  FOREIGN KEY (id_opcao) REFERENCES opcoes_votacao(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_voto_usuario (id_votacao, id_usuario)
+);

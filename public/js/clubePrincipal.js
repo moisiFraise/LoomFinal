@@ -110,7 +110,6 @@ function atualizarProgressoLeitura(paginaAtual, totalPaginas) {
     const progressoTexto = document.querySelector('.progresso-texto');
     if (progressoTexto) progressoTexto.textContent = `${porcentagem}% concluído`;
 }
-
 async function carregarMembrosClube(clubeId) {
     try {
         const membrosLista = document.getElementById('clube-membros-lista-completa');
@@ -180,17 +179,14 @@ async function verificarPermissoesCriador(clubeId) {
 function mudarSecaoClube(secao) {
     console.log('Mudando para seção:', secao);
     
-    // Esconder todas as seções
     document.querySelectorAll('.clube-secao').forEach(el => {
         el.style.display = 'none';
     });
     
-    // Remover classe ativa de todos os itens de menu
     document.querySelectorAll('.menu-item').forEach(el => {
         el.classList.remove('menu-item-ativo');
     });
     
-    // Mostrar a seção selecionada
     const secaoElement = document.getElementById(`secao-${secao}`);
     if (secaoElement) {
         secaoElement.style.display = 'block';
@@ -199,11 +195,11 @@ function mudarSecaoClube(secao) {
         console.error(`Elemento secao-${secao} não encontrado`);
     }
     
-    // Adicionar classe ativa ao item de menu
     const menuItem = document.querySelector(`.menu-item[data-secao="${secao}"]`);
     if (menuItem) {
         menuItem.classList.add('menu-item-ativo');
     }
+    
     if (secao === 'encontros') {
         carregarEncontros(clubeId);
     } else if (secao === 'livros-anteriores') {
@@ -215,8 +211,10 @@ function mudarSecaoClube(secao) {
     }
     window.location.hash = secao;
 }
-function voltarParaTelaAnterior() { window.history.back(); }
 
+function voltarParaTelaAnterior() {
+     window.history.back();
+}
 function abrirModalSelecaoLeitura() {
     document.getElementById('overlay').style.display = 'block';
     document.getElementById('modal-selecao-leitura').style.display = 'block';
@@ -245,7 +243,6 @@ function fecharModalSelecaoLeitura() {
     document.getElementById('selected-book-container').style.display = 'none';
     livroSelecionado = null;
 }
-
 function mudarTabSelecaoLeitura(tab) {
     document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
     document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('tab-ativo'));
@@ -257,7 +254,6 @@ function mudarTabSelecaoLeitura(tab) {
     document.getElementById('selected-book-container').style.display = 'none';
     livroSelecionado = null;
 }
-
 async function carregarLeiturasClube(clubeId) {
     try {
         const livroAtualContainer = document.getElementById('livro-atual-info-completo');
@@ -324,7 +320,6 @@ async function carregarLeiturasClube(clubeId) {
         document.getElementById('leituras-anteriores-grid').innerHTML = '<p class="erro-carregamento">Erro ao carregar leituras anteriores.</p>';
     }
 }
-
 async function buscarLivros() {
     const termoBusca = document.getElementById('busca-livro').value.trim();
     const resultadosContainer = document.getElementById('search-results');
@@ -371,7 +366,6 @@ async function buscarLivros() {
         resultadosContainer.innerHTML = '<p class="erro-carregamento">Erro ao buscar livros. Tente novamente.</p>';
     }
 }
-
 function selecionarLivro(index) {
     const livro = resultadosBusca[index];
     if (!livro) return;
@@ -459,7 +453,7 @@ async function salvarNovaLeitura() {
 async function carregarAtualizacoes(clubeId) {
     try {
         const atualizacoesLista = document.getElementById('atualizacoes-lista');
-        atualizacoesLista.innerHTML = '<p class="carregando">Carregando atualizações...</p>';
+        atualizacoesLista.innerHTML = '<div class="carregando">Carregando atualizações...</div>';
         
         const response = await fetch(`/api/clube/${clubeId}/atualizacoes`);
         if (!response.ok) throw new Error('Erro ao carregar atualizações');
@@ -475,7 +469,11 @@ async function carregarAtualizacoes(clubeId) {
         
         data.atualizacoes.forEach(a => {
             const dataFormatada = new Date(a.data_postagem).toLocaleDateString('pt-BR', {
-                day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                day: '2-digit', 
+                month: '2-digit', 
+                year: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit'
             });
             
             const atualizacaoItem = document.createElement('div');
@@ -486,17 +484,17 @@ async function carregarAtualizacoes(clubeId) {
                         <span class="atualizacao-usuario">${a.nome_usuario}</span>
                         <span class="atualizacao-data">${dataFormatada}</span>
                     </div>
-                    ${a.id_usuario == userId ? `
                     <div class="atualizacao-acoes">
-                        <button class="botao-excluir" onclick="excluirAtualizacao(${a.id})">
-                            <i class="fa fa-trash"></i>
-                        </button>
-                    </div>` : `
-                    <div class="atualizacao-acoes">
-                        <button class="botao-denunciar" onclick="abrirMenuDenuncia(${a.id})">
-                            <i class="fa fa-ellipsis-v"></i>
-                        </button>
-                    </div>`}
+                        ${a.id_usuario == userId ? `
+                            <button class="botao-excluir" onclick="excluirAtualizacao(${a.id})" title="Excluir atualização">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        ` : `
+                            <button class="botao-denunciar" onclick="abrirMenuDenuncia(${a.id})" title="Mais opções">
+                                <i class="fa fa-ellipsis-v"></i>
+                            </button>
+                        `}
+                    </div>
                 </div>
                 <div class="atualizacao-conteudo">${a.conteudo}</div>
                 <div class="atualizacao-footer">
@@ -507,10 +505,10 @@ async function carregarAtualizacoes(clubeId) {
                         <span class="progresso-texto">${a.porcentagem_leitura}% concluído</span>
                     </div>
                     <div class="atualizacao-interacoes">
-                        <button class="botao-curtir" data-id="${a.id}" onclick="alternarCurtida(${a.id})">
+                        <button class="botao-curtir" data-id="${a.id}" onclick="alternarCurtida(${a.id})" title="Curtir">
                             <i class="fa fa-heart-o"></i>
                         </button>
-                        <span class="contador-curtidas" data-id="${a.id}"></span>
+                        <span class="contador-curtidas" data-id="${a.id}">0</span>
                     </div>
                 </div>`;
             atualizacoesLista.appendChild(atualizacaoItem);
@@ -520,21 +518,26 @@ async function carregarAtualizacoes(clubeId) {
     } catch (error) {
         console.error('Erro:', error);
         document.getElementById('atualizacoes-lista').innerHTML = 
-            '<p class="erro-carregamento">Erro ao carregar atualizações. Tente novamente mais tarde.</p>';
+            '<div class="erro-carregamento">Erro ao carregar atualizações. Tente novamente mais tarde.</div>';
     }
 }
+
 async function excluirAtualizacao(idAtualizacao) {
     if (!confirm('Tem certeza que deseja excluir esta atualização?')) return;
     
     try {
-        const response = await fetch(`/api/clube/${clubeId}/atualizacoes/${idAtualizacao}`, {method: 'DELETE'});
+        const response = await fetch(`/api/clube/${clubeId}/atualizacoes/${idAtualizacao}`, {
+            method: 'DELETE'
+        });
+        
         if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.erro || 'Erro ao excluir atualização');
         }
         
         carregarAtualizacoes(clubeId);
-        alert('Atualização excluída com sucesso!');
+        
+        console.log('Atualização excluída com sucesso!');
     } catch (error) {
         console.error('Erro:', error);
         alert(`Erro ao excluir atualização: ${error.message}`);
@@ -543,4 +546,7 @@ async function excluirAtualizacao(idAtualizacao) {
 function fecharModalEncontro() {
     document.getElementById('modal-encontro').style.display = 'none';
     document.getElementById('overlay').style.display = 'none';
+}
+function abrirMenuDenuncia(idAtualizacao) {
+    console.log('Abrir menu de denúncia para atualização:', idAtualizacao);
 }
