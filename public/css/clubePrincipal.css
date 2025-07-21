@@ -298,15 +298,165 @@
     text-align: center;
     display: block;
 }
+
+/* Estilos para as abas */
+.tabs-container {
+    display: flex;
+    border-bottom: 2px solid var(--selection);
+    margin-bottom: 20px;
+}
+
+.tab-item {
+    padding: 12px 20px;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: var(--paragrafo);
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border-bottom: 2px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tab-item:hover {
+    color: var(--foreground);
+    background-color: rgba(106, 90, 205, 0.1);
+}
+
+.tab-item.tab-ativo {
+    color: var(--roxo);
+    border-bottom-color: var(--roxo);
+    background-color: rgba(106, 90, 205, 0.1);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.ativo {
+    display: block;
+}
+
+/* Estilos para a lista de sugestões */
+.sugestoes-lista {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.sugestao-item {
+    background-color: var(--background);
+    border: 1px solid var(--selection);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.sugestao-item:hover {
+    border-color: var(--roxo);
+    background-color: rgba(106, 90, 205, 0.05);
+}
+
+.sugestao-item.selecionada {
+    border-color: var(--roxo);
+    background-color: rgba(106, 90, 205, 0.1);
+}
+
+.sugestao-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.sugestao-livro {
+    flex: 1;
+}
+
+.sugestao-titulo {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--foreground);
+    margin-bottom: 4px;
+}
+
+.sugestao-autor {
+    font-size: 14px;
+    color: var(--paragrafo);
+    margin-bottom: 8px;
+}
+
+.sugestao-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--paragrafo);
+}
+
+.sugestao-usuario {
+    font-weight: 500;
+}
+
+.sugestao-data {
+    opacity: 0.8;
+}
+
+.sugestao-justificativa {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--selection);
+    font-size: 14px;
+    color: var(--foreground);
+    line-height: 1.4;
+}
+
+.sem-sugestoes {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--paragrafo);
+    font-style: italic;
+}
+
+.sem-sugestoes i {
+    font-size: 48px;
+    margin-bottom: 15px;
+    opacity: 0.5;
+}
+
 @media (max-width: 768px) {
     .clube-info-wrapper {
         flex-direction: row !important;
         overflow-x: auto;
         padding-bottom: 15px;
     }
+    
+    .tabs-container {
+        flex-wrap: wrap;
+    }
+    
+    .tab-item {
+        flex: 1;
+        min-width: 120px;
+        justify-content: center;
+    }
 }
+
 @media (max-width: 480px) {
     .clube-info-wrapper {
         flex-direction: column !important;
+    }
+    
+    .sugestao-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .sugestao-meta {
+        flex-wrap: wrap;
     }
 }

@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (menuItemLivros) menuItemLivros.addEventListener('click', () => carregarLeiturasClube(clubeId));
 });
 
-let livroSelecionado = null, resultadosBusca = [];
+let livroSelecionado = null, resultadosBusca = [], sugestaoSelecionada = null;
 
 async function carregarInformacoesClube(clubeId) {
     try {
@@ -110,6 +110,7 @@ function atualizarProgressoLeitura(paginaAtual, totalPaginas) {
     const progressoTexto = document.querySelector('.progresso-texto');
     if (progressoTexto) progressoTexto.textContent = `${porcentagem}% concluído`;
 }
+
 async function carregarMembrosClube(clubeId) {
     try {
         const membrosLista = document.getElementById('clube-membros-lista-completa');
@@ -143,6 +144,7 @@ async function carregarMembrosClube(clubeId) {
             '<p class="erro-carregamento">Erro ao carregar membros do clube.</p>';
     }
 }
+
 async function verificarPermissoesCriador(clubeId) {
     try {
         const response = await fetch(`/api/clube/${clubeId}/permissoes`);
@@ -176,6 +178,7 @@ async function verificarPermissoesCriador(clubeId) {
         console.error('Erro ao verificar permissões:', error);
     }
 }
+
 function mudarSecaoClube(secao) {
     console.log('Mudando para seção:', secao);
     
@@ -215,6 +218,7 @@ function mudarSecaoClube(secao) {
 function voltarParaTelaAnterior() {
      window.history.back();
 }
+
 function abrirModalSelecaoLeitura() {
     document.getElementById('overlay').style.display = 'block';
     document.getElementById('modal-selecao-leitura').style.display = 'block';
@@ -233,6 +237,9 @@ function abrirModalSelecaoLeitura() {
     if (dataFim) {
         dataFim.setAttribute('min', hoje);
     }
+    
+    // Resetar para a aba de buscar
+    mudarTabSelecaoLeitura('buscar');
 }
 
 function fecharModalSelecaoLeitura() {
@@ -240,20 +247,122 @@ function fecharModalSelecaoLeitura() {
     document.getElementById('modal-selecao-leitura').style.display = 'none';
     document.getElementById('busca-livro').value = '';
     document.getElementById('search-results').innerHTML = '';
+    document.getElementById('sugestoes-lista').innerHTML = '';
     document.getElementById('selected-book-container').style.display = 'none';
     livroSelecionado = null;
+    sugestaoSelecionada = null;
 }
+
 function mudarTabSelecaoLeitura(tab) {
-    document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+    // Remover classe ativa de todas as abas
     document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('tab-ativo'));
+    document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
     
-    if (document.getElementById(`tab-${tab}`)) document.getElementById(`tab-${tab}`).style.display = 'block';
-    if (document.querySelector(`.tab-item[data-tab="${tab}"]`)) 
-        document.querySelector(`.tab-item[data-tab="${tab}"]`).classList.add('tab-ativo');
+    // Ativar a aba selecionada
+    const tabElement = document.querySelector(`.tab-item[data-tab="${tab}"]`);
+    const contentElement = document.getElementById(`tab-${tab}`);
     
+    if (tabElement) tabElement.classList.add('tab-ativo');
+    if (contentElement) contentElement.style.display = 'block';
+    
+    // Limpar seleções anteriores
     document.getElementById('selected-book-container').style.display = 'none';
     livroSelecionado = null;
+    sugestaoSelecionada = null;
+    
+    // Carregar conteúdo específico da aba
+    if (tab === 'sugestoes') {
+        carregarSugestoes(clubeId);
+    }
 }
+
+async function carregarSugestoes(clubeId) {
+    try {
+        const sugestoesLista = document.getElementById('sugestoes-lista');
+        sugestoesLista.innerHTML = '<div class="carregando">Carregando sugestões...</div>';
+        
+        const response = await fetch(`/api/clube/${clubeId}/sugestoes`);
+        if (!response.ok) throw new Error('Erro ao carregar sugestões');
+        
+        const sugestoes = await response.json();
+        sugestoesLista.innerHTML = '';
+        
+        if (sugestoes.length === 0) {
+            sugestoesLista.innerHTML = `
+                <div class="sem-sugestoes">
+                    <i class="fa fa-lightbulb-o"></i>
+                    <p>Nenhuma sugestão para mostrar</p>
+                    <small>Os membros ainda não fizeram sugestões de leitura para este clube.</small>
+                </div>`;
+            return;
+        }
+        
+        sugestoes.forEach((sugestao, index) => {
+            const dataFormatada = new Date(sugestao.data_sugestao).toLocaleDateString('pt-BR');
+                        const sugestaoItem = document.createElement('div');
+            sugestaoItem.className = 'sugestao-item';
+            sugestaoItem.innerHTML = `
+                <div class="sugestao-header">
+                    <div class="sugestao-livro">
+                        <div class="sugestao-titulo">${sugestao.titulo}</div>
+                        <div class="sugestao-autor">${sugestao.autor || 'Autor não informado'}</div>
+                    </div>
+                </div>
+                <div class="sugestao-meta">
+                    <span class="sugestao-usuario">Sugerido por: ${sugestao.nome_usuario}</span>
+                    <span class="sugestao-data">${dataFormatada}</span>
+                </div>
+                ${sugestao.justificativa ? `
+                    <div class="sugestao-justificativa">
+                        <strong>Justificativa:</strong> ${sugestao.justificativa}
+                    </div>
+                ` : ''}
+            `;
+            
+            sugestaoItem.addEventListener('click', () => selecionarSugestao(index, sugestoes));
+            sugestoesLista.appendChild(sugestaoItem);
+        });
+    } catch (error) {
+        console.error('Erro:', error);
+        document.getElementById('sugestoes-lista').innerHTML = 
+            '<div class="erro-carregamento">Erro ao carregar sugestões. Tente novamente.</div>';
+    }
+}
+
+function selecionarSugestao(index, sugestoes) {
+    const sugestao = sugestoes[index];
+    if (!sugestao) return;
+    
+    // Remover seleção anterior
+    document.querySelectorAll('.sugestao-item').forEach(item => {
+        item.classList.remove('selecionada');
+    });
+    
+    // Marcar como selecionada
+    document.querySelectorAll('.sugestao-item')[index].classList.add('selecionada');
+    
+    sugestaoSelecionada = {
+        titulo: sugestao.titulo,
+        autor: sugestao.autor || 'Autor não informado',
+        paginas: null, // Sugestões não têm informação de páginas
+        imagemUrl: null, // Sugestões não têm capa
+        descricao: sugestao.justificativa
+    };
+    
+    // Limpar seleção de busca
+    livroSelecionado = null;
+    
+    const containerLivroSelecionado = document.getElementById('selected-book-container');
+    document.getElementById('selected-book-cover').style.backgroundImage = 
+        `url('/img/capa-padrao.jpg')`;
+    document.getElementById('selected-book-title').textContent = sugestaoSelecionada.titulo;
+    document.getElementById('selected-book-author').textContent = `Autor: ${sugestaoSelecionada.autor}`;
+    document.getElementById('selected-book-pages').textContent = '';
+    
+    containerLivroSelecionado.style.display = 'flex';
+    containerLivroSelecionado.scrollIntoView({behavior: 'smooth'});
+}
+
 async function carregarLeiturasClube(clubeId) {
     try {
         const livroAtualContainer = document.getElementById('livro-atual-info-completo');
@@ -320,6 +429,7 @@ async function carregarLeiturasClube(clubeId) {
         document.getElementById('leituras-anteriores-grid').innerHTML = '<p class="erro-carregamento">Erro ao carregar leituras anteriores.</p>';
     }
 }
+
 async function buscarLivros() {
     const termoBusca = document.getElementById('busca-livro').value.trim();
     const resultadosContainer = document.getElementById('search-results');
@@ -366,6 +476,7 @@ async function buscarLivros() {
         resultadosContainer.innerHTML = '<p class="erro-carregamento">Erro ao buscar livros. Tente novamente.</p>';
     }
 }
+
 function selecionarLivro(index) {
     const livro = resultadosBusca[index];
     if (!livro) return;
@@ -378,6 +489,12 @@ function selecionarLivro(index) {
         imagemUrl: volumeInfo.imageLinks?.thumbnail || null,
         descricao: volumeInfo.description || null
     };
+    
+    // Limpar seleção de sugestão
+    sugestaoSelecionada = null;
+    document.querySelectorAll('.sugestao-item').forEach(item => {
+        item.classList.remove('selecionada');
+    });
     
     const containerLivroSelecionado = document.getElementById('selected-book-container');
     document.getElementById('selected-book-cover').style.backgroundImage = 
@@ -401,34 +518,41 @@ async function salvarNovaLeitura() {
                 alert('Selecione um livro para continuar.');
                 return;
             }
-            
-            const dataInicio = document.getElementById('data-inicio').value;
-            const dataFim = document.getElementById('data-fim').value;
-            
-            if (!dataInicio) {
-                alert('A data de início é obrigatória.');
+            dadosLeitura = {...livroSelecionado};
+        } else if (tabAtiva === 'sugestoes') {
+            if (!sugestaoSelecionada) {
+                alert('Selecione uma sugestão para continuar.');
                 return;
             }
-            
-            const hoje = new Date().toISOString().split('T')[0];
-            if (dataInicio < hoje) {
-                alert('A data de início não pode ser anterior a hoje.');
-                return;
-            }
-            
-            if (dataFim && dataFim < hoje) {
-                alert('A data de término não pode ser anterior a hoje.');
-                return;
-            }
-            
-            if (dataFim && dataFim < dataInicio) {
-                alert('A data de término deve ser posterior à data de início.');
-                return;
-            }
-            
-            dadosLeitura = {...livroSelecionado, dataInicio, dataFim: dataFim || null};
-        } else {
+            dadosLeitura = {...sugestaoSelecionada};
         }
+        
+        const dataInicio = document.getElementById('data-inicio').value;
+        const dataFim = document.getElementById('data-fim').value;
+        
+        if (!dataInicio) {
+            alert('A data de início é obrigatória.');
+            return;
+        }
+        
+        const hoje = new Date().toISOString().split('T')[0];
+        if (dataInicio < hoje) {
+            alert('A data de início não pode ser anterior a hoje.');
+            return;
+        }
+        
+        if (dataFim && dataFim < hoje) {
+            alert('A data de término não pode ser anterior a hoje.');
+            return;
+        }
+        
+        if (dataFim && dataFim < dataInicio) {
+            alert('A data de término deve ser posterior à data de início.');
+            return;
+        }
+        
+        dadosLeitura.dataInicio = dataInicio;
+        dadosLeitura.dataFim = dataFim || null;
         
         const response = await fetch(`/api/clube/${clubeId}/leituras`, {
             method: 'POST',
@@ -450,6 +574,7 @@ async function salvarNovaLeitura() {
         alert(`Erro ao salvar leitura: ${error.message}`);
     }
 }
+
 async function carregarAtualizacoes(clubeId) {
     try {
         const atualizacoesLista = document.getElementById('atualizacoes-lista');
@@ -476,7 +601,7 @@ async function carregarAtualizacoes(clubeId) {
                 minute: '2-digit'
             });
             
-            const atualizacaoItem = document.createElement('div');
+             const atualizacaoItem = document.createElement('div');
             atualizacaoItem.className = 'atualizacao-item';
             atualizacaoItem.innerHTML = `
                 <div class="atualizacao-header">
@@ -543,10 +668,14 @@ async function excluirAtualizacao(idAtualizacao) {
         alert(`Erro ao excluir atualização: ${error.message}`);
     }
 }
+
 function fecharModalEncontro() {
     document.getElementById('modal-encontro').style.display = 'none';
     document.getElementById('overlay').style.display = 'none';
 }
+
 function abrirMenuDenuncia(idAtualizacao) {
     console.log('Abrir menu de denúncia para atualização:', idAtualizacao);
 }
+
+           

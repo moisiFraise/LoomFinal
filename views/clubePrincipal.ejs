@@ -121,7 +121,19 @@
                 <!-- Modal de Seleção de Leitura -->
                 <div class="form-container" id="modal-selecao-leitura" style="display: none;">
                     <form id="form-selecao-leitura">
-                        <h2>Selecionar Nova Leitura</h2>            
+                        <h2>Selecionar Nova Leitura</h2>
+                        
+                        <!-- Abas de navegação -->
+                        <div class="tabs-container">
+                            <div class="tab-item tab-ativo" data-tab="buscar" onclick="mudarTabSelecaoLeitura('buscar')">
+                                <i class="fa fa-search"></i> Buscar Livros
+                            </div>
+                            <div class="tab-item" data-tab="sugestoes" onclick="mudarTabSelecaoLeitura('sugestoes')">
+                                <i class="fa fa-lightbulb-o"></i> Sugestões dos Membros
+                            </div>
+                        </div>
+                        
+                        <!-- Conteúdo da aba Buscar -->
                         <div id="tab-buscar" class="tab-content" style="display: block;">
                             <p class="form-subtitulo">Buscar por título ou autor</p>
                             <div class="search-container">
@@ -134,6 +146,15 @@
                             <div id="search-results" class="search-results">
                             </div>
                         </div>
+                        
+                        <!-- Conteúdo da aba Sugestões -->
+                        <div id="tab-sugestoes" class="tab-content" style="display: none;">
+                            <p class="form-subtitulo">Sugestões dos membros do clube</p>
+                            <div id="sugestoes-lista" class="sugestoes-lista">
+                                <div class="carregando">Carregando sugestões...</div>
+                            </div>
+                        </div>
+                        
                         <div id="selected-book-container" style="display: none;" class="selected-book">
                             <div id="selected-book-cover" class="selected-book-cover"></div>
                             <div class="selected-book-info">
@@ -254,8 +275,7 @@
                                 <input type="url" id="link-encontro" placeholder="Ex: https://meet.google.com/...">
                             </div>
                         </div>
-                        
-                        <div class="form-actions">
+                    <div class="form-actions">                        <div class="form-actions">
                             <button type="submit" class="botao-moderno">
                                 <i class="fa fa-save"></i> Salvar
                             </button>
@@ -280,3 +300,4 @@
     <%- include('partials/imports') %>
 </body>
 </html>
+

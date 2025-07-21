@@ -68,16 +68,26 @@ const sessionStore = new MySQLStore({
   }
 });
 
+// Testar conexão do store
+sessionStore.onReady(() => {
+  console.log('MySQLStore conectado e pronto');
+});
+
+sessionStore.on('error', (error) => {
+  console.error('Erro no MySQLStore:', error);
+});
+
 app.use(session({
   key: 'loom_session',
   secret: process.env.SESSION_SECRET,
   store: sessionStore,
   resave: false,
   saveUninitialized: false,
+  rolling: true, // Renovar cookie a cada requisição
   cookie: { 
-    secure: false,
+    secure: false, // true apenas em HTTPS
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000, 
+    maxAge: 24 * 60 * 60 * 1000, // 24 horas
     sameSite: 'lax'
   }
 }));
@@ -157,6 +167,7 @@ app.post('/api/cadastro', async (req, res) => {
 app.post('/api/login', async (req, res) => {
   try {
     console.log('Tentativa de login:', req.body.email);
+    console.log('Sessão antes do login:', req.session);
     
     if (!req.body.email || !req.body.senha) {
       return res.status(400).json({ erro: 'Email e senha são obrigatórios.' });
@@ -178,23 +189,39 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ erro: 'Email ou senha incorretos.' });
     }
     
+    // Regenerar sessão para segurança
     req.session.regenerate(function(err) {
       if (err) {
         console.error('Erro ao regenerar sessão:', err);
         return res.status(500).json({ erro: 'Erro ao processar o login. Problema com a sessão.' });
       }
       
+      // Definir dados da sessão
       req.session.userId = usuario.id;
       req.session.userType = usuario.tipo;
       req.session.authenticated = true;
+      req.session.email = usuario.email; // Adicionar email também
       
+      console.log('Dados definidos na sessão:', {
+        userId: req.session.userId,
+        userType: req.session.userType,
+        authenticated: req.session.authenticated,
+        email: req.session.email
+      });
+      
+      // Salvar sessão explicitamente
       req.session.save(function(err) {
         if (err) {
           console.error('Erro ao salvar sessão:', err);
           return res.status(500).json({ erro: 'Erro ao processar o login. Problema ao salvar a sessão.' });
         }
         
-        console.log('Sessão salva com sucesso. ID do usuário:', req.session.userId);
+        console.log('Sessão salva com sucesso. Dados finais:', {
+          sessionID: req.sessionID,
+          userId: req.session.userId,
+          userType: req.session.userType,
+          authenticated: req.session.authenticated
+        });
         
         res.status(200).json({ 
           mensagem: 'Login realizado com sucesso!',
@@ -203,7 +230,8 @@ app.post('/api/login', async (req, res) => {
             nome: usuario.nome, 
             email: usuario.email,
             tipo: usuario.tipo
-          }
+          },
+          sessionId: req.sessionID // Para debug
         });
       });
     });
@@ -211,22 +239,10 @@ app.post('/api/login', async (req, res) => {
     console.error('Erro detalhado no login:', error);
     res.status(500).json({ 
       erro: 'Erro ao processar o login. Tente novamente.',
-      detalhes: process.env.NODE_ENV === 'production' ? error.message : undefined
+      detalhes: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
-function verificarAutenticacao(req, res, next) {
-  console.log('Verificando autenticação, sessão:', req.session);
-  console.log('userId na sessão:', req.session.userId);
-  
-  if (!req.session.userId) {
-    console.log('Usuário não autenticado, redirecionando para /autenticacao');
-    return res.redirect('/autenticacao');
-  }
-  
-  console.log('Usuário autenticado, continuando...');
-  next();
-}
 app.get('/dashboard', verificarAutenticacao, async (req, res) => {
   try {
     const usuario = await Usuario.buscarPorId(req.session.userId);
@@ -1787,6 +1803,133 @@ app.get('/api/debug/encontros/criar', verificarAutenticacao, async (req, res) =>
       detalhes: error.message,
       stack: error.stack
     });
+  }
+});
+// Adicionar estas rotas após as rotas existentes de encontros
+
+// Rota para listar sugestões de um clube
+app.get('/api/clube/:id/sugestoes', verificarAutenticacao, async (req, res) => {
+  try {
+    const clubeId = req.params.id;
+    const userId = req.session.userId;
+    
+    // Verificar se o usuário é membro do clube
+    const [participacoes] = await pool.query(
+      'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
+      [userId, clubeId]
+    );
+    
+    if (participacoes.length === 0) {
+      return res.status(403).json({ erro: 'Você não é membro deste clube' });
+    }
+    
+    // Buscar sugestões do clube
+    const [sugestoes] = await pool.query(`
+      SELECT s.*, u.nome as nome_usuario
+      FROM sugestoes s
+      JOIN usuarios u ON s.id_usuario = u.id
+      WHERE s.id_clube = ?
+      ORDER BY s.data_sugestao DESC
+    `, [clubeId]);
+    
+    res.json(sugestoes);
+  } catch (error) {
+    console.error('Erro ao listar sugestões:', error);
+    res.status(500).json({ erro: 'Erro ao listar sugestões do clube' });
+  }
+});
+
+// Rota para criar uma nova sugestão
+app.post('/api/clube/:id/sugestoes', verificarAutenticacao, async (req, res) => {
+  try {
+    const clubeId = req.params.id;
+    const userId = req.session.userId;
+    const { titulo, autor, justificativa } = req.body;
+    
+    if (!titulo) {
+      return res.status(400).json({ erro: 'Título do livro é obrigatório' });
+    }
+    
+    // Verificar se o usuário é membro do clube
+    const [participacoes] = await pool.query(
+      'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
+      [userId, clubeId]
+    );
+    
+    if (participacoes.length === 0) {
+      return res.status(403).json({ erro: 'Você não é membro deste clube' });
+    }
+    
+    // Criar a sugestão
+    const [result] = await pool.query(
+      'INSERT INTO sugestoes (id_clube, id_usuario, titulo, autor, justificativa) VALUES (?, ?, ?, ?, ?)',
+      [clubeId, userId, titulo, autor || null, justificativa || null]
+    );
+    
+    // Buscar a sugestão criada com o nome do usuário
+    const [novaSugestao] = await pool.query(`
+      SELECT s.*, u.nome as nome_usuario
+      FROM sugestoes s
+      JOIN usuarios u ON s.id_usuario = u.id
+      WHERE s.id = ?
+    `, [result.insertId]);
+    
+    res.status(201).json({
+      mensagem: 'Sugestão criada com sucesso',
+      sugestao: novaSugestao[0]
+    });
+  } catch (error) {
+    console.error('Erro ao criar sugestão:', error);
+    res.status(500).json({ erro: 'Erro ao criar sugestão' });
+  }
+});
+
+// Rota para excluir uma sugestão
+app.delete('/api/clube/:id/sugestoes/:sugestaoId', verificarAutenticacao, async (req, res) => {
+  try {
+    const clubeId = req.params.id;
+    const sugestaoId = req.params.sugestaoId;
+    const userId = req.session.userId;
+    
+    // Verificar se o usuário é membro do clube
+    const [participacoes] = await pool.query(
+      'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
+      [userId, clubeId]
+    );
+    
+    if (participacoes.length === 0) {
+      return res.status(403).json({ erro: 'Você não é membro deste clube' });
+    }
+    
+    // Verificar se a sugestão existe e pertence ao usuário ou se o usuário é criador do clube
+    const [sugestoes] = await pool.query(
+      'SELECT * FROM sugestoes WHERE id = ? AND id_clube = ?',
+      [sugestaoId, clubeId]
+    );
+    
+    if (sugestoes.length === 0) {
+      return res.status(404).json({ erro: 'Sugestão não encontrada' });
+    }
+    
+    const [clubes] = await pool.query(
+      'SELECT id_criador FROM clubes WHERE id = ?',
+      [clubeId]
+    );
+    
+    const isCriador = clubes.length > 0 && clubes[0].id_criador === userId;
+    const isAutor = sugestoes[0].id_usuario === userId;
+    
+    if (!isCriador && !isAutor) {
+      return res.status(403).json({ erro: 'Você não tem permissão para excluir esta sugestão' });
+    }
+    
+    // Excluir a sugestão
+    await pool.query('DELETE FROM sugestoes WHERE id = ?', [sugestaoId]);
+    
+    res.json({ mensagem: 'Sugestão excluída com sucesso' });
+  } catch (error) {
+    console.error('Erro ao excluir sugestão:', error);
+    res.status(500).json({ erro: 'Erro ao excluir sugestão' });
   }
 });
 app.get('/denuncias', verificarAutenticacao, async (req, res) => {
