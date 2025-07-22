@@ -18,69 +18,386 @@
 
 .leituras-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 20px;
 }
 
 .leitura-card {
-    background: var(--card-bg);
+    background-color: var(--current-line);
+    border: 2px solid var(--roxo);
     border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 16px;
+    box-shadow: 0 8px 20px rgba(189, 147, 249, 0.2);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 10px;
+    color: var(--foreground);
 }
 
 .leitura-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(189, 147, 249, 0.3);
 }
 
-.leitura-imagem {
-    height: 200px;
-    background-size: cover;
-    background-position: center;
-    background-color: var(--background-secondary);
+.leitura-card h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: var(--foreground);
 }
 
-.leitura-info {
-    padding: 15px;
+.leitura-card p {
+    font-size: 0.875rem;
+    color: var(--paragrafo);
+}
+
+.leitura-card .botao {
+    background: linear-gradient(45deg, var(--roxo), var(--rosa));
+    color: var(--current-line);
+    padding: 10px;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.leitura-card .botao:hover {
+    transform: scale(1.03);
+    box-shadow: 0 6px 15px rgba(189, 147, 249, 0.3);
+}
+
+.leitura-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
 }
 
 .leitura-info h4 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--foreground);
     margin: 0 0 10px 0;
-    font-size: 1.1rem;
+    background: linear-gradient(45deg, var(--foreground), var(--roxo));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
-.leitura-info p {
-    margin: 5px 0;
-    font-size: 0.9rem;
-    color: var(--text-muted);
-}
-
-.leitura-datas {
+.leitura-meta {
     display: flex;
-    justify-content: space-between;
-    margin-top: 10px;
-    font-size: 0.8rem;
-}
-
-.leitura-status {
-    display: inline-block;
-    padding: 3px 8px;
-    border-radius: 12px;
-    font-size: 0.8rem;
+    flex-wrap: wrap;
+    gap: 15px;
     margin-bottom: 10px;
 }
 
-.leitura-status.atual {
-    background-color: var(--verde);
-    color: white;
+.leitura-autor,
+.leitura-paginas {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: var(--paragrafo);
 }
 
-.leitura-status.anterior {
-    background-color: var(--roxo-claro);
-    color: white;
+.leitura-autor i,
+.leitura-paginas i {
+    color: var(--roxo);
+    width: 16px;
+    text-align: center;
 }
+
+.leitura-capa-pequena {
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--background);
+    overflow: hidden;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+.leitura-capa-pequena img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.leitura-detalhes {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.leitura-descricao {
+    margin-bottom: 15px;
+    color: var(--paragrafo);
+    line-height: 1.6;
+    padding: 12px;
+    background: var(--current-line);
+    border-radius: 10px;
+    border-left: 4px solid var(--roxo);
+}
+
+.leitura-info-pequena {
+    padding: 15px;
+}
+
+.leitura-info-pequena h5 {
+    margin: 0 0 8px 0;
+    font-size: 1.1rem;
+    color: var(--foreground);
+    font-weight: 600;
+}
+
+.leitura-info-pequena p {
+    margin: 4px 0;
+    font-size: 0.9rem;
+    color: var(--paragrafo);
+}
+
+.leitura-info-pequena small {
+    font-size: 0.8rem;
+    color: var(--paragrafo);
+    opacity: 0.8;
+}
+
+.leitura-participantes {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 15px;
+    border-top: 2px solid var(--current-line);
+}
+
+.participantes-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--paragrafo);
+    font-size: 0.9rem;
+    background: var(--current-line);
+    padding: 8px 12px;
+    border-radius: 10px;
+    border-left: 4px solid var(--roxo);
+}
+
+.participantes-info i {
+    color: var(--roxo);
+}
+
+.leitura-acoes {
+    padding: 0;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.botao-ver-atualizacoes {
+    padding: 8px 16px;
+    border: 2px solid var(--roxo);
+    border-radius: 12px;
+    background: var(--current-line);
+    color: var(--roxo);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex: 1;
+    justify-content: center;
+}
+
+.botao-ver-atualizacoes:hover {
+    background: var(--roxo);
+    color: var(--current-line);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(189, 147, 249, 0.3);
+}
+
+.botao-ver-atualizacoes.ativo {
+    background: linear-gradient(45deg, var(--roxo), var(--rosa));
+    color: var(--current-line);
+    border-color: var(--roxo);
+    box-shadow: 0 4px 15px rgba(189, 147, 249, 0.4);
+}
+
+.leitura-tipo {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tipo-ativa {
+    background: linear-gradient(45deg, var(--verde), var(--ciano));
+    color: var(--current-line);
+}
+
+.tipo-concluida {
+    background: linear-gradient(45deg, var(--roxo), var(--rosa));
+    color: var(--current-line);
+}
+
+.tipo-pausada {
+    background: linear-gradient(45deg, var(--laranja), var(--amarelo));
+    color: var(--foreground);
+}
+
+.leitura-acoes-admin {
+    display: flex;
+    gap: 8px;
+}
+
+.botao-pequeno {
+    padding: 8px 10px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.botao-editar {
+    background: var(--current-line);
+    color: var(--roxo);
+    border: 1px solid var(--roxo);
+}
+
+.botao-editar:hover {
+    background: var(--roxo);
+    color: var(--current-line);
+    transform: translateY(-2px);
+}
+
+.botao-excluir {
+    background: var(--current-line);
+    color: var(--vermelho);
+    border: 1px solid var(--vermelho);
+}
+
+.botao-excluir:hover {
+    background: var(--vermelho);
+    color: var(--current-line);
+    transform: translateY(-2px);
+}
+
+.leitura-passada {
+    opacity: 0.7;
+    position: relative;
+}
+
+.leitura-passada::before {
+    content: "Leitura Concluída";
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: var(--paragrafo);
+    color: var(--current-line);
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.leitura-atual-detalhada {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    background: var(--current-line);
+    border: 2px solid var(--verde);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 15px;
+    box-shadow: 0 8px 32px rgba(0, 184, 148, 0.2);
+    transition: all 0.3s ease;
+}
+
+.leitura-atual-detalhada:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(0, 184, 148, 0.3);
+}
+
+.leitura-atual-detalhada .leitura-capa {
+    width: 120px;
+    height: 180px;
+    flex-shrink: 0;
+}
+
+.leitura-atual-detalhada .leitura-capa img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.leitura-atual-detalhada .leitura-info {
+    flex: 1;
+}
+
+.leitura-atual-detalhada .leitura-info h4 {
+    margin: 0 0 10px 0;
+    font-size: 1.3rem;
+    color: var(--foreground);
+}
+
+.leitura-atual-detalhada .leitura-info p {
+    margin: 8px 0;
+    color: var(--paragrafo);
+}
+
+.leitura-atual-detalhada .leitura-acoes {
+    padding: 0;
+    margin-top: 15px;
+}
+
+.sem-leituras {
+    text-align: center;
+    padding: 40px 20px;
+    background: var(--current-line);
+    border: 2px dashed var(--roxo);
+    border-radius: 15px;
+    color: var(--paragrafo);
+    grid-column: 1 / -1;
+}
+
+.sem-leituras i {
+    font-size: 3rem;
+    color: var(--roxo);
+    margin-bottom: 15px;
+}
+
+.sem-leituras h4 {
+    color: var(--foreground);
+    margin-bottom: 10px;
+}
+
+.sem-leitura {
+    text-align: center;
+    padding: 20px;
+    color: var(--paragrafo);
+    font-style: italic;
+}
+
+/* Resto do CSS permanece igual... */
 #cancelarLeitura {
     background: linear-gradient(45deg, var(--vermelho), var(--laranja));
     color: var(--foreground);
@@ -96,6 +413,7 @@
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(248, 28, 28, 0.4);
 }
+
 .overlay {
     position: fixed;
     top: 0;
@@ -106,6 +424,7 @@
     backdrop-filter: blur(5px);
     z-index: 1000;
 }
+
 #modal-selecao-leitura {
     position: fixed;
     top: 50%;
@@ -121,12 +440,14 @@
     padding: 20px;
     box-shadow: 0 4px 12px rgba(17, 41, 255, 0.736);
 }
+
 #form-selecao-leitura {
     padding: 5px;
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
+
 #confirmarLeitura, #cancelarLeitura {
     margin-top: 5px;
     margin-bottom: 5px;
@@ -182,6 +503,7 @@
 .search-input input {
     flex: 1;
 }
+
 .search-results {
     max-height: 300px;
     overflow-y: auto;
@@ -191,136 +513,3 @@
     margin-top: 15px;
 }
 
-.book-result {
-    cursor: pointer;
-    border-radius: 8px;
-    overflow: hidden;
-    transition: transform 0.2s ease;
-}
-
-.book-result:hover {
-    transform: scale(1.05);
-}
-
-.book-cover {
-    height: 180px;
-    background-size: cover;
-    background-position: center;
-    background-color: var(--background-secondary);
-}
-
-.book-info {
-    padding: 10px;
-    background-color: var(--card-bg);
-}
-
-.book-info h4 {
-    margin: 0 0 5px 0;
-    font-size: 0.9rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.book-info p {
-    margin: 0;
-    font-size: 0.8rem;
-    color: var(--text-muted);
-}
-
-.selected-book {
-    background-color: var(--current-line);
-    border-radius: 8px;
-    padding: 15px;
-    margin-top: 15px;
-    margin-bottom: 15px;
-    display: flex;
-    gap: 15px;
-}
-
-.selected-book-cover {
-    width: 80px;
-    height: 120px;
-    background-size: cover;
-    background-position: center;
-    border-radius: 4px;
-}
-
-.selected-book-info {
-    flex: 1;
-}
-
-.selected-book-info h4 {
-    margin: 0 0 8px 0;
-}
-
-.selected-book-info p {
-    margin: 4px 0;
-    font-size: 14px;
-}
-
-.mensagem-vazia {
-    text-align: center;
-    padding: 20px;
-    color: var(--text-muted);
-    font-style: italic;
-}
-
-.erro-carregamento {
-    text-align: center;
-    padding: 20px;
-    color: var(--vermelho);
-    font-weight: bold;
-}
-
-.carregando {
-    text-align: center;
-    padding: 20px;
-    color: var(--text-primary);
-    font-style: italic;
-}
-h2 {
-    color: var(--roxo);
-    text-align: center;
-    font-size: 24px;
-    margin-bottom: 15px;
-    font-weight: 600;
-    text-shadow: 0 0 8px var(--roxo);
-}
-input[type="date"] {
-    height: 38px;
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    background-color: var(--input-bg);
-    color: var(--text-primary);
-    font-family: inherit;
-    width: 100%;
-    margin-bottom: 10px;
-}
-
-input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(0.7);
-    cursor: pointer;
-    opacity: 0.8;
-    padding: 4px;
-}
-
-input[type="date"]::-webkit-calendar-picker-indicator:hover {
-    opacity: 1;
-}
-
-input[type="date"]:focus {
-    outline: none;
-    border-color: var(--roxo);
-    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.25);
-}
-
-input[type="date"]::placeholder {
-    color: var(--text-muted);
-}
-
-.selected-book-info input[type="date"] {
-    margin-top: 5px;
-    margin-bottom: 15px;
-}

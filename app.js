@@ -1518,6 +1518,108 @@ app.get('/api/clube/:id/atualizacoes/:atualizacaoId/curtidas', verificarAutentic
     res.status(500).json({ erro: 'Erro ao verificar curtidas' });
   }
 });
+app.get('/clube/:clubeId/leitura/:idLeitura/atualizacoes', verificarAutenticacao, async (req, res) => {
+    try {
+        const { clubeId, idLeitura } = req.params;
+        const { titulo } = req.query;
+        const userId = req.session.userId;
+        
+        const [participacoes] = await pool.query(
+            'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
+            [userId, clubeId]
+        );
+        
+        if (participacoes.length === 0) {
+            return res.redirect('/dashboard');
+        }
+        
+        const [leitura] = await pool.query(
+            'SELECT * FROM leituras WHERE id = ? AND id_clube = ?',
+            [idLeitura, clubeId]
+        );
+        
+        if (leitura.length === 0) {
+            return res.redirect(`/clube/${clubeId}`);
+        }
+        
+        const usuario = await Usuario.buscarPorId(userId);
+        
+        res.render('atualizacoesLeitura', {
+            titulo: `Atualizações - ${titulo || leitura[0].titulo}`,
+            clubeId,
+            idLeitura,
+            tituloLeitura: titulo || leitura[0].titulo,
+            userId: userId,
+            userType: usuario ? usuario.tipo : null
+        });
+        
+    } catch (error) {
+        console.error('Erro ao carregar página de atualizações:', error);
+        res.redirect('/dashboard');
+    }
+});
+app.get('/api/clube/:clubeId/leitura/:idLeitura', verificarAutenticacao, async (req, res) => {
+    try {
+        const { clubeId, idLeitura } = req.params;
+        const userId = req.session.userId;
+        
+        const [participacoes] = await pool.query(
+            'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
+            [userId, clubeId]
+        );
+        
+        if (participacoes.length === 0) {
+            return res.status(403).json({ erro: 'Você não é membro deste clube' });
+        }
+        
+        const [leitura] = await pool.query(
+            'SELECT * FROM leituras WHERE id = ? AND id_clube = ?',
+            [idLeitura, clubeId]
+        );
+        
+        if (leitura.length === 0) {
+            return res.status(404).json({ erro: 'Leitura não encontrada' });
+        }
+        
+        res.json(leitura[0]);
+        
+    } catch (error) {
+        console.error('Erro ao obter informações da leitura:', error);
+        res.status(500).json({ erro: 'Erro interno do servidor' });
+    }
+});
+app.get('/api/clube/:clubeId/leitura/:idLeitura/atualizacoes', verificarAutenticacao, async (req, res) => {
+    try {
+        const { clubeId, idLeitura } = req.params;
+        const userId = req.session.userId;
+        
+        const [participacoes] = await pool.query(
+            'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
+            [userId, clubeId]
+        );
+        
+        if (participacoes.length === 0) {
+            return res.status(403).json({ erro: 'Você não é membro deste clube' });
+        }
+        
+        const [leitura] = await pool.query(
+            'SELECT * FROM leituras WHERE id = ? AND id_clube = ?',
+            [idLeitura, clubeId]
+        );
+        
+        if (leitura.length === 0) {
+            return res.status(404).json({ erro: 'Leitura não encontrada' });
+        }
+        
+        const resultado = await Atualizacoes.listarPorLeitura(clubeId, idLeitura);
+        
+        res.json(resultado);
+        
+    } catch (error) {
+        console.error('Erro ao obter atualizações da leitura:', error);
+        res.status(500).json({ erro: 'Erro interno do servidor' });
+    }
+});
 app.get('/api/clube/:id/encontros', verificarAutenticacao, async (req, res) => {
     try {
         const clubeId = req.params.id;

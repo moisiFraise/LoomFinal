@@ -863,19 +863,25 @@ async function carregarLeiturasClube(clubeId) {
                                 <img src="${data.leituraAtual.imagemUrl}" alt="${data.leituraAtual.titulo}">
                             </div>
                         ` : ''}
-                        <div class="leitura-info">
+                         <div class="leitura-info">
                             <h4>${data.leituraAtual.titulo}</h4>
                             <p><strong>Autor:</strong> ${data.leituraAtual.autor || 'Não informado'}</p>
                             ${data.leituraAtual.paginas ? `<p><strong>Páginas:</strong> ${data.leituraAtual.paginas}</p>` : ''}
                             <p><strong>Início:</strong> ${new Date(data.leituraAtual.data_inicio).toLocaleDateString('pt-BR')}</p>
                             ${data.leituraAtual.data_fim ? `<p><strong>Previsão de término:</strong> ${new Date(data.leituraAtual.data_fim).toLocaleDateString('pt-BR')}</p>` : ''}
+                            <div class="leitura-acoes">
+                                <button class="botao-ver-atualizacoes" onclick="verAtualizacoesLeitura(${data.leituraAtual.id}, '${escapeHtml(data.leituraAtual.titulo)}')">
+                                    <i class="fa fa-comments"></i> Ver Atualizações
+                                </button>
+                            </div>
                         </div>
                     </div>
                 `;
             } else {
                 leituraAtualContainer.innerHTML = '<p class="sem-leitura">Nenhum livro selecionado para leitura atual.</p>';
             }
-                        const leiturasAnterioresGrid = document.getElementById('leituras-anteriores-grid');
+            
+            const leiturasAnterioresGrid = document.getElementById('leituras-anteriores-grid');
             if (data.leiturasAnteriores && data.leiturasAnteriores.length > 0) {
                 leiturasAnterioresGrid.innerHTML = data.leiturasAnteriores.map(leitura => `
                     <div class="leitura-card">
@@ -883,11 +889,22 @@ async function carregarLeiturasClube(clubeId) {
                             <div class="leitura-capa-pequena">
                                 <img src="${leitura.imagemUrl}" alt="${leitura.titulo}">
                             </div>
-                        ` : ''}
+                        ` : `
+                            <div class="leitura-capa-pequena">
+                                <div class="capa-placeholder">
+                                    <i class="fa fa-book" style="font-size: 48px; color: var(--paragrafo);"></i>
+                                </div>
+                            </div>
+                        `}
                         <div class="leitura-info-pequena">
                             <h5>${leitura.titulo}</h5>
                             <p>${leitura.autor || 'Autor não informado'}</p>
                             <small>Lido em ${new Date(leitura.data_inicio).toLocaleDateString('pt-BR')}</small>
+                        </div>
+                        <div class="leitura-acoes">
+                            <button class="botao-ver-atualizacoes" onclick="verAtualizacoesLeitura(${leitura.id}, '${escapeHtml(leitura.titulo)}')">
+                                <i class="fa fa-comments"></i> Ver Atualizações
+                            </button>
                         </div>
                     </div>
                 `).join('');
@@ -900,6 +917,9 @@ async function carregarLeiturasClube(clubeId) {
     } catch (error) {
         console.error('Erro ao carregar leituras:', error);
     }
+}
+function verAtualizacoesLeitura(idLeitura, tituloLeitura) {
+    window.location.href = `/clube/${clubeId}/leitura/${idLeitura}/atualizacoes?titulo=${encodeURIComponent(tituloLeitura)}`;
 }
 
 async function carregarMembrosCompleto(clubeId) {
@@ -939,7 +959,6 @@ async function carregarMembrosCompleto(clubeId) {
         document.getElementById('clube-membros-lista-completa').innerHTML = '<p class="erro-membros">Erro ao conectar com o servidor.</p>';
     }
 }
-
 function voltarParaTelaAnterior() {
     window.history.back();
 }
@@ -1049,6 +1068,9 @@ async function carregarSugestoesModal() {
         document.getElementById('sugestoes-lista-modal').innerHTML = 
             '<div class="erro-carregamento">Erro ao carregar sugestões</div>';
     }
+}
+async function carregarLeituras() {
+    await carregarLeiturasClube(clubeId);
 }
 
 function selecionarSugestaoComoLeitura(sugestao) {
