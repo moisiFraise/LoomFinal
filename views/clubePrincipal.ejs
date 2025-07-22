@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="/css/atualizacoes.css">
     <link rel="stylesheet" href="/css/encontros.css">
     <link rel="stylesheet" href="/css/sugestoes.css">
+    <link rel="stylesheet" href="/css/sorteio.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <title><%= titulo %></title>
 </head>
@@ -217,9 +218,11 @@
                             <div class="tab-item" data-tab="sugestoes" onclick="mudarTabSelecaoLeitura('sugestoes')">
                                 <i class="fa fa-lightbulb-o"></i> Sugestões dos Membros
                             </div>
+                            <div class="tab-item" data-tab="sorteio" onclick="mudarTabSelecaoLeitura('sorteio')">
+                                <i class="fa fa-random"></i> Sorteio de Sugestões
+                            </div>
                         </div>
-                        
-                        <!-- Conteúdo da aba Buscar -->
+                                                <!-- Conteúdo da aba Buscar -->
                         <div id="tab-buscar" class="tab-content" style="display: block;">
                             <p class="form-subtitulo">Buscar por título ou autor</p>
                             <div class="search-container">
@@ -238,6 +241,14 @@
                             <p class="form-subtitulo">Sugestões dos membros do clube</p>
                             <div id="sugestoes-lista-modal" class="sugestoes-lista">
                                 <div class="carregando">Carregando sugestões...</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Conteúdo da aba Sorteio -->
+                        <div id="tab-sorteio" class="tab-content" style="display: none;">
+                            <p class="form-subtitulo">Selecione as sugestões que participarão do sorteio</p>
+                            <div id="sugestoes-sorteio-lista" class="sugestoes-sorteio-lista">
+                                <div class="carregando">Carregando sugestões para sorteio...</div>
                             </div>
                         </div>
                         
@@ -263,6 +274,34 @@
                         <button type="button" id="confirmarLeitura" class="botao-moderno" onclick="salvarNovaLeitura()">Confirmar</button>
                         <button type="button" id="cancelarLeitura" onclick="fecharModalSelecaoLeitura()">Cancelar</button>
                     </form>
+                </div>
+                
+                <!-- Modal de Sorteio -->
+                <div id="overlay-sorteio" class="overlay" style="display: none;"></div>
+                <div id="modal-sorteio" class="modal-sorteio" style="display: none;">
+                    <div class="sorteio-container">
+                        <h2>Sorteio de Livro</h2>
+                        
+                        <div id="participantes-sorteio" class="participantes-sorteio">
+                            <!-- Será preenchido dinamicamente -->
+                        </div>
+                        
+                        <div id="resultado-sorteio" class="resultado-sorteio">
+                            <!-- Resultado do sorteio será mostrado aqui -->
+                        </div>
+                        
+                        <div class="sorteio-acoes">
+                            <button type="button" id="confirmar-sorteio" class="botao-moderno" onclick="confirmarSorteio()" style="display: none;">
+                                <i class="fa fa-check"></i> Selecionar Este Livro
+                            </button>
+                            <button type="button" id="novo-sorteio" class="botao-secundario" onclick="iniciarAnimacaoSorteio()" style="display: none;">
+                                <i class="fa fa-refresh"></i> Sortear Novamente
+                            </button>
+                            <button type="button" class="botao-cancelar" onclick="fecharModalSorteio()">
+                                <i class="fa fa-times"></i> Fechar
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- Modal de Atualização -->

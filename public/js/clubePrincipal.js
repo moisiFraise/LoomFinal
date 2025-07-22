@@ -4,6 +4,7 @@ let livroSelecionado = null;
 let sugestaoSelecionada = null;
 let resultadosBusca = [];
 let atualizacaoEditando = null;
+let sugestoesSorteio = []; // Nova variável para controlar sugestões do sorteio
 
 document.addEventListener('DOMContentLoaded', function() {
     if (typeof clubeId !== 'undefined') {
@@ -179,6 +180,7 @@ function atualizarLeituraAtual(leitura) {
         imagemContainer.innerHTML = '';
     }
 }
+
 async function verificarPermissoesCriador() {
     try {
         const response = await fetch(`/api/clube/${clubeId}/permissoes`);
@@ -224,6 +226,7 @@ async function verificarPermissoesCriador() {
         console.error('Erro ao verificar permissões:', error);
     }
 }
+
 function abrirModalSelecaoLeitura() {
     const modal = document.getElementById('modal-selecao-leitura');
     const overlay = document.getElementById('overlay');
@@ -234,6 +237,7 @@ function abrirModalSelecaoLeitura() {
     livroSelecionado = null;
     sugestaoSelecionada = null;
     resultadosBusca = [];
+    sugestoesSorteio = []; // Limpar sugestões do sorteio
     
     mudarTabSelecaoLeitura('buscar');
     
@@ -267,11 +271,296 @@ function mudarTabSelecaoLeitura(tab) {
     
     if (tab === 'sugestoes') {
         carregarSugestoesParaModal();
+    } else if (tab === 'sorteio') {
+        carregarSugestoesParaSorteio();
     }
     
     document.getElementById('selected-book-container').style.display = 'none';
     livroSelecionado = null;
     sugestaoSelecionada = null;
+}
+
+// Nova função para carregar sugestões para sorteio
+async function carregarSugestoesParaSorteio() {
+    try {
+        const response = await fetch(`/api/clube/${clubeId}/sugestoes`);
+        const data = await response.json();
+        
+        const container = document.getElementById('sugestoes-sorteio-lista');
+        
+        if (response.ok && data.length > 0) {
+            window.sugestoesSorteioDisponiveis = data;
+            container.innerHTML = data.map((sugestao, index) => `
+                <div class="sugestao-sorteio-item" data-index="${index}">
+                    <div class="sugestao-checkbox">
+                        <input type="checkbox" id="sorteio-${index}" onchange="toggleSugestaoSorteio(${index})">
+                    </div>
+                    <div class="sugestao-info">
+                        <h4>${escapeHtml(sugestao.titulo)}</h4>
+                        <p>${sugestao.autor ? `por ${escapeHtml(sugestao.autor)}` : 'Autor não informado'}</p>
+                        ${sugestao.paginas ? `<p>${sugestao.paginas} páginas</p>` : ''}
+                        <small>Sugerido por ${escapeHtml(sugestao.nome_usuario)}</small>
+                    </div>
+                    ${sugestao.imagemUrl ? `<img src="${sugestao.imagemUrl}" alt="${escapeHtml(sugestao.titulo)}" class="sugestao-capa-pequena">` : ''}
+                </div>
+            `).join('');
+            
+            // Adicionar botões de controle
+            container.innerHTML += `
+                <div class="sorteio-controles">
+                    <div class="sorteio-acoes">
+                        <button type="button" class="botao-secundario" onclick="selecionarTodasSugestoes()">
+                            <i class="fa fa-check-square-o"></i> Selecionar Todas
+                        </button>
+                        <button type="button" class="botao-secundario" onclick="desmarcarTodasSugestoes()">
+                            <i class="fa fa-square-o"></i> Desmarcar Todas
+                        </button>
+                    </div>
+                    <div class="contador-selecionadas">
+                        <span id="contador-sugestoes">0 sugestões selecionadas</span>
+                    </div>
+                    <button type="button" class="botao-sorteio" onclick="realizarSorteio()" disabled>
+                        <i class="fa fa-random"></i> Sortear Livro
+                    </button>
+                </div>
+            `;
+        } else {
+            container.innerHTML = '<div class="sem-sugestoes">Nenhuma sugestão disponível para sorteio</div>';
+        }
+    } catch (error) {
+        console.error('Erro ao carregar sugestões para sorteio:', error);
+        document.getElementById('sugestoes-sorteio-lista').innerHTML = '<div class="erro-sugestoes">Erro ao carregar sugestões</div>';
+    }
+}
+// Função para alternar seleção de sugestão no sorteio
+function toggleSugestaoSorteio(index) {
+    const checkbox = document.getElementById(`sorteio-${index}`);
+    const sugestao = window.sugestoesSorteioDisponiveis[index];
+    
+    if (checkbox.checked) {
+        // Adicionar à lista de sorteio
+        if (!sugestoesSorteio.find(s => s.id === sugestao.id)) {
+            sugestoesSorteio.push(sugestao);
+        }
+    } else {
+        // Remover da lista de sorteio
+        sugestoesSorteio = sugestoesSorteio.filter(s => s.id !== sugestao.id);
+    }
+    
+    atualizarContadorSugestoes();
+}
+
+// Função para selecionar todas as sugestões
+function selecionarTodasSugestoes() {
+    if (!window.sugestoesSorteioDisponiveis) return;
+    
+    window.sugestoesSorteioDisponiveis.forEach((sugestao, index) => {
+        const checkbox = document.getElementById(`sorteio-${index}`);
+        if (checkbox && !checkbox.checked) {
+            checkbox.checked = true;
+            if (!sugestoesSorteio.find(s => s.id === sugestao.id)) {
+                sugestoesSorteio.push(sugestao);
+            }
+        }
+    });
+    
+    atualizarContadorSugestoes();
+}
+
+// Função para desmarcar todas as sugestões
+function desmarcarTodasSugestoes() {
+    if (!window.sugestoesSorteioDisponiveis) return;
+    
+    window.sugestoesSorteioDisponiveis.forEach((sugestao, index) => {
+        const checkbox = document.getElementById(`sorteio-${index}`);
+        if (checkbox && checkbox.checked) {
+            checkbox.checked = false;
+        }
+    });
+    
+    sugestoesSorteio = [];
+    atualizarContadorSugestoes();
+}
+
+// Função para atualizar contador e botão de sorteio
+function atualizarContadorSugestoes() {
+    const contador = document.getElementById('contador-sugestoes');
+    const botaoSorteio = document.querySelector('.botao-sorteio');
+    
+    if (contador) {
+        const quantidade = sugestoesSorteio.length;
+        contador.textContent = `${quantidade} ${quantidade === 1 ? 'sugestão selecionada' : 'sugestões selecionadas'}`;
+    }
+    
+    if (botaoSorteio) {
+        botaoSorteio.disabled = sugestoesSorteio.length === 0;
+    }
+}
+
+// Função para realizar o sorteio
+function realizarSorteio() {
+    if (sugestoesSorteio.length === 0) {
+        mostrarAlerta('Selecione pelo menos uma sugestão para o sorteio', 'erro');
+        return;
+    }
+    
+    // Mostrar modal de sorteio
+    mostrarModalSorteio();
+}
+
+// Função para mostrar modal de sorteio com animação
+function mostrarModalSorteio() {
+    const modalSorteio = document.getElementById('modal-sorteio');
+    const overlaySorteio = document.getElementById('overlay-sorteio');
+    
+    modalSorteio.style.display = 'block';
+    overlaySorteio.style.display = 'block';
+    
+    // Iniciar animação de sorteio
+    iniciarAnimacaoSorteio();
+}
+
+// Função para fechar modal de sorteio
+function fecharModalSorteio() {
+    const modalSorteio = document.getElementById('modal-sorteio');
+    const overlaySorteio = document.getElementById('overlay-sorteio');
+    
+    modalSorteio.style.display = 'none';
+    overlaySorteio.style.display = 'none';
+}
+
+// Função para iniciar animação de sorteio
+function iniciarAnimacaoSorteio() {
+    const resultadoContainer = document.getElementById('resultado-sorteio');
+    const botaoConfirmarSorteio = document.getElementById('confirmar-sorteio');
+    const botaoNovoSorteio = document.getElementById('novo-sorteio');
+    
+    // Resetar estado
+    resultadoContainer.innerHTML = '';
+    botaoConfirmarSorteio.style.display = 'none';
+    botaoNovoSorteio.style.display = 'none';
+    
+    // Mostrar sugestões participantes
+    const participantesContainer = document.getElementById('participantes-sorteio');
+    participantesContainer.innerHTML = `
+        <h4>Participantes do sorteio (${sugestoesSorteio.length}):</h4>
+        <div class="participantes-lista">
+            ${sugestoesSorteio.map(sugestao => `
+                <div class="participante-item">
+                    ${sugestao.imagemUrl ? `<img src="${sugestao.imagemUrl}" alt="${sugestao.titulo}" class="participante-capa">` : ''}
+                    <div class="participante-info">
+                        <strong>${escapeHtml(sugestao.titulo)}</strong>
+                        <small>por ${escapeHtml(sugestao.autor || 'Autor não informado')}</small>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+    
+    // Iniciar sorteio após 2 segundos
+    setTimeout(() => {
+        executarSorteio();
+    }, 2000);
+}
+
+// Função para executar o sorteio
+function executarSorteio() {
+    const resultadoContainer = document.getElementById('resultado-sorteio');
+    
+    // Mostrar animação de sorteio
+    resultadoContainer.innerHTML = `
+        <div class="sorteio-animacao">
+            <div class="sorteio-spinner">
+                <i class="fa fa-random fa-spin"></i>
+            </div>
+            <p>Sorteando...</p>
+        </div>
+    `;
+    
+    // Simular tempo de sorteio
+    setTimeout(() => {
+        // Selecionar sugestão aleatória
+        const indiceSorteado = Math.floor(Math.random() * sugestoesSorteio.length);
+        const sugestaoSorteada = sugestoesSorteio[indiceSorteado];
+        
+        // Mostrar resultado
+        mostrarResultadoSorteio(sugestaoSorteada);
+    }, 3000);
+}
+
+// Função para mostrar resultado do sorteio
+function mostrarResultadoSorteio(sugestaoSorteada) {
+    const resultadoContainer = document.getElementById('resultado-sorteio');
+    const botaoConfirmarSorteio = document.getElementById('confirmar-sorteio');
+    const botaoNovoSorteio = document.getElementById('novo-sorteio');
+    
+    resultadoContainer.innerHTML = `
+        <div class="resultado-sorteio-card">
+            <div class="resultado-header">
+                <i class="fa fa-trophy resultado-icone"></i>
+                <h3>Livro Sorteado!</h3>
+            </div>
+            <div class="livro-sorteado">
+                ${sugestaoSorteada.imagemUrl ? `
+                    <div class="livro-sorteado-capa">
+                        <img src="${sugestaoSorteada.imagemUrl}" alt="${sugestaoSorteada.titulo}">
+                    </div>
+                ` : ''}
+                <div class="livro-sorteado-info">
+                    <h4>${escapeHtml(sugestaoSorteada.titulo)}</h4>
+                    <p><strong>Autor:</strong> ${escapeHtml(sugestaoSorteada.autor || 'Não informado')}</p>
+                    ${sugestaoSorteada.paginas ? `<p><strong>Páginas:</strong> ${sugestaoSorteada.paginas}</p>` : ''}
+                    <p><strong>Sugerido por:</strong> ${escapeHtml(sugestaoSorteada.nome_usuario)}</p>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Armazenar sugestão sorteada
+    window.sugestaoSorteada = sugestaoSorteada;
+    
+    // Mostrar botões
+    botaoConfirmarSorteio.style.display = 'inline-block';
+    botaoNovoSorteio.style.display = 'inline-block';
+}
+
+// Função para confirmar sorteio e selecionar como leitura
+function confirmarSorteio() {
+    if (!window.sugestaoSorteada) {
+        mostrarAlerta('Erro: nenhuma sugestão foi sorteada', 'erro');
+        return;
+    }
+    
+    // Fechar modal de sorteio
+    fecharModalSorteio();
+    
+    // Selecionar a sugestão sorteada
+    sugestaoSelecionada = window.sugestaoSorteada;
+    livroSelecionado = null;
+    
+    // Mostrar no container de livro selecionado
+    const container = document.getElementById('selected-book-container');
+    const coverDiv = document.getElementById('selected-book-cover');
+    const titleElement = document.getElementById('selected-book-title');
+    const authorElement = document.getElementById('selected-book-author');
+    const pagesElement = document.getElementById('selected-book-pages');
+    
+    coverDiv.innerHTML = sugestaoSelecionada.imagemUrl ? 
+        `<img src="${sugestaoSelecionada.imagemUrl}" alt="${sugestaoSelecionada.titulo}">` : 
+        `<div class="capa-placeholder"><i class="fa fa-book"></i></div>`;
+    
+    titleElement.textContent = sugestaoSelecionada.titulo;
+    authorElement.textContent = sugestaoSelecionada.autor ? `Autor: ${sugestaoSelecionada.autor}` : 'Autor não informado';
+    pagesElement.textContent = sugestaoSelecionada.paginas ? `${sugestaoSelecionada.paginas} páginas` : 'Número de páginas não informado';
+    
+    container.style.display = 'flex';
+    
+    // Configurar datas
+    setTimeout(() => {
+        configurarValidacoesDatas();
+    }, 100);
+    
+    mostrarAlerta('Livro sorteado selecionado! Configure as datas e confirme a leitura.', 'sucesso');
 }
 
 async function carregarSugestoesParaModal() {
@@ -364,8 +653,7 @@ async function buscarLivros() {
         }
         
         resultadosBusca = data.items;
-        
-        data.items.forEach((livro, index) => {
+                data.items.forEach((livro, index) => {
             const volumeInfo = livro.volumeInfo;
             const titulo = volumeInfo.title || 'Título não disponível';
             const autores = volumeInfo.authors ? volumeInfo.authors.join(', ') : 'Autor não informado';
@@ -621,12 +909,16 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target.id === 'overlay') {
             fecharModalSelecaoLeitura();
         }
+        if (e.target.id === 'overlay-sorteio') {
+            fecharModalSorteio();
+        }
     });
     
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             fecharModalSelecaoLeitura();
             fecharModalNovaSugestao();
+            fecharModalSorteio();
         }
     });
 });
@@ -693,7 +985,7 @@ async function carregarSugestoesModal() {
                         '<div class="capa-placeholder"><i class="fa fa-book"></i></div>'
                     }
                 </div>
-                <div class="sugestao-info">
+                               <div class="sugestao-info">
                     <h4>${sugestao.titulo}</h4>
                     <p>por ${sugestao.autor || 'Autor não informado'}</p>
                     ${sugestao.paginas ? `<p>${sugestao.paginas} páginas</p>` : ''}
@@ -751,5 +1043,6 @@ function selecionarSugestaoComoLeitura(sugestao) {
     console.log('Livro selecionado configurado:', livroSelecionado);
 }
 
-           
+
+        
 
