@@ -30,6 +30,8 @@ const Atualizacoes = require('./models/Atualizacoes');
 const Curtidas = require('./models/Curtidas');
 const Encontros = require('./models/Encontros');
 const Denuncias = require('./models/Denuncias');
+const Votacao = require('./models/Votacao');
+
 
 
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -1922,6 +1924,240 @@ app.delete('/api/clube/:id/sugestoes/:sugestaoId', verificarAutenticacao, async 
     res.status(500).json({ erro: 'Erro ao excluir sugestão' });
   }
 });
+app.get('/api/clube/:id/votacao', verificarAutenticacao, async (req, res) => {
+  try {
+    const clubeId = req.params.id;
+    const userId = req.session.userId;
+    
+    // Verificar se é membro do clube
+    const [participacoes] = await pool.query(
+      'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
+      [userId, clubeId]
+    );
+    
+    if (participacoes.length === 0) {
+      return res.status(403).json({ erro: 'Você não é membro deste clube' });
+    }
+    
+    const votacao = await Votacao.buscarVotacaoAtiva(clubeId);
+    
+    if (!votacao) {
+      return res.json({ votacao: null, meuVoto: null });
+    }
+    
+    // Verificar se o usuário já votou
+    const meuVoto = await Votacao.verificarVotoUsuario(votacao.id, userId);
+    
+    res.json({
+      votacao,
+      meuVoto
+    });
+  } catch (error) {
+    console.error('Erro ao buscar votação:', error);
+    res.status(500).json({ erro: 'Erro ao buscar votação do clube' });
+  }
+});
+app.post('/api/clube/:id/votacao', verificarAutenticacao, async (req, res) => {
+  try {
+    const clubeId = req.params.id;
+    const userId = req.session.userId;
+    const { titulo, descricao, dataFim, sugestoes } = req.body;
+    
+    if (!titulo || !sugestoes || sugestoes.length < 2) {
+      return res.status(400).json({ 
+        erro: 'Título e pelo menos 2 sugestões são obrigatórios' 
+      });
+    }
+    
+    // Verificar se é o criador do clube
+    const [clubeRows] = await pool.query(
+      'SELECT id_criador FROM clubes WHERE id = ?',
+      [clubeId]
+    );
+    
+    if (clubeRows.length === 0) {
+      return res.status(404).json({ erro: 'Clube não encontrado' });
+    }
+    
+    if (clubeRows[0].id_criador !== parseInt(userId)) {
+      return res.status(403).json({ 
+        erro: 'Apenas o criador do clube pode criar votações' 
+      });
+    }
+    
+    // Verificar se já existe uma votação ativa
+    const votacaoExistente = await Votacao.buscarVotacaoAtiva(clubeId);
+    if (votacaoExistente) {
+      return res.status(400).json({ 
+        erro: 'Já existe uma votação ativa neste clube' 
+      });
+    }
+    
+    // Validar data de fim se fornecida
+    if (dataFim) {
+      const dataFimDate = new Date(dataFim);
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+      
+      if (dataFimDate <= hoje) {
+        return res.status(400).json({ 
+          erro: 'A data de encerramento deve ser posterior a hoje' 
+        });
+      }
+    }
+    
+    // Verificar se todas as sugestões existem e pertencem ao clube
+    const placeholders = sugestoes.map(() => '?').join(',');
+    const [sugestoesValidas] = await pool.query(
+      `SELECT id FROM sugestoes WHERE id IN (${placeholders}) AND id_clube = ?`,
+      [...sugestoes, clubeId]
+    );
+    
+    if (sugestoesValidas.length !== sugestoes.length) {
+      return res.status(400).json({ 
+        erro: 'Uma ou mais sugestões são inválidas' 
+      });
+    }
+    
+    const novaVotacao = await Votacao.criarVotacao(
+      clubeId,
+      titulo,
+      descricao || '',
+      dataFim || null,
+      sugestoes
+    );
+    
+    res.status(201).json({
+      mensagem: 'Votação criada com sucesso',
+      votacao: novaVotacao
+    });
+  } catch (error) {
+    console.error('Erro ao criar votação:', error);
+    res.status(500).json({ erro: 'Erro ao criar votação' });
+  }
+});
+app.post('/api/clube/:id/votacao/votar', verificarAutenticacao, async (req, res) => {
+  try {
+    const clubeId = req.params.id;
+    const userId = req.session.userId;
+    const { idOpcao } = req.body;
+    
+    if (!idOpcao) {
+      return res.status(400).json({ erro: 'ID da opção é obrigatório' });
+    }
+    
+    // Verificar se é membro do clube
+    const [participacoes] = await pool.query(
+      'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
+      [userId, clubeId]
+    );
+    
+    if (participacoes.length === 0) {
+      return res.status(403).json({ erro: 'Você não é membro deste clube' });
+    }
+    
+    // Buscar votação ativa
+    const votacao = await Votacao.buscarVotacaoAtiva(clubeId);
+    if (!votacao) {
+      return res.status(404).json({ erro: 'Nenhuma votação ativa encontrada' });
+    }
+    
+    // Verificar se a opção pertence à votação
+    const opcaoValida = votacao.opcoes.find(opcao => opcao.opcao_id === parseInt(idOpcao));
+    if (!opcaoValida) {
+      return res.status(400).json({ erro: 'Opção de voto inválida' });
+    }
+    
+    // Verificar se a votação ainda está dentro do prazo (se houver)
+    if (votacao.data_fim) {
+      const agora = new Date();
+      const dataFim = new Date(votacao.data_fim);
+      if (agora > dataFim) {
+        return res.status(400).json({ erro: 'O prazo para votação já expirou' });
+      }
+    }
+    
+    await Votacao.votar(votacao.id, userId, idOpcao);
+    
+    res.json({ mensagem: 'Voto registrado com sucesso' });
+  } catch (error) {
+    console.error('Erro ao votar:', error);
+    res.status(500).json({ erro: error.message || 'Erro ao registrar voto' });
+  }
+});
+app.post('/api/clube/:id/votacao/encerrar', verificarAutenticacao, async (req, res) => {
+  try {
+    const clubeId = req.params.id;
+    const userId = req.session.userId;
+    
+    // Verificar se é o criador do clube
+    const [clubeRows] = await pool.query(
+      'SELECT id_criador FROM clubes WHERE id = ?',
+      [clubeId]
+    );
+    
+    if (clubeRows.length === 0) {
+      return res.status(404).json({ erro: 'Clube não encontrado' });
+    }
+    
+    if (clubeRows[0].id_criador !== parseInt(userId)) {
+      return res.status(403).json({ 
+        erro: 'Apenas o criador do clube pode encerrar votações' 
+      });
+    }
+    
+    // Buscar votação ativa
+    const votacao = await Votacao.buscarVotacaoAtiva(clubeId);
+    if (!votacao) {
+      return res.status(404).json({ erro: 'Nenhuma votação ativa encontrada' });
+    }
+    
+    const resultado = await Votacao.encerrarVotacao(votacao.id);
+    
+    res.json({
+      mensagem: 'Votação encerrada com sucesso',
+      resultado
+    });
+  } catch (error) {
+    console.error('Erro ao encerrar votação:', error);
+    res.status(500).json({ erro: 'Erro ao encerrar votação' });
+  }
+});
+app.get('/api/clube/:id/votacao/:votacaoId/resultado', verificarAutenticacao, async (req, res) => {
+  try {
+    const clubeId = req.params.id;
+    const votacaoId = req.params.votacaoId;
+    const userId = req.session.userId;
+    
+    // Verificar se é membro do clube
+    const [participacoes] = await pool.query(
+      'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
+      [userId, clubeId]
+    );
+    
+    if (participacoes.length === 0) {
+      return res.status(403).json({ erro: 'Você não é membro deste clube' });
+    }
+    
+    // Verificar se a votação pertence ao clube
+    const [votacaoRows] = await pool.query(
+      'SELECT * FROM votacoes WHERE id = ? AND id_clube = ?',
+      [votacaoId, clubeId]
+    );
+    
+    if (votacaoRows.length === 0) {
+      return res.status(404).json({ erro: 'Votação não encontrada' });
+    }
+    
+    const resultado = await Votacao.buscarResultadoVotacao(votacaoId);
+    
+    res.json(resultado);
+  } catch (error) {
+    console.error('Erro ao buscar resultado:', error);
+    res.status(500).json({ erro: 'Erro ao buscar resultado da votação' });
+  }
+});
+
 app.get('/denuncias', verificarAutenticacao, async (req, res) => {
   try {
     const usuario = await Usuario.buscarPorId(req.session.userId);
@@ -1938,6 +2174,29 @@ app.get('/denuncias', verificarAutenticacao, async (req, res) => {
   } catch (error) {
     console.error('Erro ao carregar página de denúncias:', error);
     res.redirect('/painelAdmin');
+  }
+});
+app.get('/api/clube/:id/votacoes/historico', verificarAutenticacao, async (req, res) => {
+  try {
+    const clubeId = req.params.id;
+    const userId = req.session.userId;
+    
+    // Verificar se é membro do clube
+    const [participacoes] = await pool.query(
+      'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
+      [userId, clubeId]
+    );
+    
+    if (participacoes.length === 0) {
+      return res.status(403).json({ erro: 'Você não é membro deste clube' });
+    }
+    
+    const historico = await Votacao.buscarHistoricoVotacoes(clubeId);
+    
+    res.json(historico);
+  } catch (error) {
+    console.error('Erro ao buscar histórico:', error);
+    res.status(500).json({ erro: 'Erro ao buscar histórico de votações' });
   }
 });
 app.get('/api/admin/denuncias', verificarAutenticacao, async (req, res) => {

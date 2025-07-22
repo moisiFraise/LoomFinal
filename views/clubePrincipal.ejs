@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="/css/encontros.css">
     <link rel="stylesheet" href="/css/sugestoes.css">
     <link rel="stylesheet" href="/css/sorteio.css">
+    <link rel="stylesheet" href="/css/votacao.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <title><%= titulo %></title>
 </head>
@@ -138,11 +139,22 @@
                     <div id="clube-membros-lista-completa"></div>
                 </div>
 
-                <!-- Seção Decidir Livro -->
+               <!-- Seção Decidir Livro (Votação) -->
                 <div id="secao-decidir-livro" class="clube-secao" style="display: none;">
-                    <h3>Decidir Próximo Livro</h3>
+                    <div class="votacao-header">
+                        <h3>Decidir Próximo Livro</h3>
+                        <div id="botao-iniciar-votacao-container" style="display: none;">
+                            <button class="botao-iniciar-votacao" onclick="abrirModalNovaVotacao()">
+                                <i class="fa fa-vote-yea"></i> Iniciar Nova Votação
+                            </button>
+                        </div>
+                    </div>
+                    
                     <div id="votacao-container">
-                        <p>Funcionalidade de votação em desenvolvimento...</p>
+                        <div class="carregando-votacao">
+                            <i class="fa fa-spinner fa-spin"></i>
+                            <p>Carregando votação...</p>
+                        </div>
                     </div>
                 </div>
 
@@ -221,6 +233,9 @@
                             <div class="tab-item" data-tab="sorteio" onclick="mudarTabSelecaoLeitura('sorteio')">
                                 <i class="fa fa-random"></i> Sorteio de Sugestões
                             </div>
+                            <div class="tab-item" data-tab="votacao" onclick="mudarTabSelecaoLeitura('votacao')">
+                                <i class="fa fa-vote-yea"></i> Iniciar Votação
+                            </div>
                         </div>
                                                 <!-- Conteúdo da aba Buscar -->
                         <div id="tab-buscar" class="tab-content" style="display: block;">
@@ -251,6 +266,18 @@
                                 <div class="carregando">Carregando sugestões para sorteio...</div>
                             </div>
                         </div>
+
+                        <!-- Conteúdo da aba Votação -->
+                        <div id="tab-votacao" class="tab-content" style="display: none;">
+                            <div class="iniciar-votacao-container">
+                                <h4>Iniciar Votação para Decidir</h4>
+                                <p>Selecione as sugestões que participarão da votação e deixe os membros decidirem democraticamente</p>
+                                <button type="button" class="botao-iniciar-votacao" onclick="iniciarVotacao()">
+                                    <i class="fa fa-vote-yea"></i> Configurar Votação
+                                </button>
+                            </div>
+                        </div>
+
                         
                         <div id="selected-book-container" style="display: none;" class="selected-book">
                             <div id="selected-book-cover" class="selected-book-cover"></div>
@@ -303,7 +330,49 @@
                         </div>
                     </div>
                 </div>
-                
+                <!-- Modal de Nova Votação -->
+                <div id="overlay-votacao" class="overlay-votacao" style="display: none;"></div>
+                <div id="modal-nova-votacao" class="modal-votacao" style="display: none;">
+                    <h2>Criar Nova Votação</h2>
+                    <form id="form-nova-votacao">
+                        <div class="form-group">
+                            <label for="titulo-votacao">Título da Votação*</label>
+                            <input type="text" id="titulo-votacao" placeholder="Ex: Escolha do próximo livro - Março 2024" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="descricao-votacao">Descrição (opcional)</label>
+                            <textarea id="descricao-votacao" rows="3" placeholder="Detalhes sobre a votação..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="data-fim-votacao">Data de Encerramento (opcional)</label>
+                            <input type="date" id="data-fim-votacao">
+                            <small class="form-help">Deixe em branco para encerrar manualmente</small>
+                        </div>
+                        
+                        <div class="sugestoes-selecao">
+                            <h4>Selecione as sugestões para a votação:</h4>
+                            <div id="sugestoes-votacao-lista">
+                                <div class="carregando">Carregando sugestões...</div>
+                            </div>
+                        </div>
+                        
+                        <div id="contador-selecionadas-votacao" class="contador-selecionadas-votacao">
+                            0 sugestões selecionadas
+                        </div>
+                        
+                        <div class="form-actions-votacao">
+                            <button type="button" id="botao-criar-votacao" class="botao-criar-votacao" onclick="criarNovaVotacao()" disabled>
+                                <i class="fa fa-check"></i> Criar Votação
+                            </button>
+                            <button type="button" class="botao-cancelar" onclick="fecharModalNovaVotacao()">
+                                <i class="fa fa-times"></i> Cancelar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
                 <!-- Modal de Atualização -->
                 <div id="overlay-atualizacao" class="overlay"></div>
                 <div id="modal-atualizacao">
@@ -427,6 +496,7 @@
     <script src="/js/atualizacoes.js"></script>
     <script src="/js/encontros.js"></script>
     <script src="/js/curtidas.js"></script>
+    <script src="/js/votacao.js"></script>
     <script src="/js/sugestoes.js"></script>
     <%- include('partials/imports') %>
 </body>
