@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loom - Perfil de <%= usuarioPerfil.nome %></title>
+    <link rel="stylesheet" href="/css/meuPerfil.css">
+    <link rel="stylesheet" href="/css/menu.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+<body>
+    <%- include('partials/menu') %>
+    <%- include('partials/imports') %>
+
+    <div class="container">
+        <div class="perfil-header">
+            <div class="foto-perfil-container">
+                <% if (usuarioPerfil.foto_perfil) { %>
+                    <img src="<%= usuarioPerfil.foto_perfil %>" alt="Foto de <%= usuarioPerfil.nome %>" id="foto-perfil">
+                <% } else { %>
+                    <div class="foto-perfil-placeholder" id="foto-perfil">
+                        <%= usuarioPerfil.nome.charAt(0).toUpperCase() %>
+                    </div>
+                <% } %>
+            </div>
+            <div class="info-perfil">
+                <h1 id="nome-usuario"><%= usuarioPerfil.nome %></h1>
+                <p id="email-usuario">Membro desde <%= new Date(usuarioPerfil.data_criacao).toLocaleDateString('pt-BR') %></p>
+                <button onclick="voltarPagina()" class="btn-editar">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </button>
+            </div>
+        </div>
+        
+        <div class="biografia-container">
+            <h3>Biografia</h3>
+            <p id="biografia-texto"><%= usuarioPerfil.biografia || 'Este usuário ainda não adicionou uma biografia.' %></p>
+        </div>
+        
+        <div class="estatisticas">
+            <div class="estatistica">
+                <span class="numero"><%= clubes.length || 0 %></span>
+                <span class="label">Clubes Públicos</span>
+            </div>
+            <div class="estatistica">
+                <span class="numero"><%= publicacoes.length || 0 %></span>
+                <span class="label">Publicações Públicas</span>
+            </div>
+        </div>
+        
+        <h2 class="publicacoes-titulo">Publicações Públicas</h2>
+        <div class="filtro-publicacoes">
+            <button class="btn-filtro ativo" data-filtro="todas">Todas</button>
+            <button class="btn-filtro" data-filtro="publicas">Públicas</button>
+        </div>
+        
+        <div class="lista-publicacoes">
+            <% if (!publicacoes || publicacoes.length === 0) { %>
+                <div class="sem-publicacoes">
+                    <p>Este usuário ainda não fez publicações públicas.</p>
+                </div>
+            <% } else { %>
+                <% publicacoes.forEach(pub => { %>
+                    <div class="publicacao-item publico" data-clube-id="<%= pub.id_clube %>" data-porcentagem="<%= pub.porcentagem_leitura || 0 %>">
+                        <div class="publicacao-header">
+                            <div class="clube-info">
+                                <span class="clube-nome"><%= pub.nome_clube %></span>
+                                <span class="clube-publico"><i class="fas fa-globe"></i></span>
+                            </div>
+                            <span class="data-publicacao"><%= new Date(pub.data_postagem).toLocaleDateString('pt-BR') %></span>
+                        </div>
+                        <div class="publicacao-conteudo">
+                            <p><%= pub.conteudo %></p>
+                        </div>
+                        <div class="publicacao-footer">
+                            <div class="progresso-leitura">
+                                <div class="barra-progresso">
+                                    <div class="progresso" style="width: <%= (pub.porcentagem_leitura || 0) + '%' %>;"></div>
+                                </div>
+                                <span class="porcentagem"><%= pub.porcentagem_leitura || 0 %>% concluído</span>
+                            </div>
+                            <div class="acoes-publicacao">
+                                <span class="curtidas"><i class="far fa-heart"></i> <%= pub.curtidas || 0 %></span>
+                            </div>
+                        </div>
+                    </div>
+                <% }); %>
+            <% } %>
+        </div>
+        
+        <% if (clubes.length > 0) { %>
+            <h2 class="publicacoes-titulo">Clubes Públicos</h2>
+            <div class="clubes-publicos-lista">
+                <% clubes.forEach(clube => { %>
+                    <div class="clube-publico-item">
+                        <div class="clube-publico-header">
+                            <h3><%= clube.nome %></h3>
+                            <span class="clube-publico"><i class="fas fa-globe"></i> Público</span>
+                        </div>
+                        <% if (clube.descricao) { %>
+                            <p class="clube-publico-descricao"><%= clube.descricao %></p>
+                        <% } %>
+                        <div class="clube-publico-stats">
+                            <span><i class="fas fa-users"></i> <%= clube.total_membros || 0 %> membros</span>
+                            <span><i class="fas fa-map-marker-alt"></i> <%= clube.modelo || 'Online' %></span>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+        <% } %>
+    </div>
+    
+    <div class="notificacao" style="display: none;"></div>
+    
+    <script>
+        const usuarioPerfilId = <%= usuarioPerfil.id %>;
+        const userId = <%= userId %>;
+        
+        function voltarPagina() {
+            window.history.back();
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Configurar barras de progresso
+            document.querySelectorAll('.publicacao-item').forEach(item => {
+                const progressBar = item.querySelector('.progresso');
+                const percentageText = item.querySelector('.porcentagem');
+                
+                try {
+                    const percentage = parseInt(item.getAttribute('data-porcentagem') || '0');
+                    const safePercentage = isNaN(percentage) ? 0 : Math.max(0, Math.min(100, percentage));
+                    
+                    if (progressBar) progressBar.style.width = safePercentage + '%';
+                    if (percentageText) percentageText.textContent = safePercentage + '% concluído';
+                } catch (e) {
+                    console.error('Erro ao configurar barra de progresso:', e);
+                    if (progressBar) progressBar.style.width = '0%';
+                    if (percentageText) percentageText.textContent = '0% concluído';
+                }
+            });
+
+            // Configurar filtros
+            const btnsFiltro = document.querySelectorAll('.btn-filtro');
+            if (btnsFiltro) {
+                btnsFiltro.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const filtro = this.dataset.filtro;
+                        
+                        btnsFiltro.forEach(b => b.classList.remove('ativo'));
+                        this.classList.add('ativo');
+                        
+                        const publicacoes = document.querySelectorAll('.publicacao-item');
+                        
+                        publicacoes.forEach(pub => {
+                            if (filtro === 'todas') {
+                                pub.style.display = 'block';
+                            } else if (filtro === 'publicas' && pub.classList.contains('publico')) {
+                                pub.style.display = 'block';
+                            } else {
+                                pub.style.display = 'none';
+                            }
+                        });
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>

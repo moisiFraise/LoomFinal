@@ -40,7 +40,7 @@ class Atualizacoes {
     static async listarPorClube(idClube, idLeitura) {
         try {
             const [rows] = await pool.query(
-                `SELECT a.*, u.nome as nome_usuario
+                `SELECT a.*, u.nome as nome_usuario, u.foto_perfil
                  FROM atualizacoes a
                  JOIN usuarios u ON a.id_usuario = u.id
                  WHERE a.id_clube = ? AND a.id_leitura = ?

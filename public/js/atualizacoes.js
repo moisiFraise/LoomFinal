@@ -20,6 +20,7 @@ async function carregarAtualizacoes() {
             `<div class="erro-carregamento">Erro ao carregar atualizações. Tente novamente mais tarde.</div>`;
     }
 }
+
 async function renderizarImagemLeituraAtual(leituraAtual) {
     if (!leituraAtual || !document.getElementById('leitura-atual-imagem-container')) return;
     const imagemUrl = leituraAtual.imagemUrl || '/img/capa-padrao.jpg';
@@ -35,6 +36,7 @@ async function renderizarImagemLeituraAtual(leituraAtual) {
             </div>
         </div>`;
 }
+
 async function calcularProgressoGeral(leituraAtual) {
     try {
         const response = await fetch(`/api/clube/${clubeId}/atualizacoes/usuario/${userId}/leitura/${leituraAtual.id}`);
@@ -46,6 +48,7 @@ async function calcularProgressoGeral(leituraAtual) {
         return 0;
     }
 }
+
 function renderizarAtualizacoes(atualizacoes) {
     const container = document.getElementById('atualizacoes-lista');
     if (!atualizacoes || atualizacoes.length === 0) {
@@ -58,6 +61,11 @@ function renderizarAtualizacoes(atualizacoes) {
         const dataFormatada = data.toLocaleDateString('pt-BR') + ' às ' + 
                              data.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
         const isAutor = a.id_usuario == userId;
+        
+        // Criar avatar do usuário
+        const avatarHtml = a.foto_perfil ? 
+            `<img src="${a.foto_perfil}" alt="${a.nome_usuario}" onerror="this.parentElement.innerHTML='<div class=\\'usuario-avatar-placeholder\\'>${a.nome_usuario.charAt(0).toUpperCase()}</div>'">` :
+            `<div class="usuario-avatar-placeholder">${a.nome_usuario.charAt(0).toUpperCase()}</div>`;
         
         const botoesAcao = isAutor ? `
             <div class="atualizacao-acoes">
@@ -85,8 +93,13 @@ function renderizarAtualizacoes(atualizacoes) {
             <div class="atualizacao-item" data-id="${a.id}">
                 <div class="atualizacao-header">
                     <div class="atualizacao-usuario-info">
-                        <span class="atualizacao-usuario">${a.nome_usuario}</span>
-                        <span class="atualizacao-data">${dataFormatada}</span>
+                        <div class="usuario-avatar" onclick="irParaPerfil(${a.id_usuario})" title="Ver perfil de ${a.nome_usuario}">
+                            ${avatarHtml}
+                        </div>
+                        <div class="atualizacao-usuario-data">
+                            <span class="atualizacao-usuario" onclick="irParaPerfil(${a.id_usuario})" title="Ver perfil de ${a.nome_usuario}">${a.nome_usuario}</span>
+                            <span class="atualizacao-data">${dataFormatada}</span>
+                        </div>
                     </div>
                     ${botoesAcao}
                 </div>
@@ -114,6 +127,17 @@ function renderizarAtualizacoes(atualizacoes) {
     });
 }
 
+// Função para ir ao perfil do usuário
+function irParaPerfil(idUsuario) {
+    if (idUsuario == userId) {
+        // Se for o próprio usuário, vai para "Meu Perfil"
+        window.location.href = '/meuPerfil';
+    } else {
+        // Se for outro usuário, vai para o perfil público
+        window.location.href = `/perfil/${idUsuario}`;
+    }
+}
+
 // Certifique-se de que o evento de clique fora do dropdown funcione corretamente
 document.addEventListener('click', (event) => {
     if (!event.target.closest('.menu-opcoes')) {
@@ -122,6 +146,7 @@ document.addEventListener('click', (event) => {
         });
     }
 });
+
 function toggleMenuOpcoes(atualizacaoId) {
     const dropdown = document.getElementById(`dropdown-${atualizacaoId}`);
     const todosDropdowns = document.querySelectorAll('.dropdown-opcoes');
@@ -142,9 +167,10 @@ document.addEventListener('click', (event) => {
         });
     }
 });
+
 function criarModalDenuncia() {
     const modalHTML = `
-        <div id="overlay-denuncia" class="overlay" onclick="fecharModalDenuncia()"></div>
+        <div id="overlay-denuncia" class="overlay-denuncia" onclick="fecharModalDenuncia()"></div>
         <div id="modal-denuncia" class="modal modal-denuncia" tabindex="-1">
             <div class="modal-header">
                 <h3>Denunciar Comentário</h3>
@@ -183,6 +209,7 @@ function criarModalDenuncia() {
     document.body.insertAdjacentHTML('beforeend', modalHTML);
     console.log('Modal HTML inserido no DOM');
 }
+
 function abrirModalDenuncia(atualizacaoId, nomeUsuario) {
     console.log('Abrindo modal de denúncia para:', atualizacaoId, nomeUsuario);
     
@@ -306,6 +333,7 @@ async function enviarDenuncia() {
         }
     }
 }
+
 function mostrarMensagemSucesso(mensagem) {
     const mensagemDiv = document.createElement('div');
     mensagemDiv.className = 'mensagem-sucesso';
@@ -318,6 +346,7 @@ function mostrarMensagemSucesso(mensagem) {
         }
     }, 5000);
 }
+
 async function abrirModalAtualizacao(event) {
     if (!event || event.type !== 'click' || !event.isTrusted) {
         console.log('Tentativa de abrir modal automaticamente bloqueada');
@@ -355,12 +384,14 @@ async function abrirModalAtualizacao(event) {
         const comentarioInput = document.getElementById('atualizacao-comentario');
         if (comentarioInput) comentarioInput.focus();
     }, 300);
-      const paginaInput = document.getElementById('atualizacao-pagina');
+    
+    const paginaInput = document.getElementById('atualizacao-pagina');
     if (paginaInput) {
         paginaInput.removeEventListener('input', calcularPorcentagem);
         paginaInput.addEventListener('input', calcularPorcentagem);
     }
 }
+
 function editarAtualizacao(id) {
     fetch(`/api/clube/${clubeId}/atualizacoes/${id}`)
         .then(response => {
@@ -405,6 +436,7 @@ function editarAtualizacao(id) {
             alert('Erro ao carregar dados da atualização. Tente novamente.');
         });
 }
+
 function excluirAtualizacao(id) {
     if (confirm('Tem certeza que deseja excluir esta atualização?')) {
         fetch(`/api/clube/${clubeId}/atualizacoes/${id}`, { method: 'DELETE' })
@@ -426,6 +458,7 @@ function excluirAtualizacao(id) {
             });
     }
 }
+
 function fecharModalAtualizacao() {
     document.getElementById('overlay-atualizacao').style.display = 'none';
     document.getElementById('modal-atualizacao').style.display = 'none';
@@ -451,6 +484,7 @@ function calcularPorcentagem() {
         }
     }
 }
+
 async function salvarAtualizacao() {
     try {
         const comentario = document.getElementById('atualizacao-comentario').value.trim();
@@ -508,4 +542,3 @@ async function salvarAtualizacao() {
         }
     }
 }
-
