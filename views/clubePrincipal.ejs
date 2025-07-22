@@ -159,63 +159,39 @@
                     <form id="form-nova-sugestao">
                         <h2>Nova Sugestão de Livro</h2>
                         
-                        <!-- Abas de navegação -->
-                        <div class="tabs-container">
-                            <div class="tab-item-sugestao tab-ativo" data-tab="buscar" onclick="mudarTabSugestao('buscar')">
-                                <i class="fa fa-search"></i> Buscar Livros
-                            </div>
-                            <div class="tab-item-sugestao" data-tab="manual" onclick="mudarTabSugestao('manual')">
-                                <i class="fa fa-edit"></i> Inserir Manualmente
-                            </div>
-                        </div>
-                        
-                        <!-- Conteúdo da aba Buscar -->
-                        <div id="tab-sugestao-buscar" class="tab-content-sugestao" style="display: block;">
+                        <!-- Busca de livros -->
+                        <div id="busca-container" class="busca-container">
                             <p class="form-subtitulo">Buscar por título ou autor</p>
                             <div class="search-input">
                                 <input type="text" id="busca-livro-sugestao" placeholder="Digite o título ou autor do livro">
-                                <button type="button" class="botao-moderno" onclick="buscarLivrosSugestao()">Buscar</button>
+                                <button type="button" class="botao-moderno" onclick="buscarLivrosSugestao()">
+                                    <i class="fa fa-search"></i> Buscar
+                                </button>
                             </div>
                             
                             <div id="search-results-sugestao" class="search-results">
                             </div>
                         </div>
                         
-                        <!-- Conteúdo da aba Manual -->
-                        <div id="tab-sugestao-manual" class="tab-content-sugestao" style="display: none;">
-                            <div class="form-group">
-                                <label for="sugestao-titulo">Título do Livro*</label>
-                                <input type="text" id="sugestao-titulo" placeholder="Digite o título do livro" required>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="sugestao-autor">Autor</label>
-                                <input type="text" id="sugestao-autor" placeholder="Digite o nome do autor">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="sugestao-justificativa">Por que você sugere este livro?</label>
-                                <textarea id="sugestao-justificativa" rows="4" placeholder="Explique por que este livro seria uma boa escolha para o clube..."></textarea>
-                            </div>
-                        </div>
-                        
                         <!-- Container do livro selecionado -->
                         <div id="selected-book-container-sugestao" style="display: none;" class="selected-book">
-                            <div id="selected-book-cover-sugestao" class="selected-book-cover"></div>
-                            <div class="selected-book-info">
-                                <h4 id="selected-book-title-sugestao"></h4>
-                                <p id="selected-book-author-sugestao"></p>
-                                <p id="selected-book-pages-sugestao"></p>
-                                
-                                <div class="form-group">
-                                    <label for="sugestao-justificativa-selected">Por que você sugere este livro?</label>
-                                    <textarea id="sugestao-justificativa-selected" rows="3" placeholder="Explique por que este livro seria uma boa escolha para o clube..."></textarea>
+                            <div class="selected-book-header">
+                                <div id="selected-book-cover-sugestao" class="selected-book-cover"></div>
+                                <div class="selected-book-info">
+                                    <h4 id="selected-book-title-sugestao"></h4>
+                                    <p id="selected-book-author-sugestao"></p>
+                                    <p id="selected-book-pages-sugestao"></p>
                                 </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="sugestao-justificativa-selected">Por que você sugere este livro?</label>
+                                <textarea id="sugestao-justificativa-selected" rows="4" placeholder="Explique por que este livro seria uma boa escolha para o clube..."></textarea>
                             </div>
                         </div>
                         
                         <div class="form-actions">
-                            <button type="button" class="botao-sugerir" onclick="salvarNovaSugestao()">
+                            <button type="button" class="botao-sugerir" onclick="salvarNovaSugestao()" style="display: none;">
                                 <i class="fa fa-check"></i> Criar Sugestão
                             </button>
                             <button type="button" class="botao-cancelar" onclick="fecharModalNovaSugestao()">
@@ -271,10 +247,16 @@
                                 <h4 id="selected-book-title"></h4>
                                 <p id="selected-book-author"></p>
                                 <p id="selected-book-pages"></p>
-                                                                <p class="form-subtitulo">Data de Início</p>
-                                <input type="date" id="data-inicio" required>
-                                <p class="form-subtitulo">Data de Término Previsto</p>
-                                <input type="date" id="data-fim">
+                                <div class="form-group">
+                                    <label for="data-inicio">Data de Início*</label>
+                                    <input type="date" id="data-inicio" required>
+                                    <small class="form-help">A data de início não pode ser anterior a hoje</small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="data-fim">Data de Término Previsto</label>
+                                    <input type="date" id="data-fim">
+                                    <small class="form-help">Opcional - deixe em branco se não souber</small>
+                                </div>
                             </div>
                         </div>
                         
@@ -294,8 +276,7 @@
                             <textarea id="atualizacao-comentario" class="atualizacao-input" 
                                 placeholder="Compartilhe seus pensamentos, impressões ou citações favoritas do livro..." required></textarea>
                         </div>
-                        
-                        <div class="form-group">
+                                                        <div class="form-group">
                             <div class="pagina-input-container">
                                 <div>
                                     <label for="atualizacao-pagina">Página atual</label>
@@ -412,4 +393,4 @@
 </body>
 </html>
 
-                               
+                        

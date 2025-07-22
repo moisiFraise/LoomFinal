@@ -10,7 +10,88 @@ document.addEventListener('DOMContentLoaded', function() {
         carregarInformacoesClube(clubeId);
         verificarPermissoesCriador(clubeId);
     }
+    
+    configurarValidacoesDatas();
 });
+
+function configurarValidacoesDatas() {
+    const dataInicioInput = document.getElementById('data-inicio');
+    const dataFimInput = document.getElementById('data-fim');
+    
+    if (dataInicioInput) {
+        const hoje = new Date().toISOString().split('T')[0];
+        dataInicioInput.min = hoje;
+        
+        dataInicioInput.value = hoje;
+        
+        dataInicioInput.addEventListener('change', function() {
+            validarDataInicio();
+            atualizarDataFimMinima();
+        });
+        
+        dataInicioInput.addEventListener('blur', validarDataInicio);
+    }
+    
+    if (dataFimInput) {
+        dataFimInput.addEventListener('change', validarDataFim);
+        dataFimInput.addEventListener('blur', validarDataFim);
+    }
+}
+
+function validarDataInicio() {
+    const dataInicioInput = document.getElementById('data-inicio');
+    if (!dataInicioInput) return true;
+    
+    const dataInicio = new Date(dataInicioInput.value);
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0); 
+    
+    if (dataInicio < hoje) {
+        mostrarAlerta('A data de início não pode ser anterior a hoje', 'erro');
+        dataInicioInput.value = new Date().toISOString().split('T')[0];
+        dataInicioInput.focus();
+        return false;
+    }
+    
+    return true;
+}
+
+function validarDataFim() {
+    const dataInicioInput = document.getElementById('data-inicio');
+    const dataFimInput = document.getElementById('data-fim');
+    
+    if (!dataInicioInput || !dataFimInput || !dataFimInput.value) return true;
+    
+    const dataInicio = new Date(dataInicioInput.value);
+    const dataFim = new Date(dataFimInput.value);
+    
+    if (dataFim <= dataInicio) {
+        mostrarAlerta('A data de término deve ser posterior à data de início', 'erro');
+        dataFimInput.value = '';
+        dataFimInput.focus();
+        return false;
+    }
+    
+    return true;
+}
+
+function atualizarDataFimMinima() {
+    const dataInicioInput = document.getElementById('data-inicio');
+    const dataFimInput = document.getElementById('data-fim');
+    
+    if (!dataInicioInput || !dataFimInput) return;
+    
+    if (dataInicioInput.value) {
+        const dataInicio = new Date(dataInicioInput.value);
+        dataInicio.setDate(dataInicio.getDate() + 1); // Mínimo um dia após o início
+        dataFimInput.min = dataInicio.toISOString().split('T')[0];
+        
+        if (dataFimInput.value && new Date(dataFimInput.value) <= new Date(dataInicioInput.value)) {
+            dataFimInput.value = '';
+        }
+    }
+}
+
 function mudarSecaoClube(secao) {
     document.querySelectorAll('.clube-secao').forEach(s => s.style.display = 'none');
     document.querySelectorAll('.menu-item').forEach(item => {
@@ -98,6 +179,7 @@ function atualizarLeituraAtual(leitura) {
         imagemContainer.innerHTML = '';
     }
 }
+
 async function verificarPermissoesCriador() {
     try {
         const response = await fetch(`/api/clube/${clubeId}/permissoes`);
@@ -130,7 +212,7 @@ async function verificarPermissoesCriador() {
                 }
             }
         }
-    } catch (error) {
+       } catch (error) {
         console.error('Erro ao verificar permissões:', error);
     }
 }
@@ -151,6 +233,10 @@ function abrirModalSelecaoLeitura() {
     modal.style.display = 'block';
     overlay.style.display = 'block';
     document.body.style.overflow = 'hidden';
+    
+    setTimeout(() => {
+        configurarValidacoesDatas();
+    }, 100);
 }
 
 function fecharModalSelecaoLeitura() {
@@ -235,6 +321,10 @@ function selecionarSugestao(index) {
     
     container.style.display = 'flex';
     
+    setTimeout(() => {
+        configurarValidacoesDatas();
+    }, 100);
+    
     document.querySelectorAll('.sugestao-item').forEach((item, i) => {
         if (i === index) {
             item.classList.add('selecionado');
@@ -247,7 +337,7 @@ function selecionarSugestao(index) {
 async function buscarLivros() {
     const termoBusca = document.getElementById('busca-livro').value.trim();
     if (!termoBusca) {
-        alert('Por favor, digite um termo de busca');
+        mostrarAlerta('Por favor, digite um termo de busca', 'erro');
         return;
     }
     
@@ -315,6 +405,11 @@ function selecionarLivro(index) {
     pagesElement.textContent = volumeInfo.pageCount ? `${volumeInfo.pageCount} páginas` : 'Número de páginas não informado';
     
     container.style.display = 'flex';
+    
+    setTimeout(() => {
+        configurarValidacoesDatas();
+    }, 100);
+    
     document.querySelectorAll('.livro-resultado').forEach((item, i) => {
         if (i === index) {
             item.classList.add('selecionado');
@@ -329,12 +424,21 @@ async function salvarNovaLeitura() {
     const dataFim = document.getElementById('data-fim').value;
     
     if (!dataInicio) {
-        alert('Por favor, informe a data de início da leitura');
+        mostrarAlerta('Por favor, informe a data de início da leitura', 'erro');
+        document.getElementById('data-inicio').focus();
+        return;
+    }
+    
+    if (!validarDataInicio()) {
+        return;
+    }
+    
+    if (dataFim && !validarDataFim()) {
         return;
     }
     
     if (!livroSelecionado && !sugestaoSelecionada) {
-        alert('Por favor, selecione um livro ou sugestão');
+        mostrarAlerta('Por favor, selecione um livro ou sugestão', 'erro');
         return;
     }
     
@@ -364,6 +468,11 @@ async function salvarNovaLeitura() {
             };
         }
         
+        const botaoConfirmar = document.getElementById('confirmarLeitura');
+        const textoOriginal = botaoConfirmar.textContent;
+        botaoConfirmar.disabled = true;
+        botaoConfirmar.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Salvando...';
+        
         const response = await fetch(`/api/clube/${clubeId}/leituras`, {
             method: 'POST',
             headers: {
@@ -385,6 +494,12 @@ async function salvarNovaLeitura() {
     } catch (error) {
         console.error('Erro ao salvar nova leitura:', error);
         mostrarAlerta('Erro ao conectar com o servidor', 'erro');
+    } finally {
+        const botaoConfirmar = document.getElementById('confirmarLeitura');
+        if (botaoConfirmar) {
+            botaoConfirmar.disabled = false;
+            botaoConfirmar.textContent = 'Confirmar';
+        }
     }
 }
 
@@ -415,7 +530,7 @@ async function carregarLeiturasClube(clubeId) {
             } else {
                 leituraAtualContainer.innerHTML = '<p class="sem-leitura">Nenhum livro selecionado para leitura atual.</p>';
             }
-            const leiturasAnterioresGrid = document.getElementById('leituras-anteriores-grid');
+                        const leiturasAnterioresGrid = document.getElementById('leituras-anteriores-grid');
             if (data.leiturasAnteriores && data.leiturasAnteriores.length > 0) {
                 leiturasAnterioresGrid.innerHTML = data.leiturasAnteriores.map(leitura => `
                     <div class="leitura-card">
@@ -545,6 +660,7 @@ function mostrarAlerta(mensagem, tipo = 'info') {
         alerta.classList.add('alerta-visivel');
     }, 10);
 }
+
 async function carregarSugestoesModal() {
     try {
         const response = await fetch(`/api/clube/${clubeId}/sugestoes`);
@@ -616,6 +732,10 @@ function selecionarSugestaoComoLeitura(sugestao) {
     
     container.style.display = 'flex';
     
+    setTimeout(() => {
+        configurarValidacoesDatas();
+    }, 100);
+    
     document.querySelectorAll('.sugestao-item').forEach(item => {
         item.classList.remove('selecionado');
     });
@@ -624,29 +744,5 @@ function selecionarSugestaoComoLeitura(sugestao) {
     console.log('Livro selecionado configurado:', livroSelecionado);
 }
 
-function mudarTabSelecaoLeitura(tab) {
-    console.log('Mudando para aba:', tab);
-    
-    document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('tab-ativo'));
-    document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
-    
-    const tabElement = document.querySelector(`.tab-item[data-tab="${tab}"]`);
-    const contentElement = document.getElementById(`tab-${tab}`);
-    
-    if (tabElement) {
-        tabElement.classList.add('tab-ativo');
-    }
-    
-    if (contentElement) {
-        contentElement.style.display = 'block';
-    }
-    
-    if (tab === 'sugestoes') {
-        carregarSugestoesModal();
-    }
-    
-    const selectedContainer = document.getElementById('selected-book-container');
-    if (selectedContainer) selectedContainer.style.display = 'none';
-    livroSelecionado = null;
-}
-    
+           
+
