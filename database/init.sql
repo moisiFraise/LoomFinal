@@ -163,6 +163,8 @@ CREATE TABLE IF NOT EXISTS sugestoes (
   titulo VARCHAR(255) NOT NULL,
   autor VARCHAR(255),
   justificativa TEXT,
+  imagemUrl VARCHAR(255),
+  paginas INT;
   data_sugestao DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (id_clube) REFERENCES clubes(id) ON DELETE CASCADE,
   FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE CASCADE

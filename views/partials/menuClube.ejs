@@ -51,21 +51,33 @@
         }
     }
     
-    document.querySelectorAll('.menu-item').forEach(item => {
-        item.addEventListener('click', function() {
-            if (window.innerWidth <= 768) {
-                document.querySelector('.clube-menu-lateral').classList.remove('menu-mobile-open');
-                document.body.style.overflow = '';
-            }
+    // Adicionar event listeners para todos os itens do menu
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const secao = this.getAttribute('data-secao');
+                console.log('Clicou no menu:', secao);
+                
+                if (secao) {
+                    mudarSecaoClube(secao);
+                }
+                
+                // Fechar menu mobile se estiver aberto
+                if (window.innerWidth <= 768) {
+                    document.querySelector('.clube-menu-lateral').classList.remove('menu-mobile-open');
+                    document.body.style.overflow = '';
+                }
+            });
         });
     });
 
+    // Fechar menu mobile ao clicar fora
     document.addEventListener('click', function(event) {
         const menu = document.querySelector('.clube-menu-lateral');
         const menuToggle = document.querySelector('.menu-mobile-toggle');
         
         if (window.innerWidth <= 768 && 
-            menu.classList.contains('menu-mobile-open') && 
+            menu && menu.classList.contains('menu-mobile-open') && 
             !menu.contains(event.target) && 
             !menuToggle.contains(event.target)) {
             menu.classList.remove('menu-mobile-open');
@@ -73,4 +85,3 @@
         }
     });
 </script>
-

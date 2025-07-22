@@ -1,88 +1,50 @@
-document.addEventListener('DOMContentLoaded', () => {
-    if (window.location.hash === '#encontros') {
-        mudarSecaoClube('encontros');
-        carregarEncontros(clubeId);
-    }
-    const menuItemEncontros = document.querySelector('.menu-item[data-secao="encontros"]');
-    if (menuItemEncontros) {
-        menuItemEncontros.addEventListener('click', () => {
-            carregarEncontros(clubeId);
-            verificarPermissoesCriador(clubeId);
-        });
-    }
-    configurarTipoEncontro();
-    console.log('Script de encontros carregado');
+let encontrosCarregados = false;
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('[data-secao="encontros"]')) {
+            setTimeout(() => {
+                carregarEncontros();
+                verificarPermissoesCriador();
+            }, 100); 
+        }
+    });
 });
-async function carregarEncontros(clubeId) {
+async function carregarEncontros() {
+    console.log('Carregando encontros para o clube:', clubeId);
+    
+    const container = document.getElementById('encontros-lista');
+    if (!container) {
+        console.error('Elemento encontros-lista não encontrado');
+        return;
+    }
+    
+    if (encontrosCarregados) return;
+    
     try {
-        console.log('Carregando encontros para o clube:', clubeId);
-        const encontrosLista = document.getElementById('encontros-lista');
-        if (!encontrosLista) {
-            console.error('Elemento encontros-lista não encontrado');
-            return;
-        }
-        
-        encontrosLista.innerHTML = '<p class="carregando">Carregando encontros...</p>';
-        
         const response = await fetch(`/api/clube/${clubeId}/encontros`);
-        if (!response.ok) {
-            console.error('Resposta da API não ok:', response.status);
-            throw new Error('Erro ao carregar encontros');
-        }
-        
         const data = await response.json();
-        console.log('Dados de encontros recebidos:', data);
         
-        if (!data.encontros || data.encontros.length === 0) {
-            encontrosLista.innerHTML = '<div class="sem-encontros">Nenhum encontro agendado.</div>';
-            return;
-        }
-        
-        encontrosLista.innerHTML = '';
-        
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0);
-        
-        const encontrosFuturos = data.encontros.filter(e => {
-            const dataEncontro = new Date(e.data_encontro);
-            dataEncontro.setHours(0, 0, 0, 0);
-            return dataEncontro >= hoje;
-        });
-        
-        const encontrosPassados = data.encontros.filter(e => {
-            const dataEncontro = new Date(e.data_encontro);
-            dataEncontro.setHours(0, 0, 0, 0);
-            return dataEncontro < hoje;
-        });
-        
-        if (encontrosFuturos.length > 0) {
-            const tituloFuturos = document.createElement('h3');
-            tituloFuturos.textContent = 'Próximos Encontros';
-            tituloFuturos.className = 'encontros-secao-titulo';
-            encontrosLista.appendChild(tituloFuturos);
-            
-            encontrosFuturos.forEach(encontro => {
-                encontrosLista.appendChild(criarCardEncontro(encontro, data.isCriador, data.participacoes));
-            });
-        }
-        
-        if (encontrosPassados.length > 0) {
-            const tituloPassados = document.createElement('h3');
-            tituloPassados.textContent = 'Encontros Anteriores';
-            tituloPassados.className = 'encontros-secao-titulo';
-            encontrosLista.appendChild(tituloPassados);
-            
-            encontrosPassados.forEach(encontro => {
-                encontrosLista.appendChild(criarCardEncontro(encontro, data.isCriador, data.participacoes, true));
-            });
+        if (response.ok) {
+            exibirEncontros(data.encontros, data.isCriador, data.participacoes);
+            encontrosCarregados = true;
+        } else {
+            console.error('Erro ao carregar encontros:', data.erro);
+            container.innerHTML = `
+                <div class="erro-encontros">
+                    <i class="fa fa-exclamation-triangle"></i>
+                    <p>${data.erro}</p>
+                </div>
+            `;
         }
     } catch (error) {
         console.error('Erro ao carregar encontros:', error);
-        const encontrosLista = document.getElementById('encontros-lista');
-        if (encontrosLista) {
-            encontrosLista.innerHTML = 
-                '<p class="erro-carregamento">Erro ao carregar encontros. Tente novamente mais tarde.</p>';
-        }
+        container.innerHTML = `
+            <div class="erro-encontros">
+                <i class="fa fa-exclamation-triangle"></i>
+                <p>Erro ao conectar com o servidor</p>
+            </div>
+        `;
     }
 }
 function criarCardEncontro(encontro, isCriador, participacoes, isPassado = false) {
@@ -255,28 +217,182 @@ function traduzirStatusParticipacao(status) {
     };
     return statusMap[status] || status;
 }
-
+function exibirEncontros(encontros, isCriador, participacoes) {
+    const container = document.getElementById('encontros-lista');
+    if (!container) {
+        console.error('Container encontros-lista não encontrado');
+        return;
+    }
+    
+    if (!encontros || encontros.length === 0) {
+        container.innerHTML = `
+            <div class="sem-encontros">
+                <i class="fa fa-calendar"></i>
+                <h4>Nenhum encontro agendado</h4>
+                <p>Quando houver encontros marcados, eles aparecerão aqui.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = encontros.map(encontro => {
+        const dataEncontro = new Date(encontro.data_encontro);
+        const hoje = new Date();
+        const isPassado = dataEncontro < hoje;
+        
+        const participacao = participacoes.find(p => p.id_encontro === encontro.id);
+        const statusParticipacao = participacao ? participacao.status : null;
+        
+        return `
+            <div class="encontro-card ${isPassado ? 'encontro-passado' : ''}">
+                <div class="encontro-header">
+                    <div class="encontro-info">
+                        <h4>${escapeHtml(encontro.titulo)}</h4>
+                        <div class="encontro-meta">
+                            <span class="encontro-data">
+                                <i class="fa fa-calendar"></i>
+                                ${formatarDataEncontro(encontro.data_encontro)}
+                            </span>
+                            <span class="encontro-hora">
+                                <i class="fa fa-clock-o"></i>
+                                ${encontro.hora_inicio}${encontro.hora_fim ? ` - ${encontro.hora_fim}` : ''}
+                            </span>
+                            <span class="encontro-tipo tipo-${encontro.tipo}">
+                                <i class="fa fa-${getTipoIcon(encontro.tipo)}"></i>
+                                ${encontro.tipo.charAt(0).toUpperCase() + encontro.tipo.slice(1)}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    ${isCriador && !isPassado ? `
+                        <div class="encontro-acoes">
+                            <button class="botao-pequeno botao-editar" onclick="editarEncontro(${encontro.id})">
+                                <i class="fa fa-edit"></i>
+                            </button>
+                            <button class="botao-pequeno botao-excluir" onclick="excluirEncontro(${encontro.id})">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+                
+                ${encontro.descricao ? `
+                    <div class="encontro-descricao">
+                        ${escapeHtml(encontro.descricao)}
+                    </div>
+                ` : ''}
+                
+                <div class="encontro-detalhes">
+                    ${encontro.local ? `
+                        <div class="encontro-local">
+                            <i class="fa fa-map-marker"></i>
+                            ${escapeHtml(encontro.local)}
+                        </div>
+                    ` : ''}
+                    
+                    ${encontro.link ? `
+                        <div class="encontro-link">
+                            <i class="fa fa-link"></i>
+                            <a href="${encontro.link}" target="_blank" rel="noopener noreferrer">
+                                Acessar encontro online
+                            </a>
+                        </div>
+                    ` : ''}
+                </div>
+                
+                <div class="encontro-participantes">
+                    <div class="participantes-info">
+                        <i class="fa fa-users"></i>
+                        <span>${encontro.participantes ? encontro.participantes.length : 0} participante(s)</span>
+                    </div>
+                    
+                    ${!isPassado ? `
+                        <div class="participacao-acoes">
+                            <button class="botao-participacao ${statusParticipacao === 'confirmado' ? 'ativo' : ''}" 
+                                    onclick="confirmarParticipacao(${encontro.id}, 'confirmado')">
+                                <i class="fa fa-check"></i> Vou participar
+                            </button>
+                            <button class="botao-participacao ${statusParticipacao === 'talvez' ? 'ativo' : ''}" 
+                                    onclick="confirmarParticipacao(${encontro.id}, 'talvez')">
+                                <i class="fa fa-question"></i> Talvez
+                            </button>
+                            <button class="botao-participacao ${statusParticipacao === 'recusado' ? 'ativo' : ''}" 
+                                    onclick="confirmarParticipacao(${encontro.id}, 'recusado')">
+                                <i class="fa fa-times"></i> Não vou
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
 function abrirModalCriarEncontro() {
     const modal = document.getElementById('modal-encontro');
     const overlay = document.getElementById('overlay');
+    
+    if (!modal || !overlay) {
+        console.error('Modal ou overlay de encontro não encontrado');
+        return;
+    }
     
     document.getElementById('form-encontro').reset();
     document.getElementById('encontro-id').value = '';
     document.getElementById('modal-titulo-encontro').textContent = 'Agendar Novo Encontro';
     
-    const hoje = new Date().toISOString().split('T')[0];
-    document.getElementById('data-encontro').setAttribute('min', hoje);
-    document.getElementById('data-encontro').value = hoje;
+    configurarCamposEncontro();
     
     modal.style.display = 'block';
     overlay.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+function fecharModalEncontro() {
+    const modal = document.getElementById('modal-encontro');
+    const overlay = document.getElementById('overlay');
     
-    atualizarCamposTipoEncontro();
+    if (modal) modal.style.display = 'none';
+    if (overlay) overlay.style.display = 'none';
+    document.body.style.overflow = '';
 }
 
-function fecharModalEncontro() {
-    document.getElementById('modal-encontro').style.display = 'none';
-    document.getElementById('overlay').style.display = 'none';
+function configurarCamposEncontro() {
+    const tipoRadios = document.querySelectorAll('input[name="tipo-encontro"]');
+    const camposLocal = document.querySelector('.campos-local');
+    const camposLink = document.querySelector('.campos-link');
+    
+    if (!camposLocal || !camposLink) return;
+    
+    tipoRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            const tipo = this.value;
+            
+            switch(tipo) {
+                case 'presencial':
+                    camposLocal.style.display = 'block';
+                    camposLink.style.display = 'none';
+                    document.getElementById('local-encontro').required = true;
+                    document.getElementById('link-encontro').required = false;
+                    break;
+                case 'online':
+                    camposLocal.style.display = 'none';
+                    camposLink.style.display = 'block';
+                    document.getElementById('local-encontro').required = false;
+                    document.getElementById('link-encontro').required = true;
+                    break;
+                case 'hibrido':
+                    camposLocal.style.display = 'block';
+                    camposLink.style.display = 'block';
+                    document.getElementById('local-encontro').required = true;
+                    document.getElementById('link-encontro').required = true;
+                    break;
+            }
+        });
+    });
+    
+    const radioSelecionado = document.querySelector('input[name="tipo-encontro"]:checked');
+    if (radioSelecionado) {
+        radioSelecionado.dispatchEvent(new Event('change'));
+    }
 }
 
 function configurarTipoEncontro() {
@@ -304,115 +420,60 @@ function atualizarCamposTipoEncontro() {
 async function salvarEncontro(event) {
     event.preventDefault();
     
+    const encontroId = document.getElementById('encontro-id').value;
+    const titulo = document.getElementById('titulo-encontro').value.trim();
+    const descricao = document.getElementById('descricao-encontro').value.trim();
+    const dataEncontro = document.getElementById('data-encontro').value;
+    const horaInicio = document.getElementById('hora-inicio').value;
+    const horaFim = document.getElementById('hora-fim').value;
+    const local = document.getElementById('local-encontro').value.trim();
+    const link = document.getElementById('link-encontro').value.trim();
+    const tipo = document.querySelector('input[name="tipo-encontro"]:checked').value;
+    
+    if (!titulo || !dataEncontro || !horaInicio || !tipo) {
+        mostrarAlerta('Por favor, preencha todos os campos obrigatórios', 'erro');
+        return;
+    }
+    
     try {
-        console.log('Iniciando salvamento de encontro...');
-        const form = document.getElementById('form-encontro');
-        const encontroId = document.getElementById('encontro-id').value;
-        const isEdicao = !!encontroId;
+        const url = encontroId ? 
+            `/api/clube/${clubeId}/encontros/${encontroId}` : 
+            `/api/clube/${clubeId}/encontros`;
         
-        console.log('Modo:', isEdicao ? 'Edição' : 'Criação', 'ID:', encontroId);
-        
-        const titulo = document.getElementById('titulo-encontro').value.trim();
-        const descricao = document.getElementById('descricao-encontro').value.trim();
-        const dataEncontro = document.getElementById('data-encontro').value;
-        const horaInicio = document.getElementById('hora-inicio').value;
-        const horaFim = document.getElementById('hora-fim').value;
-        const tipoEncontro = document.querySelector('input[name="tipo-encontro"]:checked')?.value;
-        const local = document.getElementById('local-encontro').value.trim();
-        const link = document.getElementById('link-encontro').value.trim();
-        
-        console.log('Dados coletados do formulário:', {
-            titulo, descricao, dataEncontro, horaInicio, horaFim, tipoEncontro, local, link
-        });
-        
-        if (!titulo) {
-            console.error('Título não informado');
-            alert('Por favor, informe o título do encontro.');
-            return;
-        }
-        
-        if (!dataEncontro) {
-            console.error('Data não informada');
-            alert('Por favor, selecione a data do encontro.');
-            return;
-        }
-        
-        if (!horaInicio) {
-            console.error('Hora de início não informada');
-            alert('Por favor, informe o horário de início.');
-            return;
-        }
-        
-        if (!tipoEncontro) {
-            console.error('Tipo de encontro não selecionado');
-            alert('Por favor, selecione o tipo de encontro.');
-            return;
-        }
-        
-        if ((tipoEncontro === 'presencial' || tipoEncontro === 'hibrido') && !local) {
-            console.error('Local não informado para encontro presencial/híbrido');
-            alert('Por favor, informe o local do encontro.');
-            return;
-        }
-        
-        if ((tipoEncontro === 'online' || tipoEncontro === 'hibrido') && !link) {
-            console.error('Link não informado para encontro online/híbrido');
-            alert('Por favor, informe o link do encontro.');
-            return;
-        }
-        
-        if (horaFim && horaFim <= horaInicio) {
-            console.error('Hora de término inválida:', horaFim, '<=', horaInicio);
-            alert('O horário de término deve ser posterior ao horário de início.');
-            return;
-        }
-        
-    const encontroData = {
-    titulo: titulo,
-    descricao: descricao,
-    dataEncontro: dataEncontro,
-    horaInicio: horaInicio,
-    horaFim: horaFim || null,
-    tipo: tipoEncontro,
-    local: (tipoEncontro === 'presencial' || tipoEncontro === 'hibrido') ? local : null,
-    link: (tipoEncontro === 'online' || tipoEncontro === 'hibrido') ? link : null
-};
-        
-        console.log('Enviando dados do encontro:', encontroData);
-        
-        const url = isEdicao 
-            ? `/api/clube/${clubeId}/encontros/${encontroId}` 
-            : `/api/clube/${clubeId}/encontros`;
-        
-        const method = isEdicao ? 'PUT' : 'POST';
-        
-        console.log('Enviando requisição para:', url, 'Método:', method);
+        const method = encontroId ? 'PUT' : 'POST';
         
         const response = await fetch(url, {
             method: method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(encontroData)
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                titulo,
+                descricao: descricao || null,
+                dataEncontro,
+                horaInicio,
+                horaFim: horaFim || null,
+                local: local || null,
+                link: link || null,
+                tipo
+            })
         });
         
-        console.log('Status da resposta:', response.status);
-        const responseData = await response.json();
-        console.log('Dados da resposta:', responseData);
+        const data = await response.json();
         
-        if (!response.ok) {
-            console.error('Erro na resposta da API:', responseData);
-            throw new Error(responseData.erro || responseData.mensagem || 'Erro ao salvar encontro');
+        if (response.ok) {
+            mostrarAlerta(encontroId ? 'Encontro atualizado com sucesso!' : 'Encontro agendado com sucesso!', 'sucesso');
+            fecharModalEncontro();
+            encontrosCarregados = false;
+            carregarEncontros();
+        } else {
+            mostrarAlerta(data.erro || 'Erro ao salvar encontro', 'erro');
         }
-        
-        fecharModalEncontro();
-        carregarEncontros(clubeId);
-        
-        alert(isEdicao ? 'Encontro atualizado com sucesso!' : 'Encontro agendado com sucesso!');
     } catch (error) {
         console.error('Erro ao salvar encontro:', error);
-        alert(`Erro ao salvar encontro: ${error.message}`);
+        mostrarAlerta('Erro ao conectar com o servidor', 'erro');
     }
 }
-
 async function abrirModalEditarEncontro(encontroId) {
     try {
         const response = await fetch(`/api/clube/${clubeId}/encontros/${encontroId}`);
@@ -448,47 +509,93 @@ async function abrirModalEditarEncontro(encontroId) {
         alert(`Erro ao carregar dados do encontro: ${error.message}`);
     }
 }
-
+async function editarEncontro(encontroId) {
+    try {
+        const response = await fetch(`/api/clube/${clubeId}/encontros/${encontroId}`);
+        const data = await response.json();
+        
+        if (response.ok) {
+            document.getElementById('encontro-id').value = encontroId;
+            document.getElementById('titulo-encontro').value = data.titulo;
+            document.getElementById('descricao-encontro').value = data.descricao || '';
+            document.getElementById('data-encontro').value = data.data_encontro.split('T')[0];
+            document.getElementById('hora-inicio').value = data.hora_inicio;
+            document.getElementById('hora-fim').value = data.hora_fim || '';
+            document.getElementById('local-encontro').value = data.local || '';
+            document.getElementById('link-encontro').value = data.link || '';
+            
+            const tipoRadio = document.querySelector(`input[name="tipo-encontro"][value="${data.tipo}"]`);
+            if (tipoRadio) {
+                tipoRadio.checked = true;
+                tipoRadio.dispatchEvent(new Event('change'));
+            }
+            
+            document.getElementById('modal-titulo-encontro').textContent = 'Editar Encontro';
+            
+            const modal = document.getElementById('modal-encontro');
+            const overlay = document.getElementById('overlay');
+            
+            if (modal && overlay) {
+                modal.style.display = 'block';
+                overlay.style.display = 'block';
+                document.body.style.overflow = 'hidden';
+            }
+        } else {
+            mostrarAlerta(data.erro || 'Erro ao carregar dados do encontro', 'erro');
+        }
+    } catch (error) {
+        console.error('Erro ao editar encontro:', error);
+        mostrarAlerta('Erro ao conectar com o servidor', 'erro');
+    }
+}
 async function excluirEncontro(encontroId) {
-    if (!confirm('Tem certeza que deseja excluir este encontro?')) return;
+    if (!confirm('Tem certeza que deseja excluir este encontro?')) {
+        return;
+    }
     
     try {
         const response = await fetch(`/api/clube/${clubeId}/encontros/${encontroId}`, {
             method: 'DELETE'
         });
         
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.erro || 'Erro ao excluir encontro');
-        }
+        const data = await response.json();
         
-        carregarEncontros(clubeId);
-        alert('Encontro excluído com sucesso!');
+        if (response.ok) {
+            mostrarAlerta('Encontro excluído com sucesso!', 'sucesso');
+            encontrosCarregados = false;
+            carregarEncontros();
+        } else {
+            mostrarAlerta(data.erro || 'Erro ao excluir encontro', 'erro');
+        }
     } catch (error) {
-        console.error('Erro:', error);
-        alert(`Erro ao excluir encontro: ${error.message}`);
+        console.error('Erro ao excluir encontro:', error);
+        mostrarAlerta('Erro ao conectar com o servidor', 'erro');
     }
 }
 async function confirmarParticipacao(encontroId, status) {
     try {
         const response = await fetch(`/api/clube/${clubeId}/encontros/${encontroId}/participacao`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({ status })
         });
         
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.erro || 'Erro ao confirmar participação');
-        }
+        const data = await response.json();
         
-        await carregarEncontros(clubeId);
-    } catch (error) {
-        console.error('Erro:', error);
-        alert(`Erro ao confirmar participação: ${error.message}`);
+        if (response.ok) {
+            mostrarAlerta('Participação atualizada com sucesso!', 'sucesso');
+            encontrosCarregados = false;
+            carregarEncontros();
+        } else {
+            mostrarAlerta(data.erro || 'Erro ao confirmar participação', 'erro');
+        }
+    }catch (error) {
+        console.error('Erro ao confirmar participação:', error);
+        mostrarAlerta('Erro ao conectar com o servidor', 'erro');
     }
 }
-
 async function verParticipantes(encontroId) {
     try {
         const response = await fetch(`/api/clube/${clubeId}/encontros/${encontroId}/participantes`);
@@ -502,3 +609,65 @@ async function verParticipantes(encontroId) {
         alert(`Erro ao carregar participantes: ${error.message}`);
     }
 }
+function formatarDataEncontro(dataString) {
+    const data = new Date(dataString);
+    const hoje = new Date();
+    const amanha = new Date(hoje);
+    amanha.setDate(hoje.getDate() + 1);
+    
+    const dataEncontro = new Date(data.getFullYear(), data.getMonth(), data.getDate());
+    const hojeNormalizado = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+    const amanhaNormalizado = new Date(amanha.getFullYear(), amanha.getMonth(), amanha.getDate());
+    
+    if (dataEncontro.getTime() === hojeNormalizado.getTime()) {
+        return 'Hoje';
+    } else if (dataEncontro.getTime() === amanhaNormalizado.getTime()) {
+        return 'Amanhã';
+    } else {
+        return data.toLocaleDateString('pt-BR', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    }
+}
+
+function getTipoIcon(tipo) {
+    switch(tipo) {
+        case 'online':
+            return 'video-camera';
+        case 'presencial':
+            return 'map-marker';
+        case 'hibrido':
+            return 'globe';
+        default:
+            return 'calendar';
+    }
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('click', function(e) {
+        if (e.target.id === 'overlay') {
+            fecharModalEncontro();
+        }
+    });
+    
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            fecharModalEncontro();
+        }
+    });
+});

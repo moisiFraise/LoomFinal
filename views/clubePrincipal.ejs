@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="/css/leituras.css">
     <link rel="stylesheet" href="/css/atualizacoes.css">
     <link rel="stylesheet" href="/css/encontros.css">
+    <link rel="stylesheet" href="/css/sugestoes.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <title><%= titulo %></title>
 </head>
@@ -28,6 +29,7 @@
         <div class="clube-content-wrapper">
             <%- include('partials/menuClube') %>
             <div class="clube-container">
+                <!-- Seção Discussão -->
                 <div id="secao-discussao" class="clube-secao">
                     <div class="clube-info-wrapper">
                         <div class="clube-info-card">
@@ -69,7 +71,9 @@
                             </div>
                         </div>
                     </div>
-                </div>                
+                </div>
+
+                <!-- Seção Leituras -->
                 <div id="secao-livros-anteriores" class="clube-secao" style="display: none;">
                     <div class="leituras-header">
                         <h3>Leituras do Clube</h3>
@@ -88,6 +92,23 @@
                     <div class="leituras-container">
                         <h4>Leituras Anteriores</h4>
                         <div id="leituras-anteriores-grid" class="leituras-grid">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seção de Sugestões de Livros -->
+                <div id="secao-sugestoes-livros" class="clube-secao" style="display: none;">
+                    <div class="sugestoes-header">
+                        <h3>Sugestões de Livros</h3>
+                        <button class="botao-moderno" onclick="abrirModalNovaSugestao()">
+                            <i class="fa fa-plus"></i> Nova Sugestão
+                        </button>
+                    </div>
+                    
+                    <div id="sugestoes-lista" class="sugestoes-lista">
+                        <div class="loading-sugestoes">
+                            <i class="fa fa-spinner fa-spin"></i>
+                            <p>Carregando sugestões...</p>
                         </div>
                     </div>
                 </div>
@@ -110,9 +131,98 @@
                     </div>
                 </div>
                 
+                <!-- Seção Membros -->
                 <div id="secao-membros" class="clube-secao" style="display: none;">
                     <h3>Membros do Clube</h3>
                     <div id="clube-membros-lista-completa"></div>
+                </div>
+
+                <!-- Seção Decidir Livro -->
+                <div id="secao-decidir-livro" class="clube-secao" style="display: none;">
+                    <h3>Decidir Próximo Livro</h3>
+                    <div id="votacao-container">
+                        <p>Funcionalidade de votação em desenvolvimento...</p>
+                    </div>
+                </div>
+
+                <!-- Seção Configurações -->
+                <div id="secao-configuracoes-clube" class="clube-secao" style="display: none;">
+                    <h3>Configurações do Clube</h3>
+                    <div id="configuracoes-container">
+                        <p>Configurações do clube em desenvolvimento...</p>
+                    </div>
+                </div>
+                
+                <!-- Modal de Nova Sugestão -->
+                <div id="overlay-sugestao" class="overlay-sugestao" style="display: none;"></div>
+                <div id="modal-nova-sugestao" class="modal-sugestao" style="display: none;">
+                    <form id="form-nova-sugestao">
+                        <h2>Nova Sugestão de Livro</h2>
+                        
+                        <!-- Abas de navegação -->
+                        <div class="tabs-container">
+                            <div class="tab-item-sugestao tab-ativo" data-tab="buscar" onclick="mudarTabSugestao('buscar')">
+                                <i class="fa fa-search"></i> Buscar Livros
+                            </div>
+                            <div class="tab-item-sugestao" data-tab="manual" onclick="mudarTabSugestao('manual')">
+                                <i class="fa fa-edit"></i> Inserir Manualmente
+                            </div>
+                        </div>
+                        
+                        <!-- Conteúdo da aba Buscar -->
+                        <div id="tab-sugestao-buscar" class="tab-content-sugestao" style="display: block;">
+                            <p class="form-subtitulo">Buscar por título ou autor</p>
+                            <div class="search-input">
+                                <input type="text" id="busca-livro-sugestao" placeholder="Digite o título ou autor do livro">
+                                <button type="button" class="botao-moderno" onclick="buscarLivrosSugestao()">Buscar</button>
+                            </div>
+                            
+                            <div id="search-results-sugestao" class="search-results">
+                            </div>
+                        </div>
+                        
+                        <!-- Conteúdo da aba Manual -->
+                        <div id="tab-sugestao-manual" class="tab-content-sugestao" style="display: none;">
+                            <div class="form-group">
+                                <label for="sugestao-titulo">Título do Livro*</label>
+                                <input type="text" id="sugestao-titulo" placeholder="Digite o título do livro" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="sugestao-autor">Autor</label>
+                                <input type="text" id="sugestao-autor" placeholder="Digite o nome do autor">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="sugestao-justificativa">Por que você sugere este livro?</label>
+                                <textarea id="sugestao-justificativa" rows="4" placeholder="Explique por que este livro seria uma boa escolha para o clube..."></textarea>
+                            </div>
+                        </div>
+                        
+                        <!-- Container do livro selecionado -->
+                        <div id="selected-book-container-sugestao" style="display: none;" class="selected-book">
+                            <div id="selected-book-cover-sugestao" class="selected-book-cover"></div>
+                            <div class="selected-book-info">
+                                <h4 id="selected-book-title-sugestao"></h4>
+                                <p id="selected-book-author-sugestao"></p>
+                                <p id="selected-book-pages-sugestao"></p>
+                                
+                                <div class="form-group">
+                                    <label for="sugestao-justificativa-selected">Por que você sugere este livro?</label>
+                                    <textarea id="sugestao-justificativa-selected" rows="3" placeholder="Explique por que este livro seria uma boa escolha para o clube..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" class="botao-sugerir" onclick="salvarNovaSugestao()">
+                                <i class="fa fa-check"></i> Criar Sugestão
+                            </button>
+                            <button type="button" class="botao-cancelar" onclick="fecharModalNovaSugestao()">
+                                <i class="fa fa-times"></i> Cancelar
+                            </button>
+                        </div>
+                    </form>
                 </div>
                 
                 <!-- Overlay e Modais -->
@@ -150,7 +260,7 @@
                         <!-- Conteúdo da aba Sugestões -->
                         <div id="tab-sugestoes" class="tab-content" style="display: none;">
                             <p class="form-subtitulo">Sugestões dos membros do clube</p>
-                            <div id="sugestoes-lista" class="sugestoes-lista">
+                            <div id="sugestoes-lista-modal" class="sugestoes-lista">
                                 <div class="carregando">Carregando sugestões...</div>
                             </div>
                         </div>
@@ -161,8 +271,7 @@
                                 <h4 id="selected-book-title"></h4>
                                 <p id="selected-book-author"></p>
                                 <p id="selected-book-pages"></p>
-                                
-                                <p class="form-subtitulo">Data de Início</p>
+                                                                <p class="form-subtitulo">Data de Início</p>
                                 <input type="date" id="data-inicio" required>
                                 <p class="form-subtitulo">Data de Término Previsto</p>
                                 <input type="date" id="data-fim">
@@ -275,7 +384,8 @@
                                 <input type="url" id="link-encontro" placeholder="Ex: https://meet.google.com/...">
                             </div>
                         </div>
-                    <div class="form-actions">                        <div class="form-actions">
+                        
+                        <div class="form-actions">
                             <button type="submit" class="botao-moderno">
                                 <i class="fa fa-save"></i> Salvar
                             </button>
@@ -297,7 +407,9 @@
     <script src="/js/atualizacoes.js"></script>
     <script src="/js/encontros.js"></script>
     <script src="/js/curtidas.js"></script>
+    <script src="/js/sugestoes.js"></script>
     <%- include('partials/imports') %>
 </body>
 </html>
 
+                               

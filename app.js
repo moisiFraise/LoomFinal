@@ -189,14 +189,12 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ erro: 'Email ou senha incorretos.' });
     }
     
-    // Regenerar sessão para segurança
     req.session.regenerate(function(err) {
       if (err) {
         console.error('Erro ao regenerar sessão:', err);
         return res.status(500).json({ erro: 'Erro ao processar o login. Problema com a sessão.' });
       }
       
-      // Definir dados da sessão
       req.session.userId = usuario.id;
       req.session.userType = usuario.tipo;
       req.session.authenticated = true;
@@ -209,7 +207,6 @@ app.post('/api/login', async (req, res) => {
         email: req.session.email
       });
       
-      // Salvar sessão explicitamente
       req.session.save(function(err) {
         if (err) {
           console.error('Erro ao salvar sessão:', err);
@@ -1805,15 +1802,12 @@ app.get('/api/debug/encontros/criar', verificarAutenticacao, async (req, res) =>
     });
   }
 });
-// Adicionar estas rotas após as rotas existentes de encontros
 
-// Rota para listar sugestões de um clube
 app.get('/api/clube/:id/sugestoes', verificarAutenticacao, async (req, res) => {
   try {
     const clubeId = req.params.id;
     const userId = req.session.userId;
     
-    // Verificar se o usuário é membro do clube
     const [participacoes] = await pool.query(
       'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
       [userId, clubeId]
@@ -1839,18 +1833,20 @@ app.get('/api/clube/:id/sugestoes', verificarAutenticacao, async (req, res) => {
   }
 });
 
-// Rota para criar uma nova sugestão
 app.post('/api/clube/:id/sugestoes', verificarAutenticacao, async (req, res) => {
   try {
     const clubeId = req.params.id;
     const userId = req.session.userId;
-    const { titulo, autor, justificativa } = req.body;
+    const { titulo, autor, justificativa, imagemUrl, paginas } = req.body;
+    
+    console.log('Dados recebidos para sugestão:', {
+      titulo, autor, justificativa, imagemUrl, paginas
+    });
     
     if (!titulo) {
       return res.status(400).json({ erro: 'Título do livro é obrigatório' });
     }
     
-    // Verificar se o usuário é membro do clube
     const [participacoes] = await pool.query(
       'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
       [userId, clubeId]
@@ -1860,38 +1856,34 @@ app.post('/api/clube/:id/sugestoes', verificarAutenticacao, async (req, res) => 
       return res.status(403).json({ erro: 'Você não é membro deste clube' });
     }
     
-    // Criar a sugestão
-    const [result] = await pool.query(
-      'INSERT INTO sugestoes (id_clube, id_usuario, titulo, autor, justificativa) VALUES (?, ?, ?, ?, ?)',
-      [clubeId, userId, titulo, autor || null, justificativa || null]
+    const Sugestoes = require('./models/Sugestoes');
+    const novaSugestao = await Sugestoes.criar(
+      clubeId, 
+      userId, 
+      titulo, 
+      autor || null, 
+      justificativa || null, 
+      imagemUrl || null, 
+      paginas || null
     );
     
-    // Buscar a sugestão criada com o nome do usuário
-    const [novaSugestao] = await pool.query(`
-      SELECT s.*, u.nome as nome_usuario
-      FROM sugestoes s
-      JOIN usuarios u ON s.id_usuario = u.id
-      WHERE s.id = ?
-    `, [result.insertId]);
+    console.log('Sugestão criada:', novaSugestao);
     
     res.status(201).json({
       mensagem: 'Sugestão criada com sucesso',
-      sugestao: novaSugestao[0]
+      sugestao: novaSugestao
     });
   } catch (error) {
     console.error('Erro ao criar sugestão:', error);
     res.status(500).json({ erro: 'Erro ao criar sugestão' });
   }
 });
-
-// Rota para excluir uma sugestão
 app.delete('/api/clube/:id/sugestoes/:sugestaoId', verificarAutenticacao, async (req, res) => {
   try {
     const clubeId = req.params.id;
     const sugestaoId = req.params.sugestaoId;
     const userId = req.session.userId;
     
-    // Verificar se o usuário é membro do clube
     const [participacoes] = await pool.query(
       'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
       [userId, clubeId]
@@ -1901,7 +1893,6 @@ app.delete('/api/clube/:id/sugestoes/:sugestaoId', verificarAutenticacao, async 
       return res.status(403).json({ erro: 'Você não é membro deste clube' });
     }
     
-    // Verificar se a sugestão existe e pertence ao usuário ou se o usuário é criador do clube
     const [sugestoes] = await pool.query(
       'SELECT * FROM sugestoes WHERE id = ? AND id_clube = ?',
       [sugestaoId, clubeId]
@@ -1923,7 +1914,6 @@ app.delete('/api/clube/:id/sugestoes/:sugestaoId', verificarAutenticacao, async 
       return res.status(403).json({ erro: 'Você não tem permissão para excluir esta sugestão' });
     }
     
-    // Excluir a sugestão
     await pool.query('DELETE FROM sugestoes WHERE id = ?', [sugestaoId]);
     
     res.json({ mensagem: 'Sugestão excluída com sucesso' });
