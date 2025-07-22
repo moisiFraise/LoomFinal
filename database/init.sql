@@ -203,3 +203,73 @@ CREATE TABLE IF NOT EXISTS votos (
   FOREIGN KEY (id_opcao) REFERENCES opcoes_votacao(id) ON DELETE CASCADE,
   UNIQUE KEY unique_voto_usuario (id_votacao, id_usuario)
 );
+
+-- Remover as foreign keys existentes e recriar com CASCADE
+ALTER TABLE atualizacoes DROP FOREIGN KEY atualizacoes_ibfk_1;
+ALTER TABLE atualizacoes DROP FOREIGN KEY atualizacoes_ibfk_2;
+ALTER TABLE atualizacoes DROP FOREIGN KEY atualizacoes_ibfk_3;
+
+ALTER TABLE participacoes DROP FOREIGN KEY participacoes_ibfk_1;
+ALTER TABLE participacoes DROP FOREIGN KEY participacoes_ibfk_2;
+
+ALTER TABLE leituras DROP FOREIGN KEY leituras_ibfk_1;
+
+ALTER TABLE curtidas DROP FOREIGN KEY curtidas_ibfk_1;
+ALTER TABLE curtidas DROP FOREIGN KEY curtidas_ibfk_2;
+
+ALTER TABLE encontros DROP FOREIGN KEY encontros_ibfk_1;
+
+ALTER TABLE participantes_encontro DROP FOREIGN KEY participantes_encontro_ibfk_1;
+ALTER TABLE participantes_encontro DROP FOREIGN KEY participantes_encontro_ibfk_2;
+
+ALTER TABLE sugestoes DROP FOREIGN KEY sugestoes_ibfk_1;
+ALTER TABLE sugestoes DROP FOREIGN KEY sugestoes_ibfk_2;
+
+ALTER TABLE opcoes_votacao DROP FOREIGN KEY opcoes_votacao_ibfk_1;
+ALTER TABLE opcoes_votacao DROP FOREIGN KEY opcoes_votacao_ibfk_2;
+
+ALTER TABLE votacoes DROP FOREIGN KEY votacoes_ibfk_1;
+
+ALTER TABLE votos DROP FOREIGN KEY votos_ibfk_1;
+ALTER TABLE votos DROP FOREIGN KEY votos_ibfk_2;
+ALTER TABLE votos DROP FOREIGN KEY votos_ibfk_3;
+
+-- Recriar com CASCADE
+ALTER TABLE atualizacoes 
+ADD CONSTRAINT atualizacoes_ibfk_1 FOREIGN KEY (id_clube) REFERENCES clubes(id) ON DELETE CASCADE,
+ADD CONSTRAINT atualizacoes_ibfk_2 FOREIGN KEY (id_leitura) REFERENCES leituras(id) ON DELETE CASCADE,
+ADD CONSTRAINT atualizacoes_ibfk_3 FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE CASCADE;
+
+ALTER TABLE participacoes 
+ADD CONSTRAINT participacoes_ibfk_1 FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE CASCADE,
+ADD CONSTRAINT participacoes_ibfk_2 FOREIGN KEY (id_clube) REFERENCES clubes(id) ON DELETE CASCADE;
+
+ALTER TABLE leituras 
+ADD CONSTRAINT leituras_ibfk_1 FOREIGN KEY (id_clube) REFERENCES clubes(id) ON DELETE CASCADE;
+
+ALTER TABLE curtidas 
+ADD CONSTRAINT curtidas_ibfk_1 FOREIGN KEY (id_atualizacao) REFERENCES atualizacoes(id) ON DELETE CASCADE,
+ADD CONSTRAINT curtidas_ibfk_2 FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE CASCADE;
+
+ALTER TABLE encontros 
+ADD CONSTRAINT encontros_ibfk_1 FOREIGN KEY (id_clube) REFERENCES clubes(id) ON DELETE CASCADE;
+
+ALTER TABLE participantes_encontro 
+ADD CONSTRAINT participantes_encontro_ibfk_1 FOREIGN KEY (id_encontro) REFERENCES encontros(id) ON DELETE CASCADE,
+ADD CONSTRAINT participantes_encontro_ibfk_2 FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE CASCADE;
+
+ALTER TABLE sugestoes 
+ADD CONSTRAINT sugestoes_ibfk_1 FOREIGN KEY (id_clube) REFERENCES clubes(id) ON DELETE CASCADE,
+ADD CONSTRAINT sugestoes_ibfk_2 FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE CASCADE;
+
+ALTER TABLE votacoes 
+ADD CONSTRAINT votacoes_ibfk_1 FOREIGN KEY (id_clube) REFERENCES clubes(id) ON DELETE CASCADE;
+
+ALTER TABLE opcoes_votacao 
+ADD CONSTRAINT opcoes_votacao_ibfk_1 FOREIGN KEY (id_votacao) REFERENCES votacoes(id) ON DELETE CASCADE,
+ADD CONSTRAINT opcoes_votacao_ibfk_2 FOREIGN KEY (id_sugestao) REFERENCES sugestoes(id) ON DELETE CASCADE;
+
+ALTER TABLE votos 
+ADD CONSTRAINT votos_ibfk_1 FOREIGN KEY (id_votacao) REFERENCES votacoes(id) ON DELETE CASCADE,
+ADD CONSTRAINT votos_ibfk_2 FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE CASCADE,
+ADD CONSTRAINT votos_ibfk_3 FOREIGN KEY (id_opcao) REFERENCES opcoes_votacao(id) ON DELETE CASCADE;

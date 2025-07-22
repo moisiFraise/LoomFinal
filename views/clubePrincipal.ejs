@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="/css/sugestoes.css">
     <link rel="stylesheet" href="/css/sorteio.css">
     <link rel="stylesheet" href="/css/votacao.css">
+    <link rel="stylesheet" href="/css/configuracoes.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <title><%= titulo %></title>
 </head>
@@ -138,6 +139,196 @@
                     <h3>Membros do Clube</h3>
                     <div id="clube-membros-lista-completa"></div>
                 </div>
+                <!-- Seção Configurações -->
+<div id="secao-configuracoes-clube" class="clube-secao" style="display: none;">
+    <div class="configuracoes-header">
+        <h3>Configurações do Clube</h3>
+        <p class="configuracoes-aviso">
+            <i class="fa fa-exclamation-triangle"></i>
+            Apenas você, como criador do clube, pode alterar essas configurações.
+        </p>
+    </div>
+    
+    <div class="configuracoes-container">
+        <!-- Configurações Básicas -->
+        <div class="config-secao">
+            <h4><i class="fa fa-edit"></i> Informações Básicas</h4>
+            <form id="form-config-basicas" class="config-form">
+                <div class="form-group">
+                    <label for="config-nome">Nome do Clube*</label>
+                    <input type="text" id="config-nome" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="config-descricao">Descrição</label>
+                    <textarea id="config-descricao" rows="3"></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="config-cidade">Cidade</label>
+                        <input type="text" id="config-cidade">
+                    </div>
+                    <div class="form-group">
+                        <label for="config-estado">Estado</label>
+                        <input type="text" id="config-estado">
+                    </div>
+                </div>
+                
+                <button type="button" class="botao-salvar" onclick="salvarConfiguracaoBasica()">
+                    <i class="fa fa-save"></i> Salvar Informações
+                </button>
+            </form>
+        </div>
+        
+        <!-- Modalidade -->
+        <div class="config-secao">
+            <h4><i class="fa fa-globe"></i> Modalidade do Clube</h4>
+            <form id="form-config-modalidade" class="config-form">
+                <div class="modalidade-opcoes">
+                    <label class="modalidade-opcao">
+                        <input type="radio" name="config-modelo" value="online">
+                        <div class="opcao-content">
+                            <strong>Online</strong>
+                            <span>Encontros apenas virtuais</span>
+                        </div>
+                    </label>
+                    <label class="modalidade-opcao">
+                        <input type="radio" name="config-modelo" value="presencial">
+                        <div class="opcao-content">
+                            <strong>Presencial</strong>
+                            <span>Encontros apenas presenciais</span>
+                        </div>
+                    </label>
+                    <label class="modalidade-opcao">
+                        <input type="radio" name="config-modelo" value="hibrido">
+                        <div class="opcao-content">
+                            <strong>Híbrido</strong>
+                            <span>Encontros presenciais e online</span>
+                        </div>
+                    </label>
+                </div>
+                
+                <button type="button" class="botao-salvar" onclick="salvarConfiguracaoModalidade()">
+                    <i class="fa fa-save"></i> Salvar Modalidade
+                </button>
+            </form>
+        </div>
+        
+        <!-- Visibilidade -->
+        <div class="config-secao">
+            <h4><i class="fa fa-eye"></i> Visibilidade e Acesso</h4>
+            <form id="form-config-visibilidade" class="config-form">
+                <div class="visibilidade-opcoes">
+                    <label class="visibilidade-opcao">
+                        <input type="radio" name="config-visibilidade" value="publico">
+                        <div class="opcao-content">
+                            <strong>Público</strong>
+                            <span>Qualquer pessoa pode encontrar e entrar no clube</span>
+                        </div>
+                    </label>
+                    <label class="visibilidade-opcao">
+                        <input type="radio" name="config-visibilidade" value="privado">
+                        <div class="opcao-content">
+                            <strong>Privado</strong>
+                            <span>Apenas pessoas com a senha podem entrar</span>
+                        </div>
+                    </label>
+                </div>
+                
+                <div id="config-senha-container" class="form-group" style="display: none;">
+                    <label for="config-senha">Senha de Acesso*</label>
+                    <input type="password" id="config-senha" placeholder="Digite a nova senha">
+                    <small class="form-help">A senha será necessária para novos membros entrarem no clube</small>
+                </div>
+                
+                <button type="button" class="botao-salvar" onclick="salvarConfiguracaoVisibilidade()">
+                    <i class="fa fa-save"></i> Salvar Visibilidade
+                </button>
+            </form>
+        </div>
+                <!-- Categorias -->
+        <div class="config-secao">
+            <h4><i class="fa fa-tags"></i> Categorias do Clube</h4>
+            <div class="config-form">
+                <div id="categorias-atuais" class="categorias-atuais">
+                    <div class="carregando">Carregando categorias...</div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Adicionar/Remover Categorias</label>
+                    <div id="todas-categorias" class="categorias-checkbox">
+                        <div class="carregando">Carregando opções...</div>
+                    </div>
+                </div>
+                
+                <button type="button" class="botao-salvar" onclick="salvarConfiguracaoCategorias()">
+                    <i class="fa fa-save"></i> Salvar Categorias
+                </button>
+            </div>
+        </div>
+        
+        <!-- Gerenciar Membros -->
+        <div class="config-secao">
+            <h4><i class="fa fa-users"></i> Gerenciar Membros</h4>
+            <div class="config-form">
+                <div id="membros-gerenciar" class="membros-gerenciar">
+                    <div class="carregando">Carregando membros...</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Zona de Perigo -->
+        <div class="config-secao config-perigo">
+            <h4><i class="fa fa-exclamation-triangle"></i> Zona de Perigo</h4>
+            <div class="config-form">
+                <div class="perigo-aviso">
+                    <p><strong>Atenção:</strong> As ações abaixo são irreversíveis.</p>
+                </div>
+                
+                <button type="button" class="botao-perigo" onclick="confirmarExclusaoClube()">
+                    <i class="fa fa-trash"></i> Excluir Clube Permanentemente
+                </button>
+                
+                <div class="perigo-info">
+                    <small>
+                        <i class="fa fa-info-circle"></i>
+                        Para excluir o clube, todos os membros (exceto você) devem ser removidos primeiro.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- Modal de Confirmação de Exclusão -->
+    <div id="overlay-exclusao" class="overlay" style="display: none;"></div>
+    <div id="modal-confirmacao-exclusao" class="modal-confirmacao" style="display: none;">
+        <div class="confirmacao-content">
+            <h3><i class="fa fa-exclamation-triangle"></i> Confirmar Exclusão</h3>
+            <p>Tem certeza que deseja excluir permanentemente este clube?</p>
+            <p class="confirmacao-aviso">
+                <strong>Esta ação não pode ser desfeita!</strong><br>
+                Todos os dados do clube, incluindo leituras, atualizações, encontros e discussões serão perdidos.
+            </p>
+            
+            <div class="confirmacao-input">
+                <label for="confirmacao-nome">Para confirmar, digite o nome do clube:</label>
+                <input type="text" id="confirmacao-nome" placeholder="Nome do clube">
+            </div>
+            
+            <div class="confirmacao-acoes">
+                <button type="button" id="botao-confirmar-exclusao" class="botao-perigo" onclick="excluirClube()" disabled>
+                    <i class="fa fa-trash"></i> Sim, Excluir Permanentemente
+                </button>
+                <button type="button" class="botao-cancelar" onclick="fecharModalExclusao()">
+                    <i class="fa fa-times"></i> Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
+        
 
                <!-- Seção Decidir Livro (Votação) -->
                 <div id="secao-decidir-livro" class="clube-secao" style="display: none;">
@@ -497,6 +688,7 @@
     <script src="/js/encontros.js"></script>
     <script src="/js/curtidas.js"></script>
     <script src="/js/votacao.js"></script>
+    <script src="/js/configuracoes.js"></script>
     <script src="/js/sugestoes.js"></script>
     <%- include('partials/imports') %>
 </body>

@@ -2199,6 +2199,213 @@ app.get('/api/clube/:id/votacoes/historico', verificarAutenticacao, async (req, 
     res.status(500).json({ erro: 'Erro ao buscar histórico de votações' });
   }
 });
+app.get('/api/clube/:id/configuracoes', verificarAutenticacao, async (req, res) => {
+  try {
+    const clubeId = req.params.id;
+    const userId = req.session.userId;
+    
+    // Verificar se é o criador do clube
+    const [clubeRows] = await pool.query(
+      'SELECT * FROM clubes WHERE id = ? AND id_criador = ?',
+      [clubeId, userId]
+    );
+    
+    if (clubeRows.length === 0) {
+      return res.status(403).json({ erro: 'Apenas o criador do clube pode acessar as configurações' });
+    }
+    
+    const clube = clubeRows[0];
+    
+    // Buscar categorias do clube
+    const [categoriasClube] = await pool.query(`
+      SELECT c.id, c.nome
+      FROM categorias c
+      JOIN clube_categorias cc ON c.id = cc.id_categoria
+      WHERE cc.id_clube = ?
+    `, [clubeId]);
+    
+    // Buscar todas as categorias disponíveis
+    const [todasCategorias] = await pool.query('SELECT id, nome FROM categorias ORDER BY nome');
+    
+    res.json({
+      clube,
+      categoriasClube,
+      todasCategorias
+    });
+  } catch (error) {
+    console.error('Erro ao buscar configurações:', error);
+    res.status(500).json({ erro: 'Erro ao buscar configurações do clube' });
+  }
+});
+app.put('/api/clube/:id/configuracoes', verificarAutenticacao, async (req, res) => {
+  try {
+    const clubeId = req.params.id;
+    const userId = req.session.userId;
+    const { nome, descricao, visibilidade, senha, modelo, cidade, estado } = req.body;
+    
+    // Verificar se é o criador do clube
+    const [clubeRows] = await pool.query(
+      'SELECT * FROM clubes WHERE id = ? AND id_criador = ?',
+      [clubeId, userId]
+    );
+    
+    if (clubeRows.length === 0) {
+      return res.status(403).json({ erro: 'Apenas o criador do clube pode editar as configurações' });
+    }
+    
+    // Validações
+    if (!nome || nome.trim().length === 0) {
+      return res.status(400).json({ erro: 'Nome do clube é obrigatório' });
+    }
+    
+    if (visibilidade === 'privado' && (!senha || senha.trim().length === 0)) {
+      return res.status(400).json({ erro: 'Clubes privados precisam de uma senha de acesso' });
+    }
+    
+    const modelosValidos = ['online', 'presencial', 'hibrido'];
+    if (modelo && !modelosValidos.includes(modelo)) {
+      return res.status(400).json({ erro: 'Modalidade inválida' });
+    }
+    
+    // Preparar dados para atualização
+    const senhaAcesso = visibilidade === 'privado' ? senha : null;
+    
+    await pool.query(`
+      UPDATE clubes 
+      SET nome = ?, descricao = ?, visibilidade = ?, senha_acesso = ?, 
+          modelo = ?, cidade = ?, estado = ?
+      WHERE id = ?
+    `, [nome, descricao || '', visibilidade, senhaAcesso, modelo, cidade || null, estado || null, clubeId]);
+    
+    // Buscar clube atualizado
+    const [clubeAtualizado] = await pool.query('SELECT * FROM clubes WHERE id = ?', [clubeId]);
+    
+    res.json({
+      mensagem: 'Configurações atualizadas com sucesso',
+      clube: clubeAtualizado[0]
+    });
+  } catch (error) {
+    console.error('Erro ao atualizar configurações:', error);
+    res.status(500).json({ erro: 'Erro ao atualizar configurações do clube' });
+  }
+});
+
+// Atualizar categorias do clube
+app.put('/api/clube/:id/categorias', verificarAutenticacao, async (req, res) => {
+  try {
+    const clubeId = req.params.id;
+    const userId = req.session.userId;
+    const { categorias } = req.body;
+    
+    // Verificar se é o criador do clube
+    const [clubeRows] = await pool.query(
+      'SELECT * FROM clubes WHERE id = ? AND id_criador = ?',
+      [clubeId, userId]
+    );
+    
+    if (clubeRows.length === 0) {
+      return res.status(403).json({ erro: 'Apenas o criador do clube pode editar as categorias' });
+    }
+    
+    // Remover todas as categorias atuais
+    await pool.query('DELETE FROM clube_categorias WHERE id_clube = ?', [clubeId]);
+    
+    // Adicionar novas categorias se houver
+    if (categorias && categorias.length > 0) {
+      const values = categorias.map(catId => [clubeId, catId]);
+      const placeholders = values.map(() => '(?, ?)').join(', ');
+      const flatValues = values.flat();
+      
+      await pool.query(
+        `INSERT INTO clube_categorias (id_clube, id_categoria) VALUES ${placeholders}`,
+        flatValues
+      );
+    }
+    
+    // Buscar categorias atualizadas
+    const [categoriasAtualizadas] = await pool.query(`
+      SELECT c.id, c.nome
+      FROM categorias c
+      JOIN clube_categorias cc ON c.id = cc.id_categoria
+      WHERE cc.id_clube = ?
+    `, [clubeId]);
+    
+    res.json({
+      mensagem: 'Categorias atualizadas com sucesso',
+      categorias: categoriasAtualizadas
+    });
+  } catch (error) {
+    console.error('Erro ao atualizar categorias:', error);
+    res.status(500).json({ erro: 'Erro ao atualizar categorias do clube' });
+  }
+});
+// Excluir clube (versão simplificada)
+app.delete('/api/clube/:id', verificarAutenticacao, async (req, res) => {
+  try {
+    const clubeId = req.params.id;
+    const userId = req.session.userId;
+    
+    // Verificar se é o criador do clube
+    const [clubeRows] = await pool.query(
+      'SELECT * FROM clubes WHERE id = ? AND id_criador = ?',
+      [clubeId, userId]
+    );
+    
+    if (clubeRows.length === 0) {
+      return res.status(403).json({ erro: 'Apenas o criador do clube pode excluí-lo' });
+    }
+    
+    // Excluir clube diretamente (CASCADE vai limpar tudo)
+    const [result] = await pool.query('DELETE FROM clubes WHERE id = ?', [clubeId]);
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ erro: 'Clube não encontrado' });
+    }
+    
+    res.json({ mensagem: 'Clube excluído com sucesso' });
+  } catch (error) {
+    console.error('Erro ao excluir clube:', error);
+    res.status(500).json({ erro: 'Erro ao excluir clube' });
+  }
+});
+// Remover membro do clube
+app.delete('/api/clube/:id/membros/:membroId', verificarAutenticacao, async (req, res) => {
+  try {
+    const clubeId = req.params.id;
+    const membroId = req.params.membroId;
+    const userId = req.session.userId;
+    
+    // Verificar se é o criador do clube
+    const [clubeRows] = await pool.query(
+      'SELECT * FROM clubes WHERE id = ? AND id_criador = ?',
+      [clubeId, userId]
+    );
+    
+    if (clubeRows.length === 0) {
+      return res.status(403).json({ erro: 'Apenas o criador do clube pode remover membros' });
+    }
+    
+    // Não permitir remover o próprio criador
+    if (parseInt(membroId) === parseInt(userId)) {
+      return res.status(400).json({ erro: 'Você não pode se remover do próprio clube' });
+    }
+    
+    // Remover membro
+    const [result] = await pool.query(
+      'DELETE FROM participacoes WHERE id_clube = ? AND id_usuario = ?',
+      [clubeId, membroId]
+    );
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ erro: 'Membro não encontrado no clube' });
+    }
+    
+    res.json({ mensagem: 'Membro removido com sucesso' });
+  } catch (error) {
+    console.error('Erro ao remover membro:', error);
+    res.status(500).json({ erro: 'Erro ao remover membro do clube' });
+  }
+});
 app.get('/api/admin/denuncias', verificarAutenticacao, async (req, res) => {
   try {
     const usuario = await Usuario.buscarPorId(req.session.userId);

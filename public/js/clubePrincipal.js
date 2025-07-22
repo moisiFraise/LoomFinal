@@ -4,7 +4,7 @@ let livroSelecionado = null;
 let sugestaoSelecionada = null;
 let resultadosBusca = [];
 let atualizacaoEditando = null;
-let sugestoesSorteio = []; // Nova variável para controlar sugestões do sorteio
+let sugestoesSorteio = []; 
 
 document.addEventListener('DOMContentLoaded', function() {
     if (typeof clubeId !== 'undefined') {
@@ -84,7 +84,7 @@ function atualizarDataFimMinima() {
     
     if (dataInicioInput.value) {
         const dataInicio = new Date(dataInicioInput.value);
-        dataInicio.setDate(dataInicio.getDate() + 1); // Mínimo um dia após o início
+        dataInicio.setDate(dataInicio.getDate() + 1); 
         dataFimInput.min = dataInicio.toISOString().split('T')[0];
         
         if (dataFimInput.value && new Date(dataFimInput.value) <= new Date(dataInicioInput.value)) {
@@ -92,40 +92,51 @@ function atualizarDataFimMinima() {
         }
     }
 }
-
 function mudarSecaoClube(secao) {
-    document.querySelectorAll('.clube-secao').forEach(s => s.style.display = 'none');
+    console.log('Mudando para seção:', secao);
+    
+    document.querySelectorAll('.clube-secao').forEach(s => {
+        s.style.display = 'none';
+    });
+    
     document.querySelectorAll('.menu-item').forEach(item => {
         item.classList.remove('menu-item-ativo');
     });
     
+    const itemAtivo = document.querySelector(`[data-secao="${secao}"]`);
+    if (itemAtivo) {
+        itemAtivo.classList.add('menu-item-ativo');
+    }
+    
     const secaoElement = document.getElementById(`secao-${secao}`);
     if (secaoElement) {
         secaoElement.style.display = 'block';
-    }
-    const menuItem = document.querySelector(`[data-secao="${secao}"]`);
-    if (menuItem) {
-        menuItem.classList.add('menu-item-ativo');
-    }
-    switch(secao) {
-        case 'discussao':
-            carregarAtualizacoes(clubeId);
-            break;
-        case 'livros-anteriores':
-            carregarLeiturasClube(clubeId);
-            break;
-        case 'sugestoes-livros':
-            carregarSugestoes();
-            break;
-        case 'encontros':
-            carregarEncontros(clubeId);
-            break;
-        case 'membros':
-            carregarMembrosCompleto(clubeId);
-            break;
+        
+        switch(secao) {
+            case 'discussao':
+                carregarAtualizacoes();
+                break;
+            case 'livros-anteriores':
+                carregarLeituras();
+                break;
+            case 'sugestoes-livros':
+                carregarSugestoes();
+                break;
+            case 'encontros':
+                carregarEncontros();
+                break;
+            case 'membros':
+                carregarMembrosCompleto();
+                break;
+            case 'decidir-livro':
+                carregarVotacao();
+                break;
+            case 'configuracoes-clube':
+                inicializarConfiguracoes();
+                break;
+        }
     }
 }
-
 async function carregarInformacoesClube(clubeId) {
     try {
         const response = await fetch(`/api/clube/${clubeId}`);
@@ -228,7 +239,7 @@ function abrirModalSelecaoLeitura() {
     livroSelecionado = null;
     sugestaoSelecionada = null;
     resultadosBusca = [];
-    sugestoesSorteio = []; // Limpar sugestões do sorteio
+    sugestoesSorteio = []; 
     
     mudarTabSelecaoLeitura('buscar');
     
@@ -271,7 +282,6 @@ function mudarTabSelecaoLeitura(tab) {
     sugestaoSelecionada = null;
 }
 
-// Nova função para carregar sugestões para sorteio
 async function carregarSugestoesParaSorteio() {
     try {
         const response = await fetch(`/api/clube/${clubeId}/sugestoes`);
@@ -296,7 +306,6 @@ async function carregarSugestoesParaSorteio() {
                 </div>
             `).join('');
             
-            // Adicionar botões de controle
             container.innerHTML += `
                 <div class="sorteio-controles">
                     <div class="sorteio-acoes">
@@ -323,25 +332,21 @@ async function carregarSugestoesParaSorteio() {
         document.getElementById('sugestoes-sorteio-lista').innerHTML = '<div class="erro-sugestoes">Erro ao carregar sugestões</div>';
     }
 }
-// Função para alternar seleção de sugestão no sorteio
 function toggleSugestaoSorteio(index) {
     const checkbox = document.getElementById(`sorteio-${index}`);
     const sugestao = window.sugestoesSorteioDisponiveis[index];
     
     if (checkbox.checked) {
-        // Adicionar à lista de sorteio
         if (!sugestoesSorteio.find(s => s.id === sugestao.id)) {
             sugestoesSorteio.push(sugestao);
         }
     } else {
-        // Remover da lista de sorteio
         sugestoesSorteio = sugestoesSorteio.filter(s => s.id !== sugestao.id);
     }
     
     atualizarContadorSugestoes();
 }
 
-// Função para selecionar todas as sugestões
 function selecionarTodasSugestoes() {
     if (!window.sugestoesSorteioDisponiveis) return;
     
@@ -358,7 +363,6 @@ function selecionarTodasSugestoes() {
     atualizarContadorSugestoes();
 }
 
-// Função para desmarcar todas as sugestões
 function desmarcarTodasSugestoes() {
     if (!window.sugestoesSorteioDisponiveis) return;
     
@@ -373,7 +377,6 @@ function desmarcarTodasSugestoes() {
     atualizarContadorSugestoes();
 }
 
-// Função para atualizar contador e botão de sorteio
 function atualizarContadorSugestoes() {
     const contador = document.getElementById('contador-sugestoes');
     const botaoSorteio = document.querySelector('.botao-sorteio');
@@ -388,18 +391,15 @@ function atualizarContadorSugestoes() {
     }
 }
 
-// Função para realizar o sorteio
 function realizarSorteio() {
     if (sugestoesSorteio.length === 0) {
         mostrarAlerta('Selecione pelo menos uma sugestão para o sorteio', 'erro');
         return;
     }
     
-    // Mostrar modal de sorteio
     mostrarModalSorteio();
 }
 
-// Função para mostrar modal de sorteio com animação
 function mostrarModalSorteio() {
     const modalSorteio = document.getElementById('modal-sorteio');
     const overlaySorteio = document.getElementById('overlay-sorteio');
@@ -407,11 +407,9 @@ function mostrarModalSorteio() {
     modalSorteio.style.display = 'block';
     overlaySorteio.style.display = 'block';
     
-    // Iniciar animação de sorteio
     iniciarAnimacaoSorteio();
 }
 
-// Função para fechar modal de sorteio
 function fecharModalSorteio() {
     const modalSorteio = document.getElementById('modal-sorteio');
     const overlaySorteio = document.getElementById('overlay-sorteio');
@@ -420,18 +418,15 @@ function fecharModalSorteio() {
     overlaySorteio.style.display = 'none';
 }
 
-// Função para iniciar animação de sorteio
 function iniciarAnimacaoSorteio() {
     const resultadoContainer = document.getElementById('resultado-sorteio');
     const botaoConfirmarSorteio = document.getElementById('confirmar-sorteio');
     const botaoNovoSorteio = document.getElementById('novo-sorteio');
     
-    // Resetar estado
     resultadoContainer.innerHTML = '';
     botaoConfirmarSorteio.style.display = 'none';
     botaoNovoSorteio.style.display = 'none';
     
-    // Mostrar sugestões participantes
     const participantesContainer = document.getElementById('participantes-sorteio');
     participantesContainer.innerHTML = `
         <h4>Participantes do sorteio (${sugestoesSorteio.length}):</h4>
@@ -448,17 +443,14 @@ function iniciarAnimacaoSorteio() {
         </div>
     `;
     
-    // Iniciar sorteio após 2 segundos
     setTimeout(() => {
         executarSorteio();
     }, 2000);
 }
 
-// Função para executar o sorteio
 function executarSorteio() {
     const resultadoContainer = document.getElementById('resultado-sorteio');
     
-    // Mostrar animação de sorteio
     resultadoContainer.innerHTML = `
         <div class="sorteio-animacao">
             <div class="sorteio-spinner">
@@ -468,18 +460,14 @@ function executarSorteio() {
         </div>
     `;
     
-    // Simular tempo de sorteio
     setTimeout(() => {
-        // Selecionar sugestão aleatória
         const indiceSorteado = Math.floor(Math.random() * sugestoesSorteio.length);
         const sugestaoSorteada = sugestoesSorteio[indiceSorteado];
         
-        // Mostrar resultado
         mostrarResultadoSorteio(sugestaoSorteada);
     }, 3000);
 }
 
-// Função para mostrar resultado do sorteio
 function mostrarResultadoSorteio(sugestaoSorteada) {
     const resultadoContainer = document.getElementById('resultado-sorteio');
     const botaoConfirmarSorteio = document.getElementById('confirmar-sorteio');
@@ -507,29 +495,23 @@ function mostrarResultadoSorteio(sugestaoSorteada) {
         </div>
     `;
     
-    // Armazenar sugestão sorteada
     window.sugestaoSorteada = sugestaoSorteada;
     
-    // Mostrar botões
     botaoConfirmarSorteio.style.display = 'inline-block';
     botaoNovoSorteio.style.display = 'inline-block';
 }
 
-// Função para confirmar sorteio e selecionar como leitura
 function confirmarSorteio() {
     if (!window.sugestaoSorteada) {
         mostrarAlerta('Erro: nenhuma sugestão foi sorteada', 'erro');
         return;
     }
     
-    // Fechar modal de sorteio
     fecharModalSorteio();
     
-    // Selecionar a sugestão sorteada
     sugestaoSelecionada = window.sugestaoSorteada;
     livroSelecionado = null;
     
-    // Mostrar no container de livro selecionado
     const container = document.getElementById('selected-book-container');
     const coverDiv = document.getElementById('selected-book-cover');
     const titleElement = document.getElementById('selected-book-title');
@@ -546,7 +528,6 @@ function confirmarSorteio() {
     
     container.style.display = 'flex';
     
-    // Configurar datas
     setTimeout(() => {
         configurarValidacoesDatas();
     }, 100);
@@ -662,7 +643,6 @@ async function buscarLivros() {
             livroItem.className = 'livro-resultado';
             livroItem.setAttribute('data-index', index);
             
-            // Criar HTML com tratamento seguro de imagem
             let imagemHtml;
             if (volumeInfo.imageLinks?.thumbnail) {
                 imagemHtml = `<img src="${volumeInfo.imageLinks.thumbnail}" alt="${titulo}" class="livro-capa-pequena" onload="this.style.opacity=1" onerror="handleImageError(this)" style="opacity:0;transition:opacity 0.3s">`;
@@ -699,7 +679,6 @@ async function buscarLivros() {
     }
 }
 function handleImageError(img) {
-    // Evitar loop infinito removendo o onerror antes de definir nova src
     img.onerror = null;
     img.src = 'data:image/svg+xml;base64,' + btoa(`
         <svg width="120" height="180" xmlns="http://www.w3.org/2000/svg">
@@ -741,11 +720,9 @@ function selecionarLivro(index) {
     const autores = volumeInfo.authors ? volumeInfo.authors.join(', ') : 'Autor não informado';
     const paginas = volumeInfo.pageCount || 'Não informado';
     
-    // Tratar imagem com fallback seguro
     if (volumeInfo.imageLinks?.thumbnail) {
         coverDiv.innerHTML = `<img src="${volumeInfo.imageLinks.thumbnail}" alt="${titulo}" onload="this.style.opacity=1" onerror="handleImageError(this)" style="opacity:0;transition:opacity 0.3s">`;
     } else {
-        // Usar SVG inline diretamente se não houver imagem
         coverDiv.innerHTML = `
             <div class="capa-placeholder">
                 <svg width="120" height="180" xmlns="http://www.w3.org/2000/svg">
@@ -767,7 +744,6 @@ function selecionarLivro(index) {
         configurarValidacoesDatas();
     }, 100);
     
-    // Marcar como selecionado visualmente
     document.querySelectorAll('.livro-resultado').forEach((item, i) => {
         item.classList.remove('selecionado');
         if (i === index) {
@@ -854,7 +830,6 @@ async function salvarNovaLeitura() {
         if (response.ok) {
             mostrarAlerta('Nova leitura definida com sucesso!', 'sucesso');
             fecharModalSelecaoLeitura();
-            // Recarregar informações
             await carregarInformacoesClube(clubeId);
             if (document.getElementById('secao-livros-anteriores').style.display !== 'none') {
                 await carregarLeiturasClube(clubeId);
