@@ -629,7 +629,6 @@ function selecionarSugestao(index) {
         }
     });
 }
-
 async function buscarLivros() {
     const termoBusca = document.getElementById('busca-livro').value.trim();
     if (!termoBusca) {
@@ -641,50 +640,99 @@ async function buscarLivros() {
     resultsContainer.innerHTML = '<div class="carregando"><i class="fa fa-spinner fa-spin"></i> Buscando livros...</div>';
     
     try {
+        console.log('Buscando por:', termoBusca);
         const response = await fetch(`/api/livros/buscar?q=${encodeURIComponent(termoBusca)}`);
-        if (!response.ok) throw new Error('Erro na busca de livros');
+        
+        if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status}`);
+        }
         
         const data = await response.json();
+        console.log('Dados recebidos:', data);
+        
         resultsContainer.innerHTML = '';
         
         if (!data.items || data.items.length === 0) {
             resultsContainer.innerHTML = '<div class="sem-resultados">Nenhum livro encontrado. Tente outros termos de busca.</div>';
+            resultadosBusca = [];
             return;
         }
         
         resultadosBusca = data.items;
-                data.items.forEach((livro, index) => {
+        console.log('Resultados armazenados:', resultadosBusca.length, 'livros');
+        
+        data.items.forEach((livro, index) => {
             const volumeInfo = livro.volumeInfo;
             const titulo = volumeInfo.title || 'Título não disponível';
             const autores = volumeInfo.authors ? volumeInfo.authors.join(', ') : 'Autor não informado';
-            const capa = volumeInfo.imageLinks?.thumbnail || '/img/capa-padrao.jpg';
             const paginas = volumeInfo.pageCount || 'Não informado';
             
             const livroItem = document.createElement('div');
             livroItem.className = 'livro-resultado';
+            livroItem.setAttribute('data-index', index);
+            
+            // Criar HTML com tratamento seguro de imagem
+            let imagemHtml;
+            if (volumeInfo.imageLinks?.thumbnail) {
+                imagemHtml = `<img src="${volumeInfo.imageLinks.thumbnail}" alt="${titulo}" class="livro-capa-pequena" onload="this.style.opacity=1" onerror="handleImageError(this)" style="opacity:0;transition:opacity 0.3s">`;
+            } else {
+                imagemHtml = `
+                    <div class="livro-capa-pequena capa-placeholder">
+                        <svg width="60" height="90" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="60" height="90" fill="#f8f9fa" stroke="#dee2e6" stroke-width="1"/>
+                            <text x="30" y="45" text-anchor="middle" fill="#6c757d" font-family="Arial" font-size="8">Sem</text>
+                            <text x="30" y="55" text-anchor="middle" fill="#6c757d" font-family="Arial" font-size="8">Capa</text>
+                        </svg>
+                    </div>
+                `;
+            }
+            
             livroItem.innerHTML = `
-                <img src="${capa}" alt="${titulo}" class="livro-capa-pequena">
+                ${imagemHtml}
                 <div class="livro-info">
                     <h4>${titulo}</h4>
                     <p>Autor: ${autores}</p>
                     <p>Páginas: ${paginas}</p>
                 </div>
-                <button class="botao-selecionar" onclick="selecionarLivro(${index})">Selecionar</button>
+                <button class="botao-selecionar" type="button" onclick="selecionarLivro(${index})">Selecionar</button>
             `;
             resultsContainer.appendChild(livroItem);
         });
+        
+        console.log('Interface de resultados criada');
+        
     } catch (error) {
         console.error('Erro na busca:', error);
         resultsContainer.innerHTML = '<div class="erro-busca">Erro ao buscar livros. Tente novamente.</div>';
+        resultadosBusca = [];
     }
 }
-
+function handleImageError(img) {
+    // Evitar loop infinito removendo o onerror antes de definir nova src
+    img.onerror = null;
+    img.src = 'data:image/svg+xml;base64,' + btoa(`
+        <svg width="120" height="180" xmlns="http://www.w3.org/2000/svg">
+            <rect width="120" height="180" fill="#f8f9fa" stroke="#dee2e6" stroke-width="2"/>
+            <text x="60" y="90" text-anchor="middle" fill="#6c757d" font-family="Arial" font-size="14">Sem Capa</text>
+            <text x="60" y="110" text-anchor="middle" fill="#6c757d" font-family="Arial" font-size="12">Disponível</text>
+        </svg>
+    `);
+}
 function selecionarLivro(index) {
-    if (!resultadosBusca[index]) return;
+    console.log('Selecionando livro, index:', index);
+    console.log('Resultados disponíveis:', resultadosBusca);
+    
+    if (!resultadosBusca || !resultadosBusca[index]) {
+        console.error('Livro não encontrado no índice:', index);
+        mostrarAlerta('Erro ao selecionar livro', 'erro');
+        return;
+    }
     
     const livro = resultadosBusca[index];
     livroSelecionado = livro;
-    sugestaoSelecionada = null; 
+    sugestaoSelecionada = null;
+    
+    console.log('Livro selecionado:', livro);
     
     const volumeInfo = livro.volumeInfo;
     const container = document.getElementById('selected-book-container');
@@ -693,11 +741,34 @@ function selecionarLivro(index) {
     const authorElement = document.getElementById('selected-book-author');
     const pagesElement = document.getElementById('selected-book-pages');
     
-    const capa = volumeInfo.imageLinks?.thumbnail || '/img/capa-padrao.jpg';
-    coverDiv.innerHTML = `<img src="${capa}" alt="${volumeInfo.title}">`;
-    titleElement.textContent = volumeInfo.title || 'Título não disponível';
-    authorElement.textContent = volumeInfo.authors ? `Autor: ${volumeInfo.authors.join(', ')}` : 'Autor não informado';
-    pagesElement.textContent = volumeInfo.pageCount ? `${volumeInfo.pageCount} páginas` : 'Número de páginas não informado';
+    if (!container || !coverDiv || !titleElement || !authorElement || !pagesElement) {
+        console.error('Elementos do container não encontrados');
+        return;
+    }
+    
+    const titulo = volumeInfo.title || 'Título não disponível';
+    const autores = volumeInfo.authors ? volumeInfo.authors.join(', ') : 'Autor não informado';
+    const paginas = volumeInfo.pageCount || 'Não informado';
+    
+    // Tratar imagem com fallback seguro
+    if (volumeInfo.imageLinks?.thumbnail) {
+        coverDiv.innerHTML = `<img src="${volumeInfo.imageLinks.thumbnail}" alt="${titulo}" onload="this.style.opacity=1" onerror="handleImageError(this)" style="opacity:0;transition:opacity 0.3s">`;
+    } else {
+        // Usar SVG inline diretamente se não houver imagem
+        coverDiv.innerHTML = `
+            <div class="capa-placeholder">
+                <svg width="120" height="180" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="120" height="180" fill="#f8f9fa" stroke="#dee2e6" stroke-width="2"/>
+                    <text x="60" y="90" text-anchor="middle" fill="#6c757d" font-family="Arial" font-size="14">Sem Capa</text>
+                    <text x="60" y="110" text-anchor="middle" fill="#6c757d" font-family="Arial" font-size="12">Disponível</text>
+                </svg>
+            </div>
+        `;
+    }
+    
+    titleElement.textContent = titulo;
+    authorElement.textContent = `Autor: ${autores}`;
+    pagesElement.textContent = `${paginas} páginas`;
     
     container.style.display = 'flex';
     
@@ -705,16 +776,22 @@ function selecionarLivro(index) {
         configurarValidacoesDatas();
     }, 100);
     
+    // Marcar como selecionado visualmente
     document.querySelectorAll('.livro-resultado').forEach((item, i) => {
+        item.classList.remove('selecionado');
         if (i === index) {
             item.classList.add('selecionado');
-        } else {
-            item.classList.remove('selecionado');
         }
     });
+    
+    console.log('Livro selecionado com sucesso');
 }
 
 async function salvarNovaLeitura() {
+    console.log('Iniciando salvamento da nova leitura');
+    console.log('Livro selecionado:', livroSelecionado);
+    console.log('Sugestão selecionada:', sugestaoSelecionada);
+    
     const dataInicio = document.getElementById('data-inicio').value;
     const dataFim = document.getElementById('data-fim').value;
     
@@ -741,6 +818,7 @@ async function salvarNovaLeitura() {
         let dadosLeitura;
         
         if (sugestaoSelecionada) {
+            console.log('Criando leitura a partir de sugestão');
             dadosLeitura = {
                 titulo: sugestaoSelecionada.titulo,
                 autor: sugestaoSelecionada.autor,
@@ -750,21 +828,24 @@ async function salvarNovaLeitura() {
                 imagemUrl: sugestaoSelecionada.imagemUrl,
                 idCriador: userId
             };
-        } else {
+        } else if (livroSelecionado) {
+            console.log('Criando leitura a partir de livro da API');
             const volumeInfo = livroSelecionado.volumeInfo;
             dadosLeitura = {
                 titulo: volumeInfo.title,
                 autor: volumeInfo.authors ? volumeInfo.authors.join(', ') : null,
                 dataInicio,
                 dataFim: dataFim || null,
-                paginas: volumeInfo.pageCount,
-                imagemUrl: volumeInfo.imageLinks?.thumbnail,
+                paginas: volumeInfo.pageCount || null,
+                imagemUrl: volumeInfo.imageLinks?.thumbnail || null,
                 idCriador: userId
             };
         }
         
+        console.log('Dados da leitura a serem enviados:', dadosLeitura);
+        
         const botaoConfirmar = document.getElementById('confirmarLeitura');
-        const textoOriginal = botaoConfirmar.textContent;
+        const textoOriginal = botaoConfirmar.innerHTML;
         botaoConfirmar.disabled = true;
         botaoConfirmar.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Salvando...';
         
@@ -777,12 +858,16 @@ async function salvarNovaLeitura() {
         });
         
         const data = await response.json();
+        console.log('Resposta do servidor:', data);
         
         if (response.ok) {
             mostrarAlerta('Nova leitura definida com sucesso!', 'sucesso');
             fecharModalSelecaoLeitura();
-            carregarInformacoesClube(clubeId);
-            carregarLeiturasClube(clubeId);
+            // Recarregar informações
+            await carregarInformacoesClube(clubeId);
+            if (document.getElementById('secao-livros-anteriores').style.display !== 'none') {
+                await carregarLeiturasClube(clubeId);
+            }
         } else {
             mostrarAlerta(data.erro || 'Erro ao definir nova leitura', 'erro');
         }
@@ -793,11 +878,10 @@ async function salvarNovaLeitura() {
         const botaoConfirmar = document.getElementById('confirmarLeitura');
         if (botaoConfirmar) {
             botaoConfirmar.disabled = false;
-            botaoConfirmar.textContent = 'Confirmar';
+            botaoConfirmar.innerHTML = 'Confirmar';
         }
     }
 }
-
 async function carregarLeiturasClube(clubeId) {
     try {
         const response = await fetch(`/api/clube/${clubeId}/leituras`);
