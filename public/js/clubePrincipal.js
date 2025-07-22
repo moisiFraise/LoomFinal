@@ -179,7 +179,6 @@ function atualizarLeituraAtual(leitura) {
         imagemContainer.innerHTML = '';
     }
 }
-
 async function verificarPermissoesCriador() {
     try {
         const response = await fetch(`/api/clube/${clubeId}/permissoes`);
@@ -189,6 +188,9 @@ async function verificarPermissoesCriador() {
             const botaoSelecionar = document.getElementById('botao-selecionar-leitura-container');
             const botaoAgendar = document.getElementById('botao-agendar-encontro-container');
             const opcoesCreador = document.getElementById('opcoes-criador');
+            
+            const secaoVotacao = document.getElementById('secao-votacao');
+            const menuVotacao = document.querySelector('[data-secao="votacao"]');
             
             if (data.isCriador) {
                 if (botaoSelecionar) {
@@ -211,12 +213,17 @@ async function verificarPermissoesCriador() {
                     opcoesCreador.style.display = 'none';
                 }
             }
+            if (secaoVotacao) {
+                secaoVotacao.style.display = 'block';
+            }
+            if (menuVotacao) {
+                menuVotacao.style.display = 'block';
+            }
         }
-       } catch (error) {
+    } catch (error) {
         console.error('Erro ao verificar permissões:', error);
     }
 }
-
 function abrirModalSelecaoLeitura() {
     const modal = document.getElementById('modal-selecao-leitura');
     const overlay = document.getElementById('overlay');
