@@ -574,6 +574,9 @@
                             <p class="form-subtitulo">O que você está achando da leitura?</p>
                             <textarea id="atualizacao-comentario" class="atualizacao-input" 
                                 placeholder="Compartilhe seus pensamentos, impressões ou citações favoritas do livro..." required></textarea>
+                            <button type="button" class="btn-adicionar-gif" onclick="giphyManager && giphyManager.abrirModal('atualizacao')">
+                                <i class="fa fa-image"></i> Adicionar GIF (opcional)
+                            </button>
                         </div>
                                                         <div class="form-group">
                             <div class="pagina-input-container">
@@ -687,6 +690,8 @@
     <script src="/js/atualizacoes.js"></script>
     <script src="/js/encontros.js"></script>
     <script src="/js/curtidas.js"></script>
+    <script src="/js/comentarios.js"></script>
+    <script src="/js/giphy.js"></script>
     <script src="/js/votacao.js"></script>
     <script src="/js/configuracoes.js"></script>
     <script src="/js/sugestoes.js"></script>

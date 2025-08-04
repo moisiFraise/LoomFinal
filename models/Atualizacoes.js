@@ -1,7 +1,7 @@
 const pool = require('../config/database');
 
 class Atualizacoes {
-    static async criar(idClube, idLeitura, idUsuario, conteudo, paginaAtual, totalPaginas) {
+    static async criar(idClube, idLeitura, idUsuario, conteudo, paginaAtual, totalPaginas, gifUrl = null) {
         try {
             const [ultimaAtualizacao] = await pool.query(
                 `SELECT * FROM atualizacoes 
@@ -17,9 +17,9 @@ class Atualizacoes {
             }
             
             const [result] = await pool.query(
-                `INSERT INTO atualizacoes (id_clube, id_leitura, id_usuario, conteudo, porcentagem_leitura)
-                 VALUES (?, ?, ?, ?, ?)`,
-                [idClube, idLeitura, idUsuario, conteudo, porcentagemLeitura]
+                `INSERT INTO atualizacoes (id_clube, id_leitura, id_usuario, conteudo, porcentagem_leitura, gif_url)
+                 VALUES (?, ?, ?, ?, ?, ?)`,
+                [idClube, idLeitura, idUsuario, conteudo, porcentagemLeitura, gifUrl]
             );
             
             return {
@@ -29,6 +29,7 @@ class Atualizacoes {
                 idUsuario,
                 conteudo,
                 porcentagemLeitura,
+                gifUrl,
                 dataPostagem: new Date()
             };
         } catch (error) {
@@ -107,15 +108,15 @@ class Atualizacoes {
         }
     }
     
-    static async atualizar(id, conteudo, paginaAtual, totalPaginas) {
+    static async atualizar(id, conteudo, paginaAtual, totalPaginas, gifUrl = null) {
         try {
             const porcentagemLeitura = Math.min(Math.round((paginaAtual / totalPaginas) * 100), 100);
             
             const [result] = await pool.query(
                 `UPDATE atualizacoes 
-                 SET conteudo = ?, porcentagem_leitura = ?, data_postagem = NOW()
+                 SET conteudo = ?, porcentagem_leitura = ?, gif_url = ?, data_postagem = NOW()
                  WHERE id = ?`,
-                [conteudo, porcentagemLeitura, id]
+                [conteudo, porcentagemLeitura, gifUrl, id]
             );
             
             return result.affectedRows > 0;

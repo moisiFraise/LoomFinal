@@ -31,6 +31,7 @@ const Curtidas = require('./models/Curtidas');
 const Encontros = require('./models/Encontros');
 const Denuncias = require('./models/Denuncias');
 const Votacao = require('./models/Votacao');
+const Comentarios = require('./models/Comentarios');
 
 
 
@@ -102,7 +103,7 @@ app.use((req, res, next) => {
 const requiredEnvVars = [
   'DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME', 
   'SESSION_SECRET', 'CLOUDINARY_CLOUD_NAME', 
-  'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET'
+  'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET', 'GIPHY_API_KEY'
 ];
 
 const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
@@ -143,6 +144,12 @@ app.get('/api/session-check', (req, res) => {
     userId: req.session.userId,
     authenticated: req.session.authenticated,
     sessionID: req.sessionID
+  });
+});
+
+app.get('/api/config/giphy', (req, res) => {
+  res.json({
+    apiKey: process.env.GIPHY_API_KEY
   });
 });
 
@@ -1000,6 +1007,48 @@ app.get('/api/admin/usuarios/:id/clubes', verificarAutenticacao, async (req, res
     res.status(500).json({ erro: 'Erro ao listar clubes do usuário' });
   }
 });
+// Página de atualizações de leitura específica
+app.get('/clube/:id/leitura/:leituraId/atualizacoes', verificarAutenticacao, async (req, res) => {
+  try {
+    const clubeId = req.params.id;
+    const leituraId = req.params.leituraId;
+    const userId = req.session.userId;
+    
+    const [participacoes] = await pool.query(
+      'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
+      [userId, clubeId]
+    );
+    
+    if (participacoes.length === 0) {
+      return res.redirect('/dashboard');
+    }
+    
+    // Verificar se a leitura existe no clube
+    const [leituraRows] = await pool.query(
+      'SELECT * FROM leituras WHERE id = ? AND id_clube = ?',
+      [leituraId, clubeId]
+    );
+    
+    if (leituraRows.length === 0) {
+      return res.redirect(`/clube/${clubeId}`);
+    }
+    
+    const usuario = await Usuario.buscarPorId(userId);
+    
+    res.render('atualizacoesLeitura', { 
+      titulo: 'Loom - Atualizações de Leitura',
+      userId: userId,
+      clubeId: clubeId,
+      idLeitura: leituraId,
+      tituloLeitura: leituraRows[0].titulo,
+      userType: usuario ? usuario.tipo : null
+    });
+  } catch (error) {
+    console.error('Erro ao carregar página de atualizações de leitura:', error);
+    res.redirect('/dashboard');
+  }
+});
+
 /*clubePrincipal*/
 app.get('/clube/:id', verificarAutenticacao, async (req, res) => {
   try {
@@ -1249,7 +1298,7 @@ app.get('/api/clube/:id/atualizacoes', verificarAutenticacao, async (req, res) =
 app.post('/api/clube/:id/atualizacoes', verificarAutenticacao, async (req, res) => {
   try {
       const clubeId = req.params.id;
-      const { conteudo, paginaAtual } = req.body;
+      const { conteudo, paginaAtual, gifUrl } = req.body;
       
       if (!conteudo || !paginaAtual) {
           return res.status(400).json({ erro: 'Comentário e página atual são obrigatórios' });
@@ -1296,7 +1345,8 @@ app.post('/api/clube/:id/atualizacoes', verificarAutenticacao, async (req, res) 
           req.session.userId,
           conteudo,
           paginaAtual,
-          leituraAtual.paginas || 100
+          leituraAtual.paginas || 100,
+          gifUrl || null
       );
       
       const [usuarioRows] = await pool.query(
@@ -1355,7 +1405,7 @@ app.post('/api/clube/:id/atualizacoes/:atualizacaoId', verificarAutenticacao, as
   try {
     const clubeId = req.params.id;
     const atualizacaoId = req.params.atualizacaoId;
-    const { conteudo, paginaAtual } = req.body;
+    const { conteudo, paginaAtual, gifUrl } = req.body;
     
     if (!conteudo || !paginaAtual) {
       return res.status(400).json({ erro: 'Comentário e página atual são obrigatórios' });
@@ -1396,8 +1446,8 @@ app.post('/api/clube/:id/atualizacoes/:atualizacaoId', verificarAutenticacao, as
     const porcentagemLeitura = Math.min(Math.round((paginaAtual / (leituraAtual.paginas || 100)) * 100), 100);
     
     await pool.query(
-      'UPDATE atualizacoes SET conteudo = ?, porcentagem_leitura = ? WHERE id = ?',
-      [conteudo, porcentagemLeitura, atualizacaoId]
+      'UPDATE atualizacoes SET conteudo = ?, porcentagem_leitura = ?, gif_url = ? WHERE id = ?',
+      [conteudo, porcentagemLeitura, gifUrl || null, atualizacaoId]
     );
     
     const [atualizacaoAtualizada] = await pool.query(
@@ -1472,6 +1522,60 @@ app.get('/api/clube/:id/atualizacoes/usuario/:userId/leitura/:leituraId', verifi
   } catch (error) {
     console.error('Erro ao buscar última atualização:', error);
     res.status(500).json({ erro: 'Erro ao buscar última atualização' });
+  }
+});
+
+// Rotas específicas para página de atualizações de leitura
+app.get('/api/clube/:id/leitura/:leituraId', verificarAutenticacao, async (req, res) => {
+  try {
+    const clubeId = req.params.id;
+    const leituraId = req.params.leituraId;
+    
+    const [participacoes] = await pool.query(
+      'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
+      [req.session.userId, clubeId]
+    );
+    
+    if (participacoes.length === 0) {
+      return res.status(403).json({ erro: 'Você não é membro deste clube' });
+    }
+    
+    const [leituraRows] = await pool.query(
+      'SELECT * FROM leituras WHERE id = ? AND id_clube = ?',
+      [leituraId, clubeId]
+    );
+    
+    if (leituraRows.length === 0) {
+      return res.status(404).json({ erro: 'Leitura não encontrada' });
+    }
+    
+    res.json(leituraRows[0]);
+  } catch (error) {
+    console.error('Erro ao buscar leitura:', error);
+    res.status(500).json({ erro: 'Erro ao buscar informações da leitura' });
+  }
+});
+
+app.get('/api/clube/:id/leitura/:leituraId/atualizacoes', verificarAutenticacao, async (req, res) => {
+  try {
+    const clubeId = req.params.id;
+    const leituraId = req.params.leituraId;
+    
+    const [participacoes] = await pool.query(
+      'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
+      [req.session.userId, clubeId]
+    );
+    
+    if (participacoes.length === 0) {
+      return res.status(403).json({ erro: 'Você não é membro deste clube' });
+    }
+    
+    const atualizacoes = await Atualizacoes.listarPorLeitura(clubeId, leituraId);
+    
+    res.json(atualizacoes);
+  } catch (error) {
+    console.error('Erro ao buscar atualizações da leitura:', error);
+    res.status(500).json({ erro: 'Erro ao buscar atualizações da leitura' });
   }
 });
 app.post('/api/clube/:id/atualizacoes/:atualizacaoId/curtir', verificarAutenticacao, async (req, res) => {
@@ -2676,6 +2780,121 @@ app.post('/api/denuncias', verificarAutenticacao, async (req, res) => {
     res.status(500).json({ erro: error.message || 'Erro ao enviar denúncia' });
   }
 });
+
+// Rotas de comentários
+app.post('/api/comentarios', verificarAutenticacao, async (req, res) => {
+  try {
+    const { idAtualizacao, conteudo, gifUrl } = req.body;
+    
+    if (!idAtualizacao || !conteudo) {
+      return res.status(400).json({ erro: 'ID da atualização e conteúdo são obrigatórios' });
+    }
+    
+    if (conteudo.trim().length === 0) {
+      return res.status(400).json({ erro: 'Comentário não pode estar vazio' });
+    }
+    
+    // Verificar se a atualização existe
+    const [atualizacao] = await pool.query(
+      'SELECT id FROM atualizacoes WHERE id = ?',
+      [idAtualizacao]
+    );
+    
+    if (atualizacao.length === 0) {
+      return res.status(404).json({ erro: 'Atualização não encontrada' });
+    }
+    
+    const novoComentario = await Comentarios.criar(idAtualizacao, req.session.userId, conteudo, gifUrl || null);
+    
+    res.status(201).json({
+      mensagem: 'Comentário criado com sucesso',
+      comentario: novoComentario
+    });
+  } catch (error) {
+    console.error('Erro ao criar comentário:', error);
+    res.status(500).json({ erro: 'Erro ao criar comentário' });
+  }
+});
+
+app.get('/api/comentarios/:idAtualizacao', verificarAutenticacao, async (req, res) => {
+  try {
+    const { idAtualizacao } = req.params;
+    
+    const comentarios = await Comentarios.listarPorAtualizacao(idAtualizacao);
+    
+    res.json(comentarios);
+  } catch (error) {
+    console.error('Erro ao listar comentários:', error);
+    res.status(500).json({ erro: 'Erro ao listar comentários' });
+  }
+});
+
+app.put('/api/comentarios/:id', verificarAutenticacao, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { conteudo, gifUrl } = req.body;
+    
+    if (!conteudo || conteudo.trim().length === 0) {
+      return res.status(400).json({ erro: 'Conteúdo do comentário é obrigatório' });
+    }
+    
+    // Verificar se o usuário pode editar este comentário
+    const permissao = await Comentarios.verificarPermissao(id, req.session.userId);
+    
+    if (!permissao) {
+      return res.status(403).json({ erro: 'Você não tem permissão para editar este comentário' });
+    }
+    
+    const sucesso = await Comentarios.atualizar(id, conteudo, gifUrl || null);
+    
+    if (!sucesso) {
+      return res.status(404).json({ erro: 'Comentário não encontrado' });
+    }
+    
+    res.json({ mensagem: 'Comentário atualizado com sucesso' });
+  } catch (error) {
+    console.error('Erro ao atualizar comentário:', error);
+    res.status(500).json({ erro: 'Erro ao atualizar comentário' });
+  }
+});
+
+app.delete('/api/comentarios/:id', verificarAutenticacao, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Verificar se o usuário pode excluir este comentário
+    const permissao = await Comentarios.verificarPermissao(id, req.session.userId);
+    
+    if (!permissao) {
+      return res.status(403).json({ erro: 'Você não tem permissão para excluir este comentário' });
+    }
+    
+    const sucesso = await Comentarios.excluir(id);
+    
+    if (!sucesso) {
+      return res.status(404).json({ erro: 'Comentário não encontrado' });
+    }
+    
+    res.json({ mensagem: 'Comentário excluído com sucesso' });
+  } catch (error) {
+    console.error('Erro ao excluir comentário:', error);
+    res.status(500).json({ erro: 'Erro ao excluir comentário' });
+  }
+});
+
+app.get('/api/comentarios/:idAtualizacao/count', verificarAutenticacao, async (req, res) => {
+  try {
+    const { idAtualizacao } = req.params;
+    
+    const total = await Comentarios.contarPorAtualizacao(idAtualizacao);
+    
+    res.json({ total });
+  } catch (error) {
+    console.error('Erro ao contar comentários:', error);
+    res.status(500).json({ erro: 'Erro ao contar comentários' });
+  }
+});
+
 app.use((err, req, res, next) => {
   console.error('Erro global:', err);
   res.status(500).json({ 

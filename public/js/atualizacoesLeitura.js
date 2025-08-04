@@ -196,6 +196,7 @@ function renderizarAtualizacoes() {
                     ${botoesAcao}
                 </div>
                 <div class="atualizacao-conteudo">${a.conteudo}</div>
+                ${a.gif_url ? `<div class="gif-container"><img src="${a.gif_url}" alt="GIF" loading="lazy"></div>` : ''}
                 <div class="atualizacao-footer">
                     <div class="atualizacao-progresso">
                         <div class="progresso-barra-container">
@@ -208,14 +209,21 @@ function renderizarAtualizacoes() {
                             <i class="fa fa-heart-o"></i>
                         </button>
                         <span class="contador-curtidas" data-id="${a.id}"></span>
+                        <button class="botao-comentar" onclick="comentariosManager.toggleComentarios(${a.id}, 'comentarios-${a.id}', ${userId})">
+                            <i class="fa fa-comment-o"></i>
+                            <span class="comentarios-count" data-atualizacao-id="${a.id}">0</span>
+                        </button>
                     </div>
+                </div>
+                <div class="comentarios-container" id="comentarios-${a.id}" style="display: none;"></div>
                 </div>
             </div>`;
     }).join('');
     
-    // Carregar estado das curtidas
+    // Carregar estado das curtidas e contadores de comentários
     atualizacoesFiltradas.forEach(a => {
         carregarEstadoCurtidas(a.id);
+        carregarContadorComentarios(a.id);
     });
 }
 
@@ -317,6 +325,22 @@ document.addEventListener('click', (event) => {
         });
     }
 });
+
+// Função para carregar contador de comentários
+async function carregarContadorComentarios(idAtualizacao) {
+    try {
+        const response = await fetch(`/api/comentarios/${idAtualizacao}/count`);
+        if (response.ok) {
+            const data = await response.json();
+            const contador = document.querySelector(`[data-atualizacao-id="${idAtualizacao}"]`);
+            if (contador) {
+                contador.textContent = data.total;
+            }
+        }
+    } catch (error) {
+        console.error('Erro ao carregar contador de comentários:', error);
+    }
+}
 
 // Adicionar estilos de animação
 const style = document.createElement('style');

@@ -273,3 +273,18 @@ ALTER TABLE votos
 ADD CONSTRAINT votos_ibfk_1 FOREIGN KEY (id_votacao) REFERENCES votacoes(id) ON DELETE CASCADE,
 ADD CONSTRAINT votos_ibfk_2 FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE CASCADE,
 ADD CONSTRAINT votos_ibfk_3 FOREIGN KEY (id_opcao) REFERENCES opcoes_votacao(id) ON DELETE CASCADE;
+
+-- Tabela de comentários
+CREATE TABLE IF NOT EXISTS comentarios (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  id_atualizacao INT NOT NULL,
+  id_usuario INT NOT NULL,
+  conteudo TEXT NOT NULL,
+  gif_url VARCHAR(500) DEFAULT NULL,
+  data_comentario DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (id_atualizacao) REFERENCES atualizacoes(id) ON DELETE CASCADE,
+  FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE CASCADE
+);
+
+-- Adicionar campo gif_url na tabela atualizacoes
+ALTER TABLE atualizacoes ADD COLUMN gif_url VARCHAR(500) DEFAULT NULL;
