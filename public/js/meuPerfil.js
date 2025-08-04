@@ -360,28 +360,53 @@ document.head.insertAdjacentHTML('beforeend', `
     });
     
     function mostrarNotificacao(mensagem, tipo) {
-        let notificacao = document.querySelector('.notificacao');
-        
-        if (!notificacao) {
-            notificacao = document.createElement('div');
-            notificacao.className = 'notificacao';
-            document.body.appendChild(notificacao);
-        }
-        
-        notificacao.className = 'notificacao';
-        notificacao.classList.add(tipo);
-        notificacao.textContent = mensagem;
-        notificacao.style.display = 'block';
-        
-        setTimeout(() => {
-            notificacao.classList.add('mostrar');
-        }, 10);
-        
-        setTimeout(() => {
-            notificacao.classList.remove('mostrar');
-            setTimeout(() => {
-                notificacao.style.display = 'none';
-            }, 300);
-        }, 3000);
+    let notificacao = document.querySelector('.notificacao');
+    
+    if (!notificacao) {
+    notificacao = document.createElement('div');
+    notificacao.className = 'notificacao';
+    document.body.appendChild(notificacao);
     }
+    
+    notificacao.className = 'notificacao';
+    notificacao.classList.add(tipo);
+    notificacao.textContent = mensagem;
+    notificacao.style.display = 'block';
+    
+    setTimeout(() => {
+    notificacao.classList.add('mostrar');
+    }, 10);
+    
+    setTimeout(() => {
+    notificacao.classList.remove('mostrar');
+    setTimeout(() => {
+    notificacao.style.display = 'none';
+    }, 300);
+    }, 3000);
+    }
+    
+    // Carregar estado das curtidas e contadores de comentários para publicações
+    document.querySelectorAll('.publicacao-item').forEach(item => {
+        const atualizacaoId = item.getAttribute('data-id');
+        if (atualizacaoId) {
+            carregarEstadoCurtidas(atualizacaoId);
+            carregarContadorComentarios(atualizacaoId);
+        }
+    });
 });
+
+// Função para carregar contador de comentários
+async function carregarContadorComentarios(idAtualizacao) {
+    try {
+        const response = await fetch(`/api/comentarios/${idAtualizacao}/count`);
+        if (response.ok) {
+            const data = await response.json();
+            const contador = document.querySelector(`[data-atualizacao-id="${idAtualizacao}"]`);
+            if (contador) {
+                contador.textContent = data.total;
+            }
+        }
+    } catch (error) {
+        console.error('Erro ao carregar contador de comentários:', error);
+    }
+}

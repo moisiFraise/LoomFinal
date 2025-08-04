@@ -2784,35 +2784,45 @@ app.post('/api/denuncias', verificarAutenticacao, async (req, res) => {
 // Rotas de comentários
 app.post('/api/comentarios', verificarAutenticacao, async (req, res) => {
   try {
+    console.log('POST /api/comentarios - Dados recebidos:', req.body);
+    console.log('Usuário da sessão:', req.session.userId);
+    
     const { idAtualizacao, conteudo, gifUrl } = req.body;
     
     if (!idAtualizacao || !conteudo) {
+      console.log('Erro: Dados obrigatórios ausentes', { idAtualizacao, conteudo });
       return res.status(400).json({ erro: 'ID da atualização e conteúdo são obrigatórios' });
     }
     
     if (conteudo.trim().length === 0) {
+      console.log('Erro: Comentário vazio');
       return res.status(400).json({ erro: 'Comentário não pode estar vazio' });
     }
     
     // Verificar se a atualização existe
+    console.log('Verificando se atualização existe:', idAtualizacao);
     const [atualizacao] = await pool.query(
       'SELECT id FROM atualizacoes WHERE id = ?',
       [idAtualizacao]
     );
     
     if (atualizacao.length === 0) {
+      console.log('Erro: Atualização não encontrada', idAtualizacao);
       return res.status(404).json({ erro: 'Atualização não encontrada' });
     }
     
+    console.log('Criando comentário...', { idAtualizacao, userId: req.session.userId, conteudo, gifUrl });
     const novoComentario = await Comentarios.criar(idAtualizacao, req.session.userId, conteudo, gifUrl || null);
+    console.log('Comentário criado com sucesso:', novoComentario);
     
     res.status(201).json({
       mensagem: 'Comentário criado com sucesso',
       comentario: novoComentario
     });
   } catch (error) {
-    console.error('Erro ao criar comentário:', error);
-    res.status(500).json({ erro: 'Erro ao criar comentário' });
+    console.error('Erro detalhado ao criar comentário:', error);
+    console.error('Stack trace:', error.stack);
+    res.status(500).json({ erro: 'Erro ao criar comentário', detalhes: error.message });
   }
 });
 

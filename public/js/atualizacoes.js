@@ -130,7 +130,9 @@ function renderizarAtualizacoes(atualizacoes) {
     
     // Carregar estado das curtidas e contadores de comentários
     atualizacoes.forEach(a => {
-        carregarEstadoCurtidas(a.id);
+        if (typeof carregarEstadoCurtidas === 'function') {
+            carregarEstadoCurtidas(a.id);
+        }
         carregarContadorComentarios(a.id);
     });
 }
