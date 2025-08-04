@@ -2112,7 +2112,7 @@ app.get('/api/clube/:id/sugestoes', verificarAutenticacao, async (req, res) => {
     
     // Buscar sugestões do clube
     const [sugestoes] = await pool.query(`
-      SELECT s.*, u.nome as nome_usuario
+      SELECT s.*, u.nome as nome_usuario, u.foto_perfil
       FROM sugestoes s
       JOIN usuarios u ON s.id_usuario = u.id
       WHERE s.id_clube = ?
@@ -2374,6 +2374,42 @@ app.post('/api/clube/:id/votacao/votar', verificarAutenticacao, async (req, res)
   } catch (error) {
     console.error('Erro ao votar:', error);
     res.status(500).json({ erro: error.message || 'Erro ao registrar voto' });
+  }
+});
+
+// Endpoint para buscar votantes de uma opção específica
+app.get('/api/clube/:id/votacao/opcao/:opcaoId/votantes', verificarAutenticacao, async (req, res) => {
+  try {
+    const clubeId = req.params.id;
+    const opcaoId = req.params.opcaoId;
+    const userId = req.session.userId;
+    
+    // Verificar se é membro do clube
+    const [participacoes] = await pool.query(
+      'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
+      [userId, clubeId]
+    );
+    
+    if (participacoes.length === 0) {
+      return res.status(403).json({ erro: 'Você não é membro deste clube' });
+    }
+    
+    // Buscar votantes da opção
+    const [votantes] = await pool.query(
+      `SELECT u.id, u.nome, u.foto_perfil, v.data_voto
+       FROM votos v
+       JOIN usuarios u ON v.id_usuario = u.id
+       JOIN opcoes_votacao ov ON v.id_opcao = ov.id
+       JOIN votacoes vot ON ov.id_votacao = vot.id
+       WHERE ov.id = ? AND vot.id_clube = ?
+       ORDER BY v.data_voto ASC`,
+      [opcaoId, clubeId]
+    );
+    
+    res.json(votantes);
+  } catch (error) {
+    console.error('Erro ao buscar votantes:', error);
+    res.status(500).json({ erro: 'Erro ao buscar votantes' });
   }
 });
 app.post('/api/clube/:id/votacao/encerrar', verificarAutenticacao, async (req, res) => {

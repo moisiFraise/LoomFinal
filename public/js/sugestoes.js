@@ -323,11 +323,18 @@ async function carregarSugestoes() {
                     </div>
                     
                     <div class="sugestao-meta">
-                        <div class="sugestao-usuario">
-                            <div class="usuario-avatar">${sugestao.nome_usuario.charAt(0).toUpperCase()}</div>
-                            <span>Sugerido por ${escapeHtml(sugestao.nome_usuario)}</span>
+                        <div class="sugestao-usuario-info">
+                            <div class="usuario-avatar" onclick="irParaPerfil(${sugestao.id_usuario})" title="Ver perfil de ${escapeHtml(sugestao.nome_usuario)}">
+                                ${sugestao.foto_perfil ? 
+                                    `<img src="${sugestao.foto_perfil}" alt="${escapeHtml(sugestao.nome_usuario)}" onerror="this.parentElement.innerHTML='<div class=\\'usuario-avatar-placeholder\\'>${sugestao.nome_usuario.charAt(0).toUpperCase()}</div>'">` :
+                                    `<div class="usuario-avatar-placeholder">${sugestao.nome_usuario.charAt(0).toUpperCase()}</div>`
+                                }
+                            </div>
+                            <div class="sugestao-usuario-data">
+                                <span class="sugestao-usuario" onclick="irParaPerfil(${sugestao.id_usuario})" title="Ver perfil de ${escapeHtml(sugestao.nome_usuario)}">${escapeHtml(sugestao.nome_usuario)}</span>
+                                <span class="sugestao-data">sugeriu ${formatarDataSugestao(sugestao.data_sugestao)}</span>
+                            </div>
                         </div>
-                        <span class="sugestao-data">${formatarDataSugestao(sugestao.data_sugestao)}</span>
                     </div>
                     
                     ${sugestao.paginas ? `
@@ -444,6 +451,17 @@ function escapeHtml(text) {
         "'": '&#039;'
     };
     return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
+// Função para ir ao perfil do usuário
+function irParaPerfil(idUsuario) {
+    if (idUsuario == userId) {
+        // Se for o próprio usuário, vai para "Meu Perfil"
+        window.location.href = '/meuPerfil';
+    } else {
+        // Se for outro usuário, vai para o perfil público
+        window.location.href = `/perfil/${idUsuario}`;
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function() {

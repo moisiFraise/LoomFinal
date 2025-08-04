@@ -431,6 +431,7 @@ function selecionarVencedoraComoLeitura() {
         mostrarAlerta('Erro ao configurar livro selecionado. Tente usar a aba "Buscar Livros" no modal de seleção.', 'erro');
     }
 }
+
 document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('click', function(e) {
         if (e.target.id === 'overlay-votacao') {
