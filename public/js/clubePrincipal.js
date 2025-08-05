@@ -328,6 +328,17 @@ function fecharModalSelecaoLeitura() {
     modal.style.display = 'none';
     overlay.style.display = 'none';
     document.body.style.overflow = '';
+    
+    // Resetar visibilidade das abas ao fechar modal
+    const tabBuscar = document.getElementById('tab-buscar');
+    const tabSugestoes = document.getElementById('tab-sugestoes');
+    if (tabBuscar) tabBuscar.style.display = 'block';
+    if (tabSugestoes) tabSugestoes.style.display = 'none';
+    
+    // Resetar aba ativa para buscar
+    document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('tab-ativo'));
+    const tabBuscarBtn = document.querySelector('.tab-item[data-tab="buscar"]');
+    if (tabBuscarBtn) tabBuscarBtn.classList.add('tab-ativo');
 }
 
 function mudarTabSelecaoLeitura(tab) {
@@ -346,6 +357,7 @@ function mudarTabSelecaoLeitura(tab) {
         carregarSugestoesParaSorteio();
     }
     
+    // Esconder container de livro selecionado ao trocar de aba
     document.getElementById('selected-book-container').style.display = 'none';
     livroSelecionado = null;
     sugestaoSelecionada = null;
@@ -658,6 +670,12 @@ function selecionarSugestao(index) {
     
     container.style.display = 'flex';
     
+    // Esconder seção de sugestões após seleção
+    const tabSugestoes = document.getElementById('tab-sugestoes');
+    if (tabSugestoes) {
+        tabSugestoes.style.display = 'none';
+    }
+    
     setTimeout(() => {
         configurarValidacoesDatas();
     }, 100);
@@ -808,6 +826,12 @@ function selecionarLivro(index) {
     pagesElement.textContent = `${paginas} páginas`;
     
     container.style.display = 'flex';
+    
+    // Esconder seção de busca após seleção
+    const tabBuscar = document.getElementById('tab-buscar');
+    if (tabBuscar) {
+        tabBuscar.style.display = 'none';
+    }
     
     setTimeout(() => {
         configurarValidacoesDatas();

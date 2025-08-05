@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <%- include('partials/favicon') %>
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/menu.css">
     <link rel="stylesheet" href="/css/clubePrincipal.css">
@@ -461,12 +462,12 @@
                                 <p id="selected-book-pages"></p>
                                 <div class="form-group">
                                     <label for="data-inicio">Data de Início*</label>
-                                    <input type="date" id="data-inicio" required>
+                                    <input type="date" id="data-inicio" required min="">
                                     <small class="form-help">A data de início não pode ser anterior a hoje</small>
                                 </div>
                                 <div class="form-group">
                                     <label for="data-fim">Data de Término Previsto</label>
-                                    <input type="date" id="data-fim">
+                                    <input type="date" id="data-fim" min="">
                                     <small class="form-help">Opcional - deixe em branco se não souber</small>
                                 </div>
                             </div>
@@ -521,7 +522,7 @@
                         
                         <div class="form-group">
                             <label for="data-fim-votacao">Data de Encerramento (opcional)</label>
-                            <input type="date" id="data-fim-votacao">
+                            <input type="date" id="data-fim-votacao" min="">
                             <small class="form-help">Deixe em branco para encerrar manualmente</small>
                         </div>
                         
@@ -608,7 +609,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="data-encontro">Data*</label>
-                                <input type="date" id="data-encontro" required>
+                                <input type="date" id="data-encontro" required min="">
                             </div>
                             
                             <div class="form-group">
@@ -668,6 +669,20 @@
     <script>
         const clubeId = '<%= clubeId %>';
         const userId = '<%= userId %>';
+        
+        // Função para definir data mínima como hoje
+        function setMinDate(inputId) {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById(inputId).min = today;
+        }
+        
+        // Configurar data mínima quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            setMinDate('data-inicio');
+            setMinDate('data-fim');
+            setMinDate('data-fim-votacao');
+            setMinDate('data-encontro');
+        });
     </script>
     <script src="/js/clubePrincipal.js"></script>
     <script src="/js/atualizacoes.js"></script>
