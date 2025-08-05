@@ -130,6 +130,23 @@ function verificarAutenticacao(req, res, next) {
   next();
 }
 
+// Middleware para verificar se admin está tentando acessar página restrita
+async function verificarRestricaoAdmin(req, res, next) {
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    
+    if (usuario && usuario.tipo === 'admin') {
+      console.log('Admin tentando acessar página restrita, redirecionando para painel admin');
+      return res.redirect('/painelAdmin');
+    }
+    
+    next();
+  } catch (error) {
+    console.error('Erro ao verificar restrição de admin:', error);
+    next();
+  }
+}
+
 app.get('/', (req, res) => {
   res.render('index', { title: 'Loom - Home' });
 });
@@ -151,6 +168,20 @@ app.get('/api/config/giphy', (req, res) => {
   res.json({
     apiKey: process.env.GIPHY_API_KEY
   });
+});
+
+app.get('/api/usuario/tipo', verificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    if (!usuario) {
+      return res.status(404).json({ erro: 'Usuário não encontrado' });
+    }
+    
+    res.json({ tipo: usuario.tipo });
+  } catch (error) {
+    console.error('Erro ao buscar tipo do usuário:', error);
+    res.status(500).json({ erro: 'Erro ao verificar tipo do usuário' });
+  }
 });
 
 app.post('/api/cadastro', async (req, res) => {
@@ -249,7 +280,7 @@ app.post('/api/login', async (req, res) => {
     });
   }
 });
-app.get('/dashboard', verificarAutenticacao, async (req, res) => {
+app.get('/dashboard', verificarAutenticacao, verificarRestricaoAdmin, async (req, res) => {
   try {
     const usuario = await Usuario.buscarPorId(req.session.userId);
     
@@ -267,7 +298,7 @@ app.get('/dashboard', verificarAutenticacao, async (req, res) => {
     });
   }
 });
-app.get('/meuPerfil', verificarAutenticacao, async (req, res) => {
+app.get('/meuPerfil', verificarAutenticacao, verificarRestricaoAdmin, async (req, res) => {
   try {
     const usuario = await Usuario.buscarPorId(req.session.userId);
     
@@ -310,7 +341,7 @@ app.get('/meuPerfil', verificarAutenticacao, async (req, res) => {
     res.redirect('/dashboard');
   }
 });
-app.get('/perfil/:id', verificarAutenticacao, async (req, res) => {
+app.get('/perfil/:id', verificarAutenticacao, verificarRestricaoAdmin, async (req, res) => {
   try {
     const perfilId = req.params.id;
     const usuarioLogado = await Usuario.buscarPorId(req.session.userId);
@@ -591,8 +622,18 @@ app.get('/api/clubes/:userId', async (req, res) => {
     res.status(500).json({ erro: 'Erro ao buscar informações dos clubes.' });
   }
 });
-app.post('/api/clubes', async (req, res) => {
+app.post('/api/clubes', verificarAutenticacao, async (req, res) => {
   try {
+    // Verificar se usuário é admin
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    if (!usuario) {
+      return res.status(401).json({ erro: 'Usuário não encontrado.' });
+    }
+    
+    if (usuario.tipo === 'admin') {
+      return res.status(403).json({ erro: 'Administradores não podem criar clubes.' });
+    }
+    
     const { nome, descricao, idCriador, visibilidade, senha, categorias, modelo } = req.body;
     
     if (!nome || !idCriador) {
@@ -627,7 +668,7 @@ app.post('/api/clubes', async (req, res) => {
     res.status(500).json({ erro: 'Erro ao criar clube. Tente novamente.' });
   }
 });
-app.get('/explorar', verificarAutenticacao, async (req, res) => {
+app.get('/explorar', verificarAutenticacao, verificarRestricaoAdmin, async (req, res) => {
   try {
     const usuario = await Usuario.buscarPorId(req.session.userId);
     
@@ -671,6 +712,16 @@ app.get('/api/explorar/clubes', verificarAutenticacao, async (req, res) => {
 
 app.post('/api/explorar/entrar', verificarAutenticacao, async (req, res) => {
   try {
+    // Verificar se usuário é admin
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    if (!usuario) {
+      return res.status(401).json({ erro: 'Usuário não encontrado.' });
+    }
+    
+    if (usuario.tipo === 'admin') {
+      return res.status(403).json({ erro: 'Administradores não podem entrar em clubes.' });
+    }
+    
     const { clubeId } = req.body;
     
     if (!clubeId) {
@@ -693,6 +744,16 @@ app.post('/api/explorar/entrar', verificarAutenticacao, async (req, res) => {
 
 app.post('/api/explorar/entrar-privado', verificarAutenticacao, async (req, res) => {
   try {
+    // Verificar se usuário é admin
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    if (!usuario) {
+      return res.status(401).json({ erro: 'Usuário não encontrado.' });
+    }
+    
+    if (usuario.tipo === 'admin') {
+      return res.status(403).json({ erro: 'Administradores não podem entrar em clubes.' });
+    }
+    
     const { clubeId, senha } = req.body;
     
     if (!clubeId || !senha) {
@@ -1008,7 +1069,7 @@ app.get('/api/admin/usuarios/:id/clubes', verificarAutenticacao, async (req, res
   }
 });
 // Página de atualizações de leitura específica
-app.get('/clube/:id/leitura/:leituraId/atualizacoes', verificarAutenticacao, async (req, res) => {
+app.get('/clube/:id/leitura/:leituraId/atualizacoes', verificarAutenticacao, verificarRestricaoAdmin, async (req, res) => {
   try {
     const clubeId = req.params.id;
     const leituraId = req.params.leituraId;
@@ -1050,7 +1111,7 @@ app.get('/clube/:id/leitura/:leituraId/atualizacoes', verificarAutenticacao, asy
 });
 
 /*clubePrincipal*/
-app.get('/clube/:id', verificarAutenticacao, async (req, res) => {
+app.get('/clube/:id', verificarAutenticacao, verificarRestricaoAdmin, async (req, res) => {
   try {
     const clubeId = req.params.id;
     const userId = req.session.userId;
@@ -1622,7 +1683,7 @@ app.get('/api/clube/:id/atualizacoes/:atualizacaoId/curtidas', verificarAutentic
     res.status(500).json({ erro: 'Erro ao verificar curtidas' });
   }
 });
-app.get('/clube/:clubeId/leitura/:idLeitura/atualizacoes', verificarAutenticacao, async (req, res) => {
+app.get('/clube/:clubeId/leitura/:idLeitura/atualizacoes', verificarAutenticacao, verificarRestricaoAdmin, async (req, res) => {
     try {
         const { clubeId, idLeitura } = req.params;
         const { titulo } = req.query;

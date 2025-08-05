@@ -10,28 +10,35 @@
         </button>
     </div>
     <div class="links-navegacao" id="links-navegacao">
-        <a href="/dashboard">
-            <i class="fa fa-home"></i>
-            <span>Início</span>
-        </a>
-        <a href="/explorar">
-            <i class="fa fa-compass"></i>
-            <span>Explorar</span>
-        </a>
-        <a href="/meuPerfil">
-            <i class="fa fa-user"></i>
-            <span>Meu Perfil</span>
-        </a>
         <% if (typeof userType !== 'undefined' && userType === 'admin') { %>
-        <a href="/painelAdmin">
-            <i class="fa fa-database"></i>
-            <span>Painel Admin</span>
-        </a>
+            <!-- Menu simplificado para administradores -->
+            <a href="/painelAdmin">
+                <i class="fa fa-database"></i>
+                <span>Painel Admin</span>
+            </a>
+            <a href="/autenticacao">
+                <i class="fa fa-power-off"></i>
+                <span>Sair</span>
+            </a>
+        <% } else { %>
+            <!-- Menu completo para usuários comuns -->
+            <a href="/dashboard">
+                <i class="fa fa-home"></i>
+                <span>Início</span>
+            </a>
+            <a href="/explorar">
+                <i class="fa fa-compass"></i>
+                <span>Explorar</span>
+            </a>
+            <a href="/meuPerfil">
+                <i class="fa fa-user"></i>
+                <span>Meu Perfil</span>
+            </a>
+            <a href="/autenticacao">
+                <i class="fa fa-power-off"></i>
+                <span>Sair</span>
+            </a>
         <% } %>
-        <a href="/autenticacao">
-            <i class="fa fa-power-off"></i>
-            <span>Sair</span>
-        </a>
     </div>
 </nav>
 

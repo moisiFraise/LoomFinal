@@ -162,7 +162,16 @@ async function carregarInformacoesClube(clubeId) {
             leituraAtual = clube.leitura_atual;
             atualizarLeituraAtual(clube.leitura_atual);
         } else {
-            document.getElementById('livro-atual-info').innerHTML = '<p class="sem-leitura">Nenhum livro selecionado para leitura atual.</p>';
+            document.getElementById('livro-atual-info').innerHTML = `
+                <div class="sem-leitura-card">
+                    <div class="sem-leitura-content">
+                        <i class="fa fa-book sem-leitura-icone"></i>
+                        <h5 class="sem-leitura-titulo">Nenhuma leitura ativa</h5>
+                        <p class="sem-leitura-texto">O clube ainda não selecionou um livro para leitura atual.</p>
+                    </div>
+                </div>
+            `;
+            document.getElementById('leitura-atual-imagem-container').innerHTML = '';
         }
         
         carregarAtualizacoes(clubeId);
@@ -177,17 +186,77 @@ function atualizarLeituraAtual(leitura) {
     const container = document.getElementById('livro-atual-info');
     const imagemContainer = document.getElementById('leitura-atual-imagem-container');
     
+    if (!container) {
+        console.error('Container livro-atual-info não encontrado');
+        return;
+    }
+    
     container.innerHTML = `
-        <h5>${leitura.titulo}</h5>
-        <p><strong>Autor:</strong> ${leitura.autor || 'Não informado'}</p>
-        ${leitura.paginas ? `<p><strong>Páginas:</strong> ${leitura.paginas}</p>` : ''}
-        <p><strong>Início:</strong> ${new Date(leitura.data_inicio).toLocaleDateString('pt-BR')}</p>
-        ${leitura.data_fim ? `<p><strong>Previsão de término:</strong> ${new Date(leitura.data_fim).toLocaleDateString('pt-BR')}</p>` : ''}
+        <div class="leitura-atual-card">
+            <div class="leitura-header">
+                <div class="leitura-titulo-grupo">
+                    <h5 class="leitura-titulo">${escapeHtml(leitura.titulo)}</h5>
+                    <p class="leitura-autor">por ${escapeHtml(leitura.autor) || 'Autor não informado'}</p>
+                </div>
+                <div class="leitura-status">
+                    <span class="status-badge ativo">Em Leitura</span>
+                </div>
+            </div>
+            
+            <div class="leitura-conteudo">
+                <div class="leitura-detalhes">
+                    <div class="detalhe-item">
+                        <i class="fa fa-calendar-o detalhe-icone"></i>
+                        <div class="detalhe-texto">
+                            <span class="detalhe-label">Iniciado em</span>
+                            <span class="detalhe-valor">${new Date(leitura.data_inicio).toLocaleDateString('pt-BR')}</span>
+                        </div>
+                    </div>
+                    
+                    ${leitura.data_fim ? `
+                        <div class="detalhe-item">
+                            <i class="fa fa-flag-checkered detalhe-icone"></i>
+                            <div class="detalhe-texto">
+                                <span class="detalhe-label">Previsão de término</span>
+                                <span class="detalhe-valor">${new Date(leitura.data_fim).toLocaleDateString('pt-BR')}</span>
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    ${leitura.paginas ? `
+                        <div class="detalhe-item">
+                            <i class="fa fa-file-text-o detalhe-icone"></i>
+                            <div class="detalhe-texto">
+                                <span class="detalhe-label">Total de páginas</span>
+                                <span class="detalhe-valor">${leitura.paginas} páginas</span>
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+                
+                <div class="leitura-capa-lateral">
+                    ${leitura.imagemUrl ? `
+                        <div class="capa-container-lateral">
+                            <img src="${escapeHtml(leitura.imagemUrl)}" alt="${escapeHtml(leitura.titulo)}" class="leitura-capa-lateral-img">
+                            <div class="capa-overlay-lateral">
+                                <i class="fa fa-book-open"></i>
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="capa-container-lateral capa-placeholder-lateral">
+                            <div class="capa-placeholder-content-lateral">
+                                <i class="fa fa-book"></i>
+                                <span>Sem Capa</span>
+                            </div>
+                        </div>
+                    `}
+                </div>
+            </div>
+        </div>
     `;
     
-    if (leitura.imagemUrl) {
-        imagemContainer.innerHTML = `<img src="${leitura.imagemUrl}" alt="${leitura.titulo}" class="livro-capa-atual">`;
-    } else {
+    // Limpar o container de imagem separado, já que agora está integrado
+    if (imagemContainer) {
         imagemContainer.innerHTML = '';
     }
 }
@@ -860,17 +929,17 @@ async function carregarLeiturasClube(clubeId) {
                     <div class="leitura-atual-detalhada">
                         ${data.leituraAtual.imagemUrl ? `
                             <div class="leitura-capa">
-                                <img src="${data.leituraAtual.imagemUrl}" alt="${data.leituraAtual.titulo}">
+                                <img src="${escapeHtml(data.leituraAtual.imagemUrl)}" alt="${escapeHtml(data.leituraAtual.titulo)}">
                             </div>
                         ` : ''}
                          <div class="leitura-info">
-                            <h4>${data.leituraAtual.titulo}</h4>
-                            <p><strong>Autor:</strong> ${data.leituraAtual.autor || 'Não informado'}</p>
+                            <h4>${escapeHtml(data.leituraAtual.titulo)}</h4>
+                            <p><strong>Autor:</strong> ${escapeHtml(data.leituraAtual.autor) || 'Não informado'}</p>
                             ${data.leituraAtual.paginas ? `<p><strong>Páginas:</strong> ${data.leituraAtual.paginas}</p>` : ''}
                             <p><strong>Início:</strong> ${new Date(data.leituraAtual.data_inicio).toLocaleDateString('pt-BR')}</p>
                             ${data.leituraAtual.data_fim ? `<p><strong>Previsão de término:</strong> ${new Date(data.leituraAtual.data_fim).toLocaleDateString('pt-BR')}</p>` : ''}
                             <div class="leitura-acoes">
-                                <button class="botao-ver-atualizacoes" onclick="verAtualizacoesLeitura(${data.leituraAtual.id}, '${escapeHtml(data.leituraAtual.titulo)}')">
+                                <button class="botao-ver-atualizacoes" data-leitura-id="${data.leituraAtual.id}" data-leitura-titulo="${escapeHtml(data.leituraAtual.titulo)}">
                                     <i class="fa fa-comments"></i> Ver Atualizações
                                 </button>
                             </div>
@@ -884,33 +953,44 @@ async function carregarLeiturasClube(clubeId) {
             const leiturasAnterioresGrid = document.getElementById('leituras-anteriores-grid');
             if (data.leiturasAnteriores && data.leiturasAnteriores.length > 0) {
                 leiturasAnterioresGrid.innerHTML = data.leiturasAnteriores.map(leitura => `
-                    <div class="leitura-card">
+                    <div class="leitura-atual-detalhada">
                         ${leitura.imagemUrl ? `
-                            <div class="leitura-capa-pequena">
-                                <img src="${leitura.imagemUrl}" alt="${leitura.titulo}">
+                            <div class="leitura-capa">
+                                <img src="${escapeHtml(leitura.imagemUrl)}" alt="${escapeHtml(leitura.titulo)}">
                             </div>
                         ` : `
-                            <div class="leitura-capa-pequena">
+                            <div class="leitura-capa">
                                 <div class="capa-placeholder">
                                     <i class="fa fa-book" style="font-size: 48px; color: var(--paragrafo);"></i>
                                 </div>
                             </div>
                         `}
-                        <div class="leitura-info-pequena">
-                            <h5>${leitura.titulo}</h5>
-                            <p>${leitura.autor || 'Autor não informado'}</p>
-                            <small>Lido em ${new Date(leitura.data_inicio).toLocaleDateString('pt-BR')}</small>
-                        </div>
-                        <div class="leitura-acoes">
-                            <button class="botao-ver-atualizacoes" onclick="verAtualizacoesLeitura(${leitura.id}, '${escapeHtml(leitura.titulo)}')">
-                                <i class="fa fa-comments"></i> Ver Atualizações
-                            </button>
+                        <div class="leitura-info">
+                            <h4>${escapeHtml(leitura.titulo)}</h4>
+                            <p><strong>Autor:</strong> ${escapeHtml(leitura.autor) || 'Autor não informado'}</p>
+                            ${leitura.paginas ? `<p><strong>Páginas:</strong> ${leitura.paginas}</p>` : ''}
+                            <p><strong>Lido em:</strong> ${new Date(leitura.data_inicio).toLocaleDateString('pt-BR')}</p>
+                            ${leitura.data_fim ? `<p><strong>Finalizado em:</strong> ${new Date(leitura.data_fim).toLocaleDateString('pt-BR')}</p>` : ''}
+                            <div class="leitura-acoes">
+                                <button class="botao-ver-atualizacoes" data-leitura-id="${leitura.id}" data-leitura-titulo="${escapeHtml(leitura.titulo)}">
+                                    <i class="fa fa-comments"></i> Ver Atualizações
+                                </button>
+                            </div>
                         </div>
                     </div>
                 `).join('');
             } else {
                 leiturasAnterioresGrid.innerHTML = '<p class="sem-leituras">Nenhuma leitura anterior encontrada.</p>';
             }
+            
+            // Adicionar event listeners para os botões de ver atualizações
+            document.querySelectorAll('.botao-ver-atualizacoes').forEach(botao => {
+                botao.addEventListener('click', function() {
+                    const leituraId = this.getAttribute('data-leitura-id');
+                    const leituraTitulo = this.getAttribute('data-leitura-titulo');
+                    verAtualizacoesLeitura(leituraId, leituraTitulo);
+                });
+            });
         } else {
             console.error('Erro ao carregar leituras:', data.erro);
         }
@@ -922,7 +1002,7 @@ function verAtualizacoesLeitura(idLeitura, tituloLeitura) {
     window.location.href = `/clube/${clubeId}/leitura/${idLeitura}/atualizacoes?titulo=${encodeURIComponent(tituloLeitura)}`;
 }
 
-async function carregarMembrosCompleto(clubeId) {
+async function carregarMembrosCompleto() {
     try {
         const response = await fetch(`/api/clube/${clubeId}/membros`);
         const data = await response.json();
@@ -936,12 +1016,19 @@ async function carregarMembrosCompleto(clubeId) {
                         ${data.membros.map(membro => `
                             <div class="membro-card ${membro.is_criador ? 'membro-criador' : ''}">
                                 <div class="membro-avatar">
-                                    ${membro.nome.charAt(0).toUpperCase()}
+                                    ${membro.foto_perfil ? 
+                                        `<img src="${escapeHtml(membro.foto_perfil)}" alt="${escapeHtml(membro.nome)}" class="membro-foto-perfil" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                         <div class="membro-inicial" style="display:none;">${escapeHtml(membro.nome).charAt(0).toUpperCase()}</div>` : 
+                                        `<div class="membro-inicial">${escapeHtml(membro.nome).charAt(0).toUpperCase()}</div>`
+                                    }
                                 </div>
                                 <div class="membro-info">
-                                    <h4>${escapeHtml(membro.nome)}</h4>
-                                    <p>${escapeHtml(membro.email)}</p>
+                                    <h4 class="membro-nome-clicavel" onclick="irParaPerfil(${membro.id})" style="cursor: pointer; color: var(--principal); text-decoration: underline;">
+                                        ${escapeHtml(membro.nome)}
+                                    </h4>
+                                    <p class="membro-email">${escapeHtml(membro.email)}</p>
                                     ${membro.is_criador ? '<span class="badge-criador">Criador</span>' : ''}
+                                    ${membro.data_entrada ? `<p class="membro-data-entrada">Membro desde ${new Date(membro.data_entrada).toLocaleDateString('pt-BR')}</p>` : ''}
                                 </div>
                             </div>
                         `).join('')}
@@ -961,6 +1048,10 @@ async function carregarMembrosCompleto(clubeId) {
 }
 function voltarParaTelaAnterior() {
     window.history.back();
+}
+
+function irParaPerfil(idUsuario) {
+    window.location.href = `/perfil/${idUsuario}`;
 }
 
 document.addEventListener('DOMContentLoaded', function() {

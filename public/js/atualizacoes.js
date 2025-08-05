@@ -22,19 +22,8 @@ async function carregarAtualizacoes() {
 }
 
 async function renderizarImagemLeituraAtual(leituraAtual) {
-    if (!leituraAtual || !document.getElementById('leitura-atual-imagem-container')) return;
-    const imagemUrl = leituraAtual.imagemUrl || '/img/capa-padrao.jpg';
-    const progressoGeral = await calcularProgressoGeral(leituraAtual);
-    document.getElementById('leitura-atual-imagem-container').innerHTML = `
-        <div class="leitura-atual-imagem">
-            <img src="${imagemUrl}" alt="${leituraAtual.titulo}">
-            <div class="progresso-geral">
-                <div class="progresso-barra-container">
-                    <div class="progresso-barra-geral" style="width: ${progressoGeral}%"></div>
-                </div>
-                <span class="progresso-texto-geral">${progressoGeral}% concluído</span>
-            </div>
-        </div>`;
+    // Função removida - a imagem da leitura atual é agora gerenciada pelo clubePrincipal.js
+    return;
 }
 
 async function calcularProgressoGeral(leituraAtual) {

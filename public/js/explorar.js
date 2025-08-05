@@ -229,3 +229,28 @@ function mostrarErro(mensagem) {
     const listaElement = document.getElementById('lista-clubes');
     listaElement.innerHTML = `<div class="erro-mensagem">${mensagem}</div>`;
 }
+
+function mostrarAlerta(mensagem, tipo = 'info') {
+    const alerta = document.createElement('div');
+    alerta.className = `alerta alerta-${tipo}`;
+    alerta.innerHTML = `
+        <div class="alerta-conteudo">
+            <span class="alerta-mensagem">${mensagem}</span>
+            <button class="alerta-fechar" onclick="this.parentElement.parentElement.remove()">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(alerta);
+    
+    setTimeout(() => {
+        if (alerta.parentElement) {
+            alerta.remove();
+        }
+    }, 5000);
+    
+    setTimeout(() => {
+        alerta.classList.add('alerta-visivel');
+    }, 10);
+}
