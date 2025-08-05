@@ -28,8 +28,6 @@ async function carregarConfiguracoes() {
 function preencherFormularios(clube) {
     document.getElementById('config-nome').value = clube.nome || '';
     document.getElementById('config-descricao').value = clube.descricao || '';
-    document.getElementById('config-cidade').value = clube.cidade || '';
-    document.getElementById('config-estado').value = clube.estado || '';
     
     const modalidadeRadio = document.querySelector(`input[name="config-modelo"][value="${clube.modelo}"]`);
     if (modalidadeRadio) {
@@ -96,8 +94,6 @@ async function salvarConfiguracaoBasica() {
         const dados = {
             nome: document.getElementById('config-nome').value.trim(),
             descricao: document.getElementById('config-descricao').value.trim(),
-            cidade: document.getElementById('config-cidade').value.trim(),
-            estado: document.getElementById('config-estado').value.trim(),
             visibilidade: configuracoesOriginais.visibilidade,
             senha: configuracoesOriginais.senha_acesso,
             modelo: configuracoesOriginais.modelo
@@ -160,9 +156,7 @@ async function salvarConfiguracaoModalidade() {
             descricao: configuracoesOriginais.descricao,
             visibilidade: configuracoesOriginais.visibilidade,
             senha: configuracoesOriginais.senha_acesso,
-            modelo: modeloSelecionado.value,
-            cidade: configuracoesOriginais.cidade,
-            estado: configuracoesOriginais.estado
+            modelo: modeloSelecionado.value
         };
         
         const response = await fetch(`/api/clube/${clubeId}/configuracoes`, {
@@ -221,9 +215,7 @@ async function salvarConfiguracaoVisibilidade() {
             descricao: configuracoesOriginais.descricao,
             visibilidade: visibilidadeSelecionada.value,
             senha: visibilidadeSelecionada.value === 'privado' ? senha : null,
-            modelo: configuracoesOriginais.modelo,
-            cidade: configuracoesOriginais.cidade,
-            estado: configuracoesOriginais.estado
+            modelo: configuracoesOriginais.modelo
         };
         
         const response = await fetch(`/api/clube/${clubeId}/configuracoes`, {
