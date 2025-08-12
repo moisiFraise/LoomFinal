@@ -3022,6 +3022,27 @@ app.use((req, res) => {
   res.status(404).json({ erro: 'Rota não encontrada' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+const server = app.listen(PORT, () => {
+  console.log(`🚀 Loom Server running on http://localhost:${PORT}`);
+  console.log(`📱 PWA available for installation!`);
+});
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.log(`❌ Port ${PORT} is busy. Trying alternative port...`);
+    const altPort = PORT + 1;
+    const altServer = app.listen(altPort, () => {
+      console.log(`🚀 Loom Server running on http://localhost:${altPort}`);
+      console.log(`📱 PWA available for installation!`);
+    });
+    
+    altServer.on('error', (altErr) => {
+      console.error(`❌ Failed to start server on ports ${PORT} and ${altPort}`);
+      console.error('Please stop other Node.js processes and try again.');
+      process.exit(1);
+    });
+  } else {
+    console.error('❌ Server error:', err);
+    process.exit(1);
+  }
 });
