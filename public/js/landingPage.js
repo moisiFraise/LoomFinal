@@ -23,6 +23,22 @@ function stars() {
 let deferredPrompt;
 const installButton = document.getElementById('installButton');
 
+console.log('PWA Script carregado');
+console.log('Install button encontrado:', installButton);
+
+// Debug: verificar se o navegador suporta PWA
+if ('serviceWorker' in navigator) {
+  console.log('Service Worker suportado');
+} else {
+  console.log('Service Worker NÃO suportado');
+}
+
+// Debug: verificar manifest
+fetch('/manifest.json')
+  .then(response => response.json())
+  .then(manifest => console.log('Manifest carregado:', manifest))
+  .catch(error => console.error('Erro ao carregar manifest:', error));
+
 // Registrar Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -54,13 +70,38 @@ if ('serviceWorker' in navigator) {
 
 // Capturar evento de instalação PWA
 window.addEventListener('beforeinstallprompt', (e) => {
-  console.log('PWA pode ser instalado');
+  console.log('Evento beforeinstallprompt disparado - PWA pode ser instalado');
   e.preventDefault();
   deferredPrompt = e;
   
   // Mostrar botão de instalação
   installButton.style.display = 'inline-block';
+  console.log('Botão de instalação mostrado');
 });
+
+// Debug: Forçar exibição do botão após 3 segundos se não detectar PWA
+setTimeout(() => {
+  if (installButton && installButton.style.display === 'none') {
+    console.log('Forçando exibição do botão para teste');
+    installButton.style.display = 'inline-block';
+    installButton.innerHTML = '<i class="fas fa-bug"></i> Debug: Testar PWA';
+    
+    installButton.addEventListener('click', () => {
+      console.log('Debug: Verificando criterios PWA...');
+      
+      // Verificar critérios PWA
+      const checks = {
+        serviceWorker: 'serviceWorker' in navigator,
+        manifest: document.querySelector('link[rel="manifest"]') !== null,
+        https: location.protocol === 'https:' || location.hostname === 'localhost',
+        standalone: window.matchMedia('(display-mode: standalone)').matches
+      };
+      
+      console.table(checks);
+      alert(`PWA Status:\n${JSON.stringify(checks, null, 2)}`);
+    });
+  }
+}, 3000);
 
 // Evento de clique no botão de instalação
 installButton.addEventListener('click', async () => {

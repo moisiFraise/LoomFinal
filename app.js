@@ -37,13 +37,14 @@ const Comentarios = require('./models/Comentarios');
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Servir manifest.json com Content-Type correto
-app.get('/manifest.json', (req, res) => {
-  res.setHeader('Content-Type', 'application/json');
-  res.sendFile(path.join(__dirname, 'manifest.json'));
-});
+// Configurar Content-Type para manifest.json
+app.use(express.static(path.join(__dirname, 'public'), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('manifest.json')) {
+      res.setHeader('Content-Type', 'application/json');
+    }
+  }
+}));
 
 app.use(fileUpload({
   useTempFiles: false,
