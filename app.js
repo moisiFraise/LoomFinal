@@ -39,6 +39,12 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Servir manifest.json com Content-Type correto
+app.get('/manifest.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.sendFile(path.join(__dirname, 'manifest.json'));
+});
+
 app.use(fileUpload({
   useTempFiles: false,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB

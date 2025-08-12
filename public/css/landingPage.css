@@ -112,6 +112,28 @@ h1 {
     background-color: rgba(255, 255, 255, 0.1);
 }
 
+.btn-pwa {
+    background-color: #4CAF50;
+    color: #fff;
+    border: none;
+    animation: pulse-install 2s infinite;
+}
+
+.btn-pwa:hover {
+    background-color: #45a049;
+    transform: translateY(-3px);
+}
+
+.btn-pwa i {
+    margin-right: 8px;
+}
+
+@keyframes pulse-install {
+    0% { box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3); }
+    50% { box-shadow: 0 4px 20px rgba(76, 175, 80, 0.5); }
+    100% { box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3); }
+}
+
 @media screen and (max-width: 600px) {
     h1 {
         font-size: 24px;
