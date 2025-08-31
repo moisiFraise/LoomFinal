@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="/css/sorteio.css">
     <link rel="stylesheet" href="/css/votacao.css">
     <link rel="stylesheet" href="/css/configuracoes.css">
+    <link rel="stylesheet" href="/css/sair-clube.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <title><%= titulo %></title>
 </head>
@@ -677,6 +678,37 @@
         function setMinDate(inputId) {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById(inputId).min = today;
+        }
+        
+        // Função para sair do clube
+        async function sairDoClube() {
+            if (!confirm('Tem certeza que deseja sair deste clube?\n\nSuas atualizações permanecerão visíveis, mas você não poderá mais participar das discussões.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/clube/${clubeId}/sair`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    alert('Erro: ' + (data.erro || 'Não foi possível sair do clube'));
+                    return;
+                }
+                
+                alert(data.mensagem);
+                // Redirecionar para dashboard
+                window.location.href = '/dashboard';
+                
+            } catch (error) {
+                console.error('Erro ao sair do clube:', error);
+                alert('Erro ao sair do clube. Tente novamente.');
+            }
         }
         
         // Configurar data mínima quando a página carregar

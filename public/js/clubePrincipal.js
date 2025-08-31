@@ -269,8 +269,10 @@ async function verificarPermissoesCriador() {
             const botaoSelecionar = document.getElementById('botao-selecionar-leitura-container');
             const botaoAgendar = document.getElementById('botao-agendar-encontro-container');
             const opcoesCreador = document.getElementById('opcoes-criador');
+            const opcoesMembro = document.getElementById('opcoes-membro');
             
             if (data.isCriador) {
+                // Mostrar opções do criador
                 if (botaoSelecionar) {
                     botaoSelecionar.style.display = 'block';
                 }
@@ -280,7 +282,12 @@ async function verificarPermissoesCriador() {
                 if (opcoesCreador) {
                     opcoesCreador.style.display = 'block';
                 }
+                // Ocultar opções de membro
+                if (opcoesMembro) {
+                    opcoesMembro.style.display = 'none';
+                }
             } else {
+                // Ocultar opções do criador
                 if (botaoSelecionar) {
                     botaoSelecionar.style.display = 'none';
                 }
@@ -290,9 +297,11 @@ async function verificarPermissoesCriador() {
                 if (opcoesCreador) {
                     opcoesCreador.style.display = 'none';
                 }
+                // Mostrar opções de membro (sair do clube)
+                if (opcoesMembro) {
+                    opcoesMembro.style.display = 'block';
+                }
             }
-            
-            
         }
     } catch (error) {
         console.error('Erro ao verificar permissões:', error);

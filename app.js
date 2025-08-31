@@ -437,6 +437,50 @@ app.get('/api/clube/:clubeId/atualizacoes/:id/curtidas', verificarAutenticacao, 
   res.json({ curtido: false, total: 0 });
 });
 
+// Rota para sair do clube
+app.post('/api/clube/:id/sair', verificarAutenticacao, async (req, res) => {
+  try {
+    const clubeId = req.params.id;
+    const userId = req.session.userId;
+    
+    // Verificar se o usuário é realmente membro do clube
+    const [participacoes] = await pool.query(
+      'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
+      [userId, clubeId]
+    );
+    
+    if (participacoes.length === 0) {
+      return res.status(404).json({ erro: 'Você não é membro deste clube' });
+    }
+    
+    // Verificar se o usuário não é o criador do clube
+    const [clube] = await pool.query('SELECT id_criador FROM clubes WHERE id = ?', [clubeId]);
+    
+    if (clube.length === 0) {
+      return res.status(404).json({ erro: 'Clube não encontrado' });
+    }
+    
+    if (clube[0].id_criador === userId) {
+      return res.status(403).json({ erro: 'O criador do clube não pode sair. Delete o clube se necessário.' });
+    }
+    
+    // Remover usuário do clube
+    await pool.query(
+      'DELETE FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
+      [userId, clubeId]
+    );
+    
+    res.json({ 
+      success: true, 
+      mensagem: 'Você saiu do clube com sucesso' 
+    });
+    
+  } catch (error) {
+    console.error('Erro ao sair do clube:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+});
+
 app.get('/api/usuario/tipo', verificarAutenticacao, async (req, res) => {
   try {
     const usuario = await Usuario.buscarPorId(req.session.userId);

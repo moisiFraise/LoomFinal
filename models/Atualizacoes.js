@@ -41,12 +41,17 @@ class Atualizacoes {
     static async listarPorClube(idClube, idLeitura) {
         try {
             const [rows] = await pool.query(
-                `SELECT a.*, u.nome as nome_usuario, u.foto_perfil
+                `SELECT a.*, u.nome as nome_usuario, u.foto_perfil,
+                        CASE 
+                            WHEN p.id_usuario IS NULL THEN 1 
+                            ELSE 0 
+                        END as usuario_saiu_do_clube
                  FROM atualizacoes a
                  JOIN usuarios u ON a.id_usuario = u.id
+                 LEFT JOIN participacoes p ON u.id = p.id_usuario AND p.id_clube = ?
                  WHERE a.id_clube = ? AND a.id_leitura = ?
                  ORDER BY a.data_postagem DESC`,
-                [idClube, idLeitura]
+                [idClube, idClube, idLeitura]
             );
             
             return rows;
