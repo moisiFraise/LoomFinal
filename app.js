@@ -125,13 +125,19 @@ app.use((req, res, next) => {
 });
 
 function verificarAutenticacao(req, res, next) {
-  console.log('Verificando autenticação, sessão:', req.session);
-  console.log('userId na sessão:', req.session.userId);
+  console.log('Verificando autenticação, userId:', req.session.userId);
   
   if (!req.session.userId) {
     console.log('Usuário não autenticado, redirecionando para /autenticacao');
     return res.redirect('/autenticacao');
   }
+  
+  // Adicionar headers para evitar cache em páginas autenticadas
+  res.set({
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
   
   console.log('Usuário autenticado, continuando...');
   next();
@@ -158,8 +164,81 @@ app.get('/', (req, res) => {
   res.render('index', { title: 'Loom - Home' });
 });
 
-app.get('/autenticacao', (req, res) => {
-  res.render('autenticacao', { titulo: 'Loom - Login e Cadastro' });
+app.get('/autenticacao', async (req, res) => {
+  // Apenas limpar se há dados de usuário na sessão (não apenas sessionID vazio)
+  if (req.session.userId) {
+    console.log('Usuário logado acessando /autenticacao, limpando sessão...', req.sessionID);
+    
+    try {
+      // Remover sessão do banco primeiro
+      await pool.query('DELETE FROM sessions WHERE session_id = ?', [req.sessionID]);
+      console.log('Sessão removida do banco:', req.sessionID);
+    } catch (err) {
+      console.error('Erro ao remover sessão do banco:', err);
+    }
+    
+    req.session.destroy((err) => {
+      if (err) {
+        console.error('Erro ao destruir sessão em /autenticacao:', err);
+      }
+      res.clearCookie('loom_session');
+      res.render('autenticacao', { titulo: 'Loom - Login e Cadastro' });
+    });
+  } else {
+    // Sessão vazia ou já limpa - apenas renderizar a página
+    res.render('autenticacao', { titulo: 'Loom - Login e Cadastro' });
+  }
+});
+
+app.post('/logout', async (req, res) => {
+  console.log('Iniciando logout para usuário:', req.session.userId);
+  console.log('SessionID:', req.sessionID);
+  
+  const sessionId = req.sessionID;
+  const userId = req.session.userId;
+  
+  try {
+    // Primeiro, remover manualmente a sessão do banco
+    await pool.query('DELETE FROM sessions WHERE session_id = ?', [sessionId]);
+    console.log('Sessão removida do banco:', sessionId);
+    
+    // Depois, destruir a sessão no servidor
+    req.session.destroy((err) => {
+      if (err) {
+        console.error('Erro ao destruir sessão no servidor:', err);
+      }
+      
+      // Limpar todos os cookies relacionados à sessão
+      res.clearCookie('loom_session', {
+        path: '/',
+        domain: undefined,
+        secure: false,
+        httpOnly: true,
+        sameSite: 'lax'
+      });
+      
+      // Limpar cookie sem opções também
+      res.clearCookie('loom_session');
+      
+      console.log('Logout realizado com sucesso para usuário:', userId);
+      res.json({ success: true });
+    });
+    
+  } catch (dbError) {
+    console.error('Erro ao remover sessão do banco:', dbError);
+    
+    // Mesmo com erro no banco, tentar destruir a sessão
+    req.session.destroy((err) => {
+      if (err) {
+        console.error('Erro ao destruir sessão:', err);
+        return res.status(500).json({ success: false });
+      }
+      
+      res.clearCookie('loom_session');
+      console.log('Logout parcial realizado (erro no banco, mas sessão local destruída)');
+      res.json({ success: true, warning: 'Sessão removida localmente, mas pode ter ficado no banco' });
+    });
+  }
 });
 
 app.get('/api/session-check', (req, res) => {
@@ -168,6 +247,202 @@ app.get('/api/session-check', (req, res) => {
     userId: req.session.userId,
     authenticated: req.session.authenticated,
     sessionID: req.sessionID
+  });
+});
+
+// Debug: verificar participação do usuário em um clube
+app.get('/api/debug/clube/:id/participacao', verificarAutenticacao, async (req, res) => {
+  try {
+    const clubeId = req.params.id;
+    const userId = req.session.userId;
+    
+    const [participacoes] = await pool.query(
+      'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
+      [userId, clubeId]
+    );
+    
+    const [clube] = await pool.query('SELECT * FROM clubes WHERE id = ?', [clubeId]);
+    
+    res.json({
+      userId: userId,
+      clubeId: clubeId,
+      clubeExists: clube.length > 0,
+      isMember: participacoes.length > 0,
+      participacao: participacoes[0] || null,
+      clube: clube[0] || null
+    });
+  } catch (error) {
+    console.error('Erro ao verificar participação:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+});
+
+// Debug: limpar participações órfãs
+app.post('/api/debug/cleanup-participacoes', verificarAutenticacao, async (req, res) => {
+  try {
+    // Remover participações de clubes que não existem mais
+    const [resultado1] = await pool.query(`
+      DELETE p FROM participacoes p 
+      LEFT JOIN clubes c ON p.id_clube = c.id 
+      WHERE c.id IS NULL
+    `);
+    
+    // Remover participações de usuários que não existem mais
+    const [resultado2] = await pool.query(`
+      DELETE p FROM participacoes p 
+      LEFT JOIN usuarios u ON p.id_usuario = u.id 
+      WHERE u.id IS NULL
+    `);
+    
+    res.json({
+      clubesOrfaosRemovidos: resultado1.affectedRows,
+      usuariosOrfaosRemovidos: resultado2.affectedRows,
+      success: true
+    });
+  } catch (error) {
+    console.error('Erro ao limpar participações:', error);
+    res.status(500).json({ erro: 'Erro ao limpar participações' });
+  }
+});
+
+// Debug: investigar sessões no banco
+app.get('/api/debug/sessions', async (req, res) => {
+  try {
+    const [sessions] = await pool.query('SELECT * FROM sessions ORDER BY expires DESC');
+    
+    // Extrair dados das sessões
+    const sessionsData = sessions.map(session => {
+      try {
+        const data = JSON.parse(session.data);
+        return {
+          session_id: session.session_id,
+          expires: session.expires,
+          userId: data.userId || null,
+          userType: data.userType || null,
+          email: data.email || null,
+          authenticated: data.authenticated || false,
+          isExpired: new Date() > new Date(session.expires),
+          raw: session.data
+        };
+      } catch (e) {
+        return {
+          session_id: session.session_id,
+          expires: session.expires,
+          error: 'Invalid JSON data',
+          raw: session.data
+        };
+      }
+    });
+    
+    // Contar sessões por usuário
+    const userSessions = {};
+    sessionsData.forEach(s => {
+      if (s.userId) {
+        if (!userSessions[s.userId]) userSessions[s.userId] = 0;
+        userSessions[s.userId]++;
+      }
+    });
+    
+    res.json({
+      totalSessions: sessions.length,
+      activeSessions: sessionsData.filter(s => !s.isExpired).length,
+      expiredSessions: sessionsData.filter(s => s.isExpired).length,
+      userSessions,
+      currentSessionId: req.sessionID,
+      currentUserId: req.session.userId,
+      sessions: sessionsData
+    });
+  } catch (error) {
+    console.error('Erro ao buscar sessões:', error);
+    res.status(500).json({ erro: 'Erro ao buscar sessões' });
+  }
+});
+
+// Debug: limpar sessões expiradas
+app.post('/api/debug/cleanup-sessions', async (req, res) => {
+  try {
+    const [resultado] = await pool.query('DELETE FROM sessions WHERE expires < NOW()');
+    
+    res.json({
+      sessionsRemovidas: resultado.affectedRows,
+      success: true
+    });
+  } catch (error) {
+    console.error('Erro ao limpar sessões:', error);
+    res.status(500).json({ erro: 'Erro ao limpar sessões' });
+  }
+});
+
+// Debug: limpar todas as sessões de um usuário específico (exceto a atual)
+app.post('/api/debug/cleanup-user-sessions/:userId', async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const currentSessionId = req.sessionID;
+    
+    // Buscar todas as sessões e filtrar as do usuário
+    const [sessions] = await pool.query('SELECT * FROM sessions');
+    const userSessions = [];
+    
+    for (const session of sessions) {
+      try {
+        const data = JSON.parse(session.data);
+        if (data.userId == userId && session.session_id !== currentSessionId) {
+          userSessions.push(session.session_id);
+        }
+      } catch (e) {
+        // Ignorar sessões com dados inválidos
+      }
+    }
+    
+    if (userSessions.length > 0) {
+      const placeholders = userSessions.map(() => '?').join(',');
+      const [resultado] = await pool.query(
+        `DELETE FROM sessions WHERE session_id IN (${placeholders})`,
+        userSessions
+      );
+      
+      res.json({
+        userId: userId,
+        sessionsRemovidas: resultado.affectedRows,
+        sessionIdsRemovidos: userSessions,
+        currentSessionId: currentSessionId,
+        success: true
+      });
+    } else {
+      res.json({
+        userId: userId,
+        sessionsRemovidas: 0,
+        message: 'Nenhuma sessão adicional encontrada para este usuário',
+        success: true
+      });
+    }
+    
+  } catch (error) {
+    console.error('Erro ao limpar sessões do usuário:', error);
+    res.status(500).json({ erro: 'Erro ao limpar sessões do usuário' });
+  }
+});
+
+// Debug: rota para forçar refresh completo do usuário
+app.get('/api/debug/force-refresh', verificarAutenticacao, (req, res) => {
+  res.set({
+    'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+    'Pragma': 'no-cache',
+    'Expires': '0',
+    'Last-Modified': new Date().toISOString(),
+    'ETag': `"${Date.now()}-${Math.random()}"`
+  });
+  
+  res.json({
+    currentUser: {
+      userId: req.session.userId,
+      userType: req.session.userType,
+      email: req.session.email,
+      authenticated: req.session.authenticated
+    },
+    sessionId: req.sessionID,
+    timestamp: new Date().toISOString(),
+    message: 'Dados atuais do usuário - cache forçado a atualizar'
   });
 });
 
@@ -298,6 +573,7 @@ app.get('/dashboard', verificarAutenticacao, verificarRestricaoAdmin, async (req
     });
   } catch (error) {
     console.error('Erro ao carregar dashboard:', error);
+    
     res.render('dashboard', { 
       titulo: 'Loom - Meus Clubes',
       userId: req.session.userId,
@@ -616,13 +892,30 @@ app.get('/api/clubes/:userId', async (req, res) => {
   try {
     const userId = req.params.userId;
     
-    const clubesCriados = await Clube.buscarPorCriador(userId);
+    console.log(`Buscando clubes para usuário: ${userId}`);
     
+    const clubesCriados = await Clube.buscarPorCriador(userId);
     const clubesParticipando = await Clube.buscarParticipacoes(userId);
+    
+    console.log(`Clubes criados: ${clubesCriados.length}`);
+    console.log(`Clubes participando: ${clubesParticipando.length}`);
+    
+    // Verificar se há sobreposição (não deveria haver)
+    const todosClubes = [...clubesCriados, ...clubesParticipando];
+    const idsUnicos = new Set(todosClubes.map(c => c.id));
+    
+    if (todosClubes.length !== idsUnicos.size) {
+      console.warn('AVISO: Há clubes duplicados na lista!');
+    }
     
     res.json({
       clubesCriados,
-      clubesParticipando
+      clubesParticipando,
+      debug: {
+        totalCriados: clubesCriados.length,
+        totalParticipando: clubesParticipando.length,
+        totalUnico: idsUnicos.size
+      }
     });
   } catch (error) {
     console.error('Erro ao buscar clubes:', error);
@@ -1335,13 +1628,23 @@ app.post('/api/clube/:id/leituras', verificarAutenticacao, async (req, res) => {
 app.get('/api/clube/:id/atualizacoes', verificarAutenticacao, async (req, res) => {
   try {
       const clubeId = req.params.id;
+      const userId = req.session.userId;
+      
+      console.log(`Verificando participação: usuário ${userId} no clube ${clubeId}`);
+      
       const [participacoes] = await pool.query(
           'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
-          [req.session.userId, clubeId]
+          [userId, clubeId]
       );
       
+      console.log(`Participações encontradas: ${participacoes.length}`);
+      
       if (participacoes.length === 0) {
-          return res.status(403).json({ erro: 'Você não é membro deste clube' });
+          console.log(`Acesso negado: usuário ${userId} não é membro do clube ${clubeId}`);
+          return res.status(403).json({ 
+            erro: 'Você não é membro deste clube',
+            debug: { userId, clubeId, isMember: false }
+          });
       }
       const [leituraRows] = await pool.query(
           'SELECT * FROM leituras WHERE id_clube = ? AND status = "atual" LIMIT 1',

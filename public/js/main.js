@@ -17,8 +17,32 @@ function mostrarSecao(secao) {
   }
 }
 
-function sair() {
-  window.location.href = '/autenticacao';
+async function sair() {
+  try {
+    // Limpar qualquer storage local primeiro
+    if (typeof(Storage) !== "undefined") {
+      localStorage.clear();
+      sessionStorage.clear();
+    }
+    
+    const response = await fetch('/logout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (response.ok) {
+      // Forçar reload da página para limpar qualquer cache
+      window.location.replace('/autenticacao');
+    } else {
+      console.error('Erro no logout');
+      window.location.replace('/autenticacao');
+    }
+  } catch (error) {
+    console.error('Erro ao fazer logout:', error);
+    window.location.replace('/autenticacao');
+  }
 }
 
 if ('serviceWorker' in navigator) {

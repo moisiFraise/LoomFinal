@@ -178,6 +178,11 @@
     
     <div class="notificacao" style="display: none;"></div>
     <script>
+        // Definir userId para uso em JavaScript
+        const userId = '<%= typeof userId !== "undefined" && userId ? userId : null %>';
+        console.log('userId definido para meuPerfil:', userId);
+    </script>
+    <script>
 document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('.publicacao-item').forEach(item => {
     const progressBar = item.querySelector('.progresso');

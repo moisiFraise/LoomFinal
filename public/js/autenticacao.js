@@ -83,7 +83,9 @@ if (formularioLogin) {
             // Aguardar um momento para garantir que a sessão foi estabelecida
             setTimeout(() => {
                 console.log('Redirecionando para o dashboard...');
-                window.location.href = '/dashboard';
+                // Forçar reload completo para evitar cache adicionando timestamp
+                const timestamp = new Date().getTime();
+                window.location.replace(`/dashboard?t=${timestamp}`);
             }, 1500);
             
         } catch (error) {

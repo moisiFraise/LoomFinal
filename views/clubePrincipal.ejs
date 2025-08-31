@@ -668,8 +668,10 @@
     </section>
 
     <script>
-        const clubeId = '<%= clubeId %>';
-        const userId = '<%= userId %>';
+        const clubeId = '<%= typeof clubeId !== "undefined" && clubeId ? clubeId : null %>';
+        const userId = '<%= typeof userId !== "undefined" && userId ? userId : null %>';
+        console.log('clubeId definido:', clubeId);
+        console.log('userId definido:', userId);
         
         // Função para definir data mínima como hoje
         function setMinDate(inputId) {
