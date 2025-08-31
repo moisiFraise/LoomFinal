@@ -1,7 +1,7 @@
 const pool = require('../config/database');
 
 class Atualizacoes {
-    static async criar(idClube, idLeitura, idUsuario, conteudo, paginaAtual, totalPaginas, gifUrl = null) {
+    static async criar(idClube, idLeitura, idUsuario, conteudo, paginaAtual, totalPaginas, gifUrl = null, idEmocao = null) {
         try {
             const [ultimaAtualizacao] = await pool.query(
                 `SELECT * FROM atualizacoes 
@@ -17,9 +17,9 @@ class Atualizacoes {
             }
             
             const [result] = await pool.query(
-                `INSERT INTO atualizacoes (id_clube, id_leitura, id_usuario, conteudo, porcentagem_leitura, gif_url)
-                 VALUES (?, ?, ?, ?, ?, ?)`,
-                [idClube, idLeitura, idUsuario, conteudo, porcentagemLeitura, gifUrl]
+                `INSERT INTO atualizacoes (id_clube, id_leitura, id_usuario, conteudo, porcentagem_leitura, gif_url, id_emocao)
+                 VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                [idClube, idLeitura, idUsuario, conteudo, porcentagemLeitura, gifUrl, idEmocao]
             );
             
             return {
@@ -42,12 +42,14 @@ class Atualizacoes {
         try {
             const [rows] = await pool.query(
                 `SELECT a.*, u.nome as nome_usuario, u.foto_perfil,
+                        e.nome as emocao_nome, e.emoji as emocao_emoji, e.cor as emocao_cor,
                         CASE 
                             WHEN p.id_usuario IS NULL THEN 1 
                             ELSE 0 
                         END as usuario_saiu_do_clube
                  FROM atualizacoes a
                  JOIN usuarios u ON a.id_usuario = u.id
+                 LEFT JOIN emocoes e ON a.id_emocao = e.id
                  LEFT JOIN participacoes p ON u.id = p.id_usuario AND p.id_clube = ?
                  WHERE a.id_clube = ? AND a.id_leitura = ?
                  ORDER BY a.data_postagem DESC`,

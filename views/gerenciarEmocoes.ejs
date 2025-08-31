@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <%- include('partials/favicon') %>
+    <title><%= titulo %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/menu.css">
+    <link rel="stylesheet" href="/css/gerenciarEmocoes.css">
+    <%- include('partials/imports') %>
+</head>
+<body>
+    <%- include('partials/menu') %>
+
+    <div class="emocoes-container">
+        <div class="emocoes-header">
+            <h1>Gerenciamento de Emoções</h1>
+            <p>Gerencie as emoções disponíveis para atualizações de leitura</p>
+            <button class="btn-nova-emocao" onclick="abrirModalNovaEmocao()">
+                <i class="fas fa-plus"></i> Nova Emoção
+            </button>
+        </div>
+
+        <div class="emocoes-grid" id="emocoes-grid">
+            <div class="carregando">Carregando emoções...</div>
+        </div>
+    </div>
+
+    <!-- Modal para nova emoção -->
+    <div id="modal-emocao" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-titulo">Nova Emoção</h3>
+                <button class="modal-close" onclick="fecharModalEmocao()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="form-emocao">
+                <input type="hidden" id="emocao-id">
+                
+                <div class="form-group">
+                    <label for="emocao-nome">Nome da Emoção</label>
+                    <input type="text" id="emocao-nome" required maxlength="50">
+                </div>
+
+                <div class="form-group">
+                    <label for="emocao-emoji">Emoji</label>
+                    <input type="text" id="emocao-emoji" required maxlength="10" placeholder="😊">
+                </div>
+
+                <div class="form-group">
+                    <label for="emocao-cor">Cor</label>
+                    <input type="color" id="emocao-cor" value="#6c5ce7">
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="emocao-ativo" checked>
+                        Emoção ativa
+                    </label>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" onclick="fecharModalEmocao()">Cancelar</button>
+                    <button type="submit">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-overlay" class="modal-overlay" onclick="fecharModalEmocao()" style="display: none;"></div>
+
+    <script>
+        const userId = '<%= typeof userId !== "undefined" && userId ? userId : null %>';
+        const userType = '<%= typeof userType !== "undefined" && userType ? userType : null %>';
+    </script>
+    <script src="/js/gerenciarEmocoes.js"></script>
+</body>
+</html>

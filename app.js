@@ -32,6 +32,7 @@ const Encontros = require('./models/Encontros');
 const Denuncias = require('./models/Denuncias');
 const Votacao = require('./models/Votacao');
 const Comentarios = require('./models/Comentarios');
+const Emocoes = require('./models/Emocoes');
 
 
 
@@ -426,6 +427,118 @@ app.post('/api/emergency-cleanup', async (req, res) => {
   }
 });
 
+// Setup inicial de emoções (sem autenticação para primeira execução)
+app.post('/api/setup-emocoes', async (req, res) => {
+  try {
+    // Criar tabela de emoções
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS emocoes (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        nome VARCHAR(50) NOT NULL UNIQUE,
+        emoji VARCHAR(10) NOT NULL,
+        cor VARCHAR(7) DEFAULT '#6c5ce7',
+        ativo BOOLEAN DEFAULT TRUE,
+        data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Inserir emoções padrão
+    await pool.query(`
+      INSERT INTO emocoes (nome, emoji, cor) VALUES 
+      ('Feliz', '😊', '#28a745'),
+      ('Empolgado', '🤩', '#ffc107'),
+      ('Relaxado', '😌', '#17a2b8'),
+      ('Triste', '😢', '#6f42c1'),
+      ('Frustrado', '😤', '#fd7e14'),
+      ('Surpreso', '😮', '#e83e8c'),
+      ('Pensativo', '🤔', '#6c757d'),
+      ('Inspirado', '✨', '#20c997')
+      ON DUPLICATE KEY UPDATE nome=nome
+    `);
+
+    // Modificar tabela atualizacoes para incluir emoção
+    try {
+      await pool.query(`
+        ALTER TABLE atualizacoes 
+        ADD COLUMN id_emocao INT DEFAULT NULL
+      `);
+      
+      await pool.query(`
+        ALTER TABLE atualizacoes 
+        ADD FOREIGN KEY (id_emocao) REFERENCES emocoes(id) ON DELETE SET NULL
+      `);
+    } catch (alterError) {
+      console.log('Colunas podem já existir:', alterError.message);
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Sistema de emoções inicializado com sucesso!' 
+    });
+
+  } catch (error) {
+    console.error('Erro ao inicializar emoções:', error);
+    res.status(500).json({ erro: 'Erro ao inicializar sistema de emoções' });
+  }
+});
+
+// Rota para inicializar sistema de emoções
+app.post('/api/admin/init-emocoes', verificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    if (!usuario || usuario.tipo !== 'admin') {
+      return res.status(403).json({ erro: 'Acesso negado' });
+    }
+
+    // Criar tabela de emoções
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS emocoes (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        nome VARCHAR(50) NOT NULL UNIQUE,
+        emoji VARCHAR(10) NOT NULL,
+        cor VARCHAR(7) DEFAULT '#6c5ce7',
+        ativo BOOLEAN DEFAULT TRUE,
+        data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Inserir emoções padrão
+    await pool.query(`
+      INSERT INTO emocoes (nome, emoji, cor) VALUES 
+      ('Feliz', '😊', '#28a745'),
+      ('Empolgado', '🤩', '#ffc107'),
+      ('Relaxado', '😌', '#17a2b8'),
+      ('Triste', '😢', '#6f42c1'),
+      ('Frustrado', '😤', '#fd7e14'),
+      ('Surpreso', '😮', '#e83e8c'),
+      ('Pensativo', '🤔', '#6c757d'),
+      ('Inspirado', '✨', '#20c997')
+      ON DUPLICATE KEY UPDATE nome=nome
+    `);
+
+    // Modificar tabela atualizacoes para incluir emoção
+    try {
+      await pool.query(`
+        ALTER TABLE atualizacoes 
+        ADD COLUMN id_emocao INT DEFAULT NULL,
+        ADD FOREIGN KEY (id_emocao) REFERENCES emocoes(id) ON DELETE SET NULL
+      `);
+    } catch (alterError) {
+      // Coluna pode já existir, ignorar erro
+      console.log('Coluna id_emocao pode já existir:', alterError.message);
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Sistema de emoções inicializado com sucesso!' 
+    });
+
+  } catch (error) {
+    console.error('Erro ao inicializar emoções:', error);
+    res.status(500).json({ erro: 'Erro ao inicializar sistema de emoções' });
+  }
+});
+
 // Rota temporária para curtidas (evitar erro 404)
 app.get('/api/curtidas/:id/status', verificarAutenticacao, (req, res) => {
   // Retornar dados padrão para evitar erro
@@ -436,6 +549,130 @@ app.get('/api/clube/:clubeId/atualizacoes/:id/curtidas', verificarAutenticacao, 
   // Retornar dados padrão para evitar erro
   res.json({ curtido: false, total: 0 });
 });
+
+// =================== ROTAS DE EMOÇÕES ===================
+
+// Listar emoções ativas (para usuários)
+app.get('/api/emocoes', verificarAutenticacao, async (req, res) => {
+  try {
+    const emocoes = await Emocoes.listarTodas();
+    res.json(emocoes);
+  } catch (error) {
+    console.error('Erro ao listar emoções:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+});
+
+// Listar todas as emoções (para admin)
+app.get('/api/admin/emocoes', verificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    if (!usuario || usuario.tipo !== 'admin') {
+      return res.status(403).json({ erro: 'Acesso negado' });
+    }
+
+    const emocoes = await Emocoes.listarTodasAdmin();
+    res.json(emocoes);
+  } catch (error) {
+    console.error('Erro ao listar emoções (admin):', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+});
+
+// Criar nova emoção (admin)
+app.post('/api/admin/emocoes', verificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    if (!usuario || usuario.tipo !== 'admin') {
+      return res.status(403).json({ erro: 'Acesso negado' });
+    }
+
+    const { nome, emoji, cor } = req.body;
+
+    if (!nome || !emoji) {
+      return res.status(400).json({ erro: 'Nome e emoji são obrigatórios' });
+    }
+
+    const emocao = await Emocoes.criar(nome, emoji, cor);
+    res.status(201).json(emocao);
+  } catch (error) {
+    console.error('Erro ao criar emoção:', error);
+    
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ erro: 'Já existe uma emoção com este nome' });
+    }
+    
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+});
+
+// Atualizar emoção (admin)
+app.put('/api/admin/emocoes/:id', verificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    if (!usuario || usuario.tipo !== 'admin') {
+      return res.status(403).json({ erro: 'Acesso negado' });
+    }
+
+    const { id } = req.params;
+    const { nome, emoji, cor, ativo } = req.body;
+
+    const emocao = await Emocoes.atualizar(id, { nome, emoji, cor, ativo });
+    
+    if (!emocao) {
+      return res.status(404).json({ erro: 'Emoção não encontrada' });
+    }
+
+    res.json(emocao);
+  } catch (error) {
+    console.error('Erro ao atualizar emoção:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+});
+
+// Remover emoção (admin)
+app.delete('/api/admin/emocoes/:id', verificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    if (!usuario || usuario.tipo !== 'admin') {
+      return res.status(403).json({ erro: 'Acesso negado' });
+    }
+
+    const { id } = req.params;
+    await Emocoes.remover(id);
+    
+    res.json({ sucesso: true, mensagem: 'Emoção removida com sucesso' });
+  } catch (error) {
+    console.error('Erro ao remover emoção:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+});
+
+// Ativar/Desativar emoção (admin)
+app.patch('/api/admin/emocoes/:id/status', verificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    if (!usuario || usuario.tipo !== 'admin') {
+      return res.status(403).json({ erro: 'Acesso negado' });
+    }
+
+    const { id } = req.params;
+    const { ativo } = req.body;
+
+    const emocao = await Emocoes.ativarDesativar(id, ativo);
+    
+    if (!emocao) {
+      return res.status(404).json({ erro: 'Emoção não encontrada' });
+    }
+
+    res.json(emocao);
+  } catch (error) {
+    console.error('Erro ao alterar status da emoção:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+});
+
+// =================== FIM ROTAS DE EMOÇÕES ===================
 
 // Rota para sair do clube
 app.post('/api/clube/:id/sair', verificarAutenticacao, async (req, res) => {
@@ -1245,6 +1482,28 @@ app.get('/gerenciarClubes', verificarAutenticacao, async (req, res) => {
   }
 });
 
+app.get('/gerenciarEmocoes', verificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    
+    if (!usuario || usuario.tipo !== 'admin') {
+      return res.redirect('/dashboard');
+    }
+    
+    const emocoes = await Emocoes.listarTodasAdmin();
+    
+    res.render('gerenciarEmocoes', { 
+      titulo: 'Loom - Gerenciar Emoções',
+      emocoes: emocoes,
+      userId: req.session.userId,
+      userType: usuario.tipo
+    });
+  } catch (error) {
+    console.error('Erro ao carregar emoções:', error);
+    res.redirect('/painelAdmin');
+  }
+});
+
 app.get('/api/admin/clubes', verificarAutenticacao, async (req, res) => {
   try {
     const usuario = await Usuario.buscarPorId(req.session.userId);
@@ -1692,7 +1951,7 @@ app.get('/api/clube/:id/atualizacoes', verificarAutenticacao, async (req, res) =
 app.post('/api/clube/:id/atualizacoes', verificarAutenticacao, async (req, res) => {
   try {
       const clubeId = req.params.id;
-      const { conteudo, paginaAtual, gifUrl } = req.body;
+      const { conteudo, paginaAtual, gifUrl, idEmocao } = req.body;
       
       if (!conteudo || !paginaAtual) {
           return res.status(400).json({ erro: 'Comentário e página atual são obrigatórios' });
@@ -1740,7 +1999,8 @@ app.post('/api/clube/:id/atualizacoes', verificarAutenticacao, async (req, res) 
           conteudo,
           paginaAtual,
           leituraAtual.paginas || 100,
-          gifUrl || null
+          gifUrl || null,
+          idEmocao || null
       );
       
       const [usuarioRows] = await pool.query(
