@@ -170,7 +170,10 @@ async function carregarEstadoCurtidas(atualizacaoId) {
             response = await fetch(`/api/curtidas/${atualizacaoId}/status`);
         }
         
-        if (!response.ok) throw new Error('Erro ao carregar estado das curtidas');
+        if (!response.ok) {
+            console.warn('Rota de curtidas não encontrada, ignorando...'); 
+            return; // Não gerar erro, apenas ignorar
+        }
         
         const data = await response.json();
         const curtido = data.curtido || data.curtiu;

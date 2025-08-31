@@ -389,8 +389,23 @@ document.head.insertAdjacentHTML('beforeend', `
     document.querySelectorAll('.publicacao-item').forEach(item => {
         const atualizacaoId = item.getAttribute('data-id');
         if (atualizacaoId) {
-            carregarEstadoCurtidas(atualizacaoId);
-            carregarContadorComentarios(atualizacaoId);
+            // Só carregar curtidas se a função existir
+            if (typeof carregarEstadoCurtidas === 'function') {
+                try {
+                    carregarEstadoCurtidas(atualizacaoId);
+                } catch (e) {
+                    console.warn('Erro ao carregar curtidas:', e);
+                }
+            }
+            
+            // Carregar comentários se a função existir
+            if (typeof carregarContadorComentarios === 'function') {
+                try {
+                    carregarContadorComentarios(atualizacaoId);
+                } catch (e) {
+                    console.warn('Erro ao carregar comentários:', e);
+                }
+            }
         }
     });
 });

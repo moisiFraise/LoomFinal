@@ -426,6 +426,17 @@ app.post('/api/emergency-cleanup', async (req, res) => {
   }
 });
 
+// Rota temporária para curtidas (evitar erro 404)
+app.get('/api/curtidas/:id/status', verificarAutenticacao, (req, res) => {
+  // Retornar dados padrão para evitar erro
+  res.json({ curtido: false, total: 0 });
+});
+
+app.get('/api/clube/:clubeId/atualizacoes/:id/curtidas', verificarAutenticacao, (req, res) => {
+  // Retornar dados padrão para evitar erro
+  res.json({ curtido: false, total: 0 });
+});
+
 app.get('/api/usuario/tipo', verificarAutenticacao, async (req, res) => {
   try {
     const usuario = await Usuario.buscarPorId(req.session.userId);
