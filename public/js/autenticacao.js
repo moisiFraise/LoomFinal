@@ -80,13 +80,14 @@ if (formularioLogin) {
             
             mostrarMensagem(formularioLogin, 'sucesso', 'Login realizado com sucesso! Redirecionando...');
             
-            // Aguardar um momento para garantir que a sessão foi estabelecida
+            // Limpeza total antes de redirecionar
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            // Redirecionamento imediato com cache bust
             setTimeout(() => {
-                console.log('Redirecionando para o dashboard...');
-                // Forçar reload completo para evitar cache adicionando timestamp
-                const timestamp = new Date().getTime();
-                window.location.replace(`/dashboard?t=${timestamp}`);
-            }, 1500);
+                window.location.href = '/dashboard?cb=' + Date.now() + '&r=' + Math.random();
+            }, 1000);
             
         } catch (error) {
             console.error('Erro ao fazer login:', error);

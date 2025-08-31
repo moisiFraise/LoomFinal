@@ -248,10 +248,10 @@ async function criarClube() {
 }
 async function carregarMeusClubes() {
     try {
-        if (!userId) {
-            console.error('ID de usuário não definido');
-            const clubesGrid = document.getElementById('meus-clubes');
-            clubesGrid.innerHTML = '<p class="mensagem-erro">Não foi possível carregar seus clubes. ID de usuário não definido.</p>';
+        if (!userId || userId === 'null' || userId === null) {
+            console.error('ID de usuário não definido ou inválido:', userId);
+            // Redirecionar para login se userId não for válido
+            window.location.href = '/autenticacao';
             return;
         }
         

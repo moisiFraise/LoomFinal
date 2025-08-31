@@ -668,8 +668,8 @@
     </section>
 
     <script>
-        const clubeId = '<%= typeof clubeId !== "undefined" && clubeId ? clubeId : null %>';
-        const userId = '<%= typeof userId !== "undefined" && userId ? userId : null %>';
+        const clubeId = <%= typeof clubeId !== "undefined" && clubeId ? clubeId : 'null' %>;
+        const userId = <%= typeof userId !== "undefined" && userId ? userId : 'null' %>;
         console.log('clubeId definido:', clubeId);
         console.log('userId definido:', userId);
         

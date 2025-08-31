@@ -102,11 +102,6 @@ app.use(session({
   }
 }));
 
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-  next();
-});
-
 const requiredEnvVars = [
   'DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME', 
   'SESSION_SECRET', 'CLOUDINARY_CLOUD_NAME', 
@@ -118,28 +113,35 @@ if (missingEnvVars.length > 0) {
   console.error('Variáveis de ambiente ausentes:', missingEnvVars.join(', '));
 }
 
-app.use((req, res, next) => {
-  console.log('Sessão atual:', req.session);
-  console.log('ID do usuário na sessão:', req.session.userId);
-  next();
-});
-
 function verificarAutenticacao(req, res, next) {
-  console.log('Verificando autenticação, userId:', req.session.userId);
-  
   if (!req.session.userId) {
-    console.log('Usuário não autenticado, redirecionando para /autenticacao');
     return res.redirect('/autenticacao');
   }
   
-  // Adicionar headers para evitar cache em páginas autenticadas
+  // Verificar se a sessão ainda é válida (não expirada)
+  if (req.session.cookie && req.session.cookie.expires) {
+    const now = new Date();
+    const expires = new Date(req.session.cookie.expires);
+    
+    if (expires <= now) {
+      console.log('Sessão expirada detectada, forçando logout');
+      req.session.destroy(() => {
+        res.clearCookie('loom_session');
+        return res.redirect('/autenticacao');
+      });
+      return;
+    }
+  }
+  
+  // Headers anti-cache extremamente agressivos
   res.set({
-    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Cache-Control': 'no-cache, no-store, must-revalidate, private, max-age=0',
     'Pragma': 'no-cache',
-    'Expires': '0'
+    'Expires': '0',
+    'Last-Modified': new Date().toISOString(),
+    'ETag': Date.now().toString()
   });
   
-  console.log('Usuário autenticado, continuando...');
   next();
 }
 
@@ -164,81 +166,42 @@ app.get('/', (req, res) => {
   res.render('index', { title: 'Loom - Home' });
 });
 
-app.get('/autenticacao', async (req, res) => {
-  // Apenas limpar se há dados de usuário na sessão (não apenas sessionID vazio)
-  if (req.session.userId) {
-    console.log('Usuário logado acessando /autenticacao, limpando sessão...', req.sessionID);
+app.get('/autenticacao', (req, res) => {
+  // Sempre limpar tudo ao acessar página de login
+  req.session.destroy(() => {
+    res.clearCookie('loom_session');
+    res.clearCookie('connect.sid');
     
-    try {
-      // Remover sessão do banco primeiro
-      await pool.query('DELETE FROM sessions WHERE session_id = ?', [req.sessionID]);
-      console.log('Sessão removida do banco:', req.sessionID);
-    } catch (err) {
-      console.error('Erro ao remover sessão do banco:', err);
-    }
-    
-    req.session.destroy((err) => {
-      if (err) {
-        console.error('Erro ao destruir sessão em /autenticacao:', err);
-      }
-      res.clearCookie('loom_session');
-      res.render('autenticacao', { titulo: 'Loom - Login e Cadastro' });
+    // Headers extremamente agressivos para evitar cache
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate, private, max-age=0',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+      'Last-Modified': new Date().toISOString(),
+      'ETag': Date.now().toString(),
+      'Vary': 'Cookie, Authorization'
     });
-  } else {
-    // Sessão vazia ou já limpa - apenas renderizar a página
+    
     res.render('autenticacao', { titulo: 'Loom - Login e Cadastro' });
-  }
+  });
 });
 
-app.post('/logout', async (req, res) => {
-  console.log('Iniciando logout para usuário:', req.session.userId);
-  console.log('SessionID:', req.sessionID);
-  
-  const sessionId = req.sessionID;
-  const userId = req.session.userId;
-  
-  try {
-    // Primeiro, remover manualmente a sessão do banco
-    await pool.query('DELETE FROM sessions WHERE session_id = ?', [sessionId]);
-    console.log('Sessão removida do banco:', sessionId);
+app.post('/logout', (req, res) => {
+  // Logout simples e direto
+  req.session.destroy(() => {
+    // Limpar todos os cookies possíveis
+    res.clearCookie('loom_session');
+    res.clearCookie('connect.sid');
     
-    // Depois, destruir a sessão no servidor
-    req.session.destroy((err) => {
-      if (err) {
-        console.error('Erro ao destruir sessão no servidor:', err);
-      }
-      
-      // Limpar todos os cookies relacionados à sessão
-      res.clearCookie('loom_session', {
-        path: '/',
-        domain: undefined,
-        secure: false,
-        httpOnly: true,
-        sameSite: 'lax'
-      });
-      
-      // Limpar cookie sem opções também
-      res.clearCookie('loom_session');
-      
-      console.log('Logout realizado com sucesso para usuário:', userId);
-      res.json({ success: true });
+    // Headers para evitar cache da resposta
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
     });
     
-  } catch (dbError) {
-    console.error('Erro ao remover sessão do banco:', dbError);
-    
-    // Mesmo com erro no banco, tentar destruir a sessão
-    req.session.destroy((err) => {
-      if (err) {
-        console.error('Erro ao destruir sessão:', err);
-        return res.status(500).json({ success: false });
-      }
-      
-      res.clearCookie('loom_session');
-      console.log('Logout parcial realizado (erro no banco, mas sessão local destruída)');
-      res.json({ success: true, warning: 'Sessão removida localmente, mas pode ter ficado no banco' });
-    });
-  }
+    res.json({ success: true });
+  });
 });
 
 app.get('/api/session-check', (req, res) => {
@@ -452,6 +415,17 @@ app.get('/api/config/giphy', (req, res) => {
   });
 });
 
+// Rota simples para limpeza de emergência
+app.post('/api/emergency-cleanup', async (req, res) => {
+  try {
+    // Limpar todas as sessões expiradas
+    await pool.query('DELETE FROM sessions WHERE expires < NOW()');
+    res.json({ success: true, message: 'Sessões expiradas removidas' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 app.get('/api/usuario/tipo', verificarAutenticacao, async (req, res) => {
   try {
     const usuario = await Usuario.buscarPorId(req.session.userId);
@@ -583,7 +557,25 @@ app.get('/dashboard', verificarAutenticacao, verificarRestricaoAdmin, async (req
 });
 app.get('/meuPerfil', verificarAutenticacao, verificarRestricaoAdmin, async (req, res) => {
   try {
+    // Headers anti-cache extremamente agressivos para meuPerfil
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate, private, max-age=0, s-maxage=0',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+      'Last-Modified': new Date().toISOString(),
+      'ETag': `"profile-${req.session.userId}-${Date.now()}"`,
+      'Vary': 'Cookie, Authorization, User-Agent',
+      'X-Accel-Expires': '0'
+    });
+    
     const usuario = await Usuario.buscarPorId(req.session.userId);
+    
+    // Debug temporário para meuPerfil
+    console.log(`=== MEUPERFIL DEBUG ===`);
+    console.log(`SessionID: ${req.sessionID}`);
+    console.log(`UserId na sessão: ${req.session.userId}`);
+    console.log(`Usuário encontrado: ${usuario ? usuario.nome : 'null'} (${usuario ? usuario.email : 'null'})`);
+    console.log(`========================`);
     
     if (!usuario) {
       return res.redirect('/autenticacao');
@@ -617,7 +609,9 @@ app.get('/meuPerfil', verificarAutenticacao, verificarRestricaoAdmin, async (req
       userType: usuario.tipo,
       usuario: usuario,
       clubes: clubesIds,
-      publicacoes: publicacoes
+      publicacoes: publicacoes,
+      timestamp: Date.now(),
+      sessionId: req.sessionID
     });
   } catch (error) {
     console.error('Erro ao carregar perfil:', error);
@@ -892,30 +886,12 @@ app.get('/api/clubes/:userId', async (req, res) => {
   try {
     const userId = req.params.userId;
     
-    console.log(`Buscando clubes para usuário: ${userId}`);
-    
     const clubesCriados = await Clube.buscarPorCriador(userId);
     const clubesParticipando = await Clube.buscarParticipacoes(userId);
     
-    console.log(`Clubes criados: ${clubesCriados.length}`);
-    console.log(`Clubes participando: ${clubesParticipando.length}`);
-    
-    // Verificar se há sobreposição (não deveria haver)
-    const todosClubes = [...clubesCriados, ...clubesParticipando];
-    const idsUnicos = new Set(todosClubes.map(c => c.id));
-    
-    if (todosClubes.length !== idsUnicos.size) {
-      console.warn('AVISO: Há clubes duplicados na lista!');
-    }
-    
     res.json({
       clubesCriados,
-      clubesParticipando,
-      debug: {
-        totalCriados: clubesCriados.length,
-        totalParticipando: clubesParticipando.length,
-        totalUnico: idsUnicos.size
-      }
+      clubesParticipando
     });
   } catch (error) {
     console.error('Erro ao buscar clubes:', error);
@@ -1630,21 +1606,13 @@ app.get('/api/clube/:id/atualizacoes', verificarAutenticacao, async (req, res) =
       const clubeId = req.params.id;
       const userId = req.session.userId;
       
-      console.log(`Verificando participação: usuário ${userId} no clube ${clubeId}`);
-      
       const [participacoes] = await pool.query(
           'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
           [userId, clubeId]
       );
       
-      console.log(`Participações encontradas: ${participacoes.length}`);
-      
       if (participacoes.length === 0) {
-          console.log(`Acesso negado: usuário ${userId} não é membro do clube ${clubeId}`);
-          return res.status(403).json({ 
-            erro: 'Você não é membro deste clube',
-            debug: { userId, clubeId, isMember: false }
-          });
+          return res.status(403).json({ erro: 'Você não é membro deste clube' });
       }
       const [leituraRows] = await pool.query(
           'SELECT * FROM leituras WHERE id_clube = ? AND status = "atual" LIMIT 1',

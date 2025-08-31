@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta name="cache-bust" content="<%= timestamp || Date.now() %>">
     <%- include('partials/favicon') %>
     <title>Loom - Meu Perfil</title>
     <link rel="stylesheet" href="/css/meuPerfil.css">
@@ -177,10 +181,30 @@
     </div>
     
     <div class="notificacao" style="display: none;"></div>
+    
+    <!-- SCRIPT NUCLEAR DE LIMPEZA -->
+    <script src="/js/nuclear-cleanup.js"></script>
+    
     <script>
-        // Definir userId para uso em JavaScript
-        const userId = '<%= typeof userId !== "undefined" && userId ? userId : null %>';
+        // Definir userId para uso em JavaScript  
+        const userId = <%= typeof userId !== "undefined" && userId ? userId : 'null' %>;
+        const currentTimestamp = '<%= timestamp || Date.now() %>';
+        const sessionId = '<%= sessionId || "" %>';
+        
         console.log('userId definido para meuPerfil:', userId);
+        console.log('timestamp da página:', currentTimestamp);
+        console.log('sessionId:', sessionId);
+        
+        // Forçar reload se os dados parecem estar em cache
+        if (performance && performance.navigation && performance.navigation.type === 2) {
+            console.log('Página carregada do cache, forçando reload...');
+            window.location.reload(true);
+        }
+        
+        // Função para recarregar dados do perfil
+        window.recarregarPerfil = function() {
+            window.location.href = '/meuPerfil?refresh=' + Date.now();
+        };
     </script>
     <script>
 document.addEventListener('DOMContentLoaded', function() {
