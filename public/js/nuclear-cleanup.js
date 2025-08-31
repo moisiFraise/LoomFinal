@@ -90,4 +90,43 @@
         window.location.replace('/autenticacao?nuclear=' + Date.now());
     };
     
+    // Função específica para desinstalar PWA
+    window.desinstalarPWA = async function() {
+        console.log('🔥 Desinstalando PWA completamente...');
+        
+        // 1. Desregistrar todos os Service Workers
+        if ('serviceWorker' in navigator) {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (let registration of registrations) {
+                console.log('Desregistrando SW:', registration.scope);
+                await registration.unregister();
+            }
+        }
+        
+        // 2. Limpar todos os caches
+        if ('caches' in window) {
+            const cacheNames = await caches.keys();
+            for (let name of cacheNames) {
+                console.log('Deletando cache:', name);
+                await caches.delete(name);
+            }
+        }
+        
+        // 3. Limpar storages
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // 4. Limpar cookies
+        const cookies = document.cookie.split(";");
+        for (let cookie of cookies) {
+            const eqPos = cookie.indexOf("=");
+            const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+            document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+        }
+        
+        // 5. Recarregar página
+        alert('🚀 PWA DESINSTALADO! Recarregando...');
+        window.location.href = '/autenticacao?pwa-removed=' + Date.now();
+    };
+    
 })();
