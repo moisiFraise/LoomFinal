@@ -168,144 +168,181 @@
     grid-column: 1 / -1;
 }
 
-/* Modal */
-.modal {
+/* Modal com estilo igual ao formulário de criar clube */
+.form-container {
+    max-width: 450px;
+    width: 85%; 
+    padding: 20px; 
+    background: var(--current-line);
+    border: 2px solid var(--roxo);
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(189, 147, 249, 0.3);
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1001;
+    margin: 15px auto;
+    overflow-y: auto;
+    max-height: 90vh; 
+    scrollbar-width: thin; 
+    scrollbar-color: var(--roxo) var(--current-line);
+}
+
+.form-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.form-container::-webkit-scrollbar-track {
+    background: var(--current-line);
+    border-radius: 10px;
+}
+
+.form-container::-webkit-scrollbar-thumb {
+    background-color: var(--roxo);
+    border-radius: 10px;
+    border: 2px solid var(--current-line);
+}
+
+.overlay {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    right: 0;
+    bottom: 0;
+    background: rgba(40, 42, 54, 0.8);
+    backdrop-filter: blur(5px);
     z-index: 1000;
 }
 
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 999;
-}
-
-.modal-content {
-    background: var(--card-bg);
-    border-radius: 12px;
-    padding: 0;
-    max-width: 500px;
-    width: 90%;
-    max-height: 90vh;
-    overflow-y: auto;
-    position: relative;
-    z-index: 1001;
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.modal-header h3 {
-    margin: 0;
-    color: var(--texto-principal);
-}
-
-.modal-close {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: var(--texto-secundario);
-    padding: 5px;
-}
-
-.modal-close:hover {
-    color: var(--texto-principal);
-}
-
 #form-emocao {
-    padding: 20px;
-}
-
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 600;
-    color: var(--texto-principal);
-}
-
-.form-group input {
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
     width: 100%;
-    padding: 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    background: var(--input-bg);
-    color: var(--texto-principal);
+}
+
+#form-emocao > * {
+    margin-bottom: 8px;
+}
+
+.form-subtitulo {
+    font-weight: 600;
+    color: var(--foreground);
+    margin: 10px 0 5px 0;
+    font-size: 14px;
+}
+
+#form-emocao input[type="text"],
+#form-emocao input[type="color"] {
+    height: 38px;
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--roxo);
+    border-radius: 8px;
+    background-color: var(--background);
+    color: var(--foreground);
     font-size: 1rem;
 }
 
-.form-group input:focus {
+#form-emocao input[type="text"]:focus,
+#form-emocao input[type="color"]:focus {
     outline: none;
     border-color: var(--roxo);
     box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
 }
 
-.form-group input[type="color"] {
+#form-emocao input[type="color"] {
     width: 60px;
     height: 40px;
     padding: 0;
-    border-radius: 6px;
     cursor: pointer;
 }
 
-.form-group input[type="checkbox"] {
-    width: auto;
-    margin-right: 8px;
-}
-
-.form-actions {
+.radio-group {
     display: flex;
-    gap: 15px;
-    justify-content: flex-end;
-    margin-top: 30px;
+    gap: 10px;
+    margin: 10px 0;
+    width: 100%;
 }
 
-.form-actions button {
-    padding: 12px 24px;
+.radio-option {
+    flex: 1;
+    position: relative;
+    cursor: pointer;
+}
+
+.radio-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.radio-option label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 10px;
+    background-color: var(--current-line);
+    border: 2px solid var(--comment);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    text-align: center;
+    font-size: 14px;
+    height: 100%;
+}
+
+.radio-option i {
+    font-size: 18px;
+    margin-bottom: 8px;
+}
+
+.radio-option input[type="radio"]:checked + label {
+    background-color: var(--roxo);
+    color: var(--foreground);
+    border-color: var(--roxo);
+    box-shadow: 0 0 10px rgba(189, 147, 249, 0.5);
+}
+
+.radio-option:hover label {
+    transform: translateY(-2px);
+    border-color: var(--roxo-claro);
+}
+
+.radio-option .option-description {
+    font-size: 11px;
+    margin-top: 5px;
+    opacity: 0.8;
+}
+
+.form-buttons {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#confirmar-emocao, #cancelar-emocao {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+#cancelar-emocao {
+    background: linear-gradient(45deg, var(--vermelho), var(--laranja));
+    color: var(--foreground);
+    padding: 8px; 
     border: none;
-    border-radius: 6px;
-    font-weight: 600;
+    border-radius: 12px; 
+    font-size: 14px; 
     cursor: pointer;
     transition: all 0.3s ease;
 }
 
-.form-actions button[type="submit"] {
-    background: var(--roxo);
-    color: white;
-}
-
-.form-actions button[type="submit"]:hover {
-    background: var(--roxo-hover);
-}
-
-.form-actions button[type="button"] {
-    background: #6c757d;
-    color: white;
-}
-
-.form-actions button[type="button"]:hover {
-    background: #545b62;
+#cancelar-emocao:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(248, 28, 28, 0.4);
 }
 
 /* Responsivo */
@@ -319,8 +356,36 @@
         grid-template-columns: 1fr;
     }
     
-    .modal-content {
-        width: 95%;
-        margin: 10px;
+    .form-container {
+        max-height: 85vh;
+        width: 90%; 
+    }
+    
+    .form-container {
+        padding: 15px;
+    }
+    
+    #form-emocao > * {
+        margin-bottom: 6px;
+    }
+    
+    .radio-option label {
+        padding: 10px 8px;
+        font-size: 13px;
+    }
+    
+    .radio-option i {
+        font-size: 16px;
+        margin-bottom: 5px;
+    }
+    
+    .radio-option .option-description {
+        font-size: 10px;
+    }
+}
+
+@media (max-height: 600px) {
+    .form-container {
+        max-height: 95vh;
     }
 }

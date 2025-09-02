@@ -65,9 +65,11 @@ class Atualizacoes {
         static async listarPorLeitura(idClube, idLeitura) {
         try {
             const [atualizacoes] = await pool.query(
-                `SELECT a.*, u.nome as nome_usuario, u.foto_perfil
+                `SELECT a.*, u.nome as nome_usuario, u.foto_perfil,
+                        e.nome as emocao_nome, e.emoji as emocao_emoji, e.cor as emocao_cor
                  FROM atualizacoes a
                  JOIN usuarios u ON a.id_usuario = u.id
+                 LEFT JOIN emocoes e ON a.id_emocao = e.id
                  WHERE a.id_clube = ? AND a.id_leitura = ?
                  ORDER BY a.data_postagem DESC`,
                 [idClube, idLeitura]
@@ -101,9 +103,11 @@ class Atualizacoes {
     static async obterPorId(id) {
         try {
             const [rows] = await pool.query(
-                `SELECT a.*, u.nome as nome_usuario, u.foto_perfil
+                `SELECT a.*, u.nome as nome_usuario, u.foto_perfil,
+                        e.nome as emocao_nome, e.emoji as emocao_emoji, e.cor as emocao_cor
                  FROM atualizacoes a
                  JOIN usuarios u ON a.id_usuario = u.id
+                 LEFT JOIN emocoes e ON a.id_emocao = e.id
                  WHERE a.id = ?`,
                 [id]
             );

@@ -587,13 +587,13 @@ app.post('/api/admin/emocoes', verificarAutenticacao, async (req, res) => {
       return res.status(403).json({ erro: 'Acesso negado' });
     }
 
-    const { nome, emoji, cor } = req.body;
+    const { nome, emoji, cor, ativo } = req.body;
 
     if (!nome || !emoji) {
       return res.status(400).json({ erro: 'Nome e emoji são obrigatórios' });
     }
 
-    const emocao = await Emocoes.criar(nome, emoji, cor);
+    const emocao = await Emocoes.criar(nome, emoji, cor, ativo);
     res.status(201).json(emocao);
   } catch (error) {
     console.error('Erro ao criar emoção:', error);
@@ -888,9 +888,11 @@ app.get('/meuPerfil', verificarAutenticacao, verificarRestricaoAdmin, async (req
     ];
       const [publicacoes] = await pool.query(`
       SELECT a.*, c.nome as nome_clube, c.visibilidade, 
-             (SELECT COUNT(*) FROM curtidas WHERE id_atualizacao = a.id) as curtidas
+             (SELECT COUNT(*) FROM curtidas WHERE id_atualizacao = a.id) as curtidas,
+             e.nome as emocao_nome, e.emoji as emocao_emoji, e.cor as emocao_cor
       FROM atualizacoes a
       JOIN clubes c ON a.id_clube = c.id
+      LEFT JOIN emocoes e ON a.id_emocao = e.id
       WHERE a.id_usuario = ?
       ORDER BY a.data_postagem DESC
     `, [req.session.userId]);
@@ -946,9 +948,11 @@ app.get('/perfil/:id', verificarAutenticacao, verificarRestricaoAdmin, async (re
     // Buscar publicações públicas do usuário
     const [publicacoes] = await pool.query(`
       SELECT a.*, c.nome as nome_clube, c.visibilidade, 
-             (SELECT COUNT(*) FROM curtidas WHERE id_atualizacao = a.id) as curtidas
+             (SELECT COUNT(*) FROM curtidas WHERE id_atualizacao = a.id) as curtidas,
+             e.nome as emocao_nome, e.emoji as emocao_emoji, e.cor as emocao_cor
       FROM atualizacoes a
       JOIN clubes c ON a.id_clube = c.id
+      LEFT JOIN emocoes e ON a.id_emocao = e.id
       WHERE a.id_usuario = ? AND c.visibilidade = "publico"
       ORDER BY a.data_postagem DESC
       LIMIT 50

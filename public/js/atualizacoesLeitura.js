@@ -189,7 +189,10 @@ function renderizarAtualizacoes() {
                             ${avatarHtml}
                         </div>
                         <div class="atualizacao-usuario-data">
-                            <span class="atualizacao-usuario" onclick="irParaPerfil(${a.id_usuario})" title="Ver perfil de ${a.nome_usuario}">${a.nome_usuario}</span>
+                            <span class="atualizacao-usuario" onclick="irParaPerfil(${a.id_usuario})" title="Ver perfil de ${a.nome_usuario}">
+                                ${a.nome_usuario}
+                                ${a.emocao_emoji ? `<span class="atualizacao-emocao" style="background-color: ${a.emocao_cor}">${a.emocao_emoji} ${a.emocao_nome}</span>` : ''}
+                            </span>
                             <span class="atualizacao-data">${dataFormatada}</span>
                         </div>
                     </div>

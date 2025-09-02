@@ -38,11 +38,11 @@ class Emocoes {
         }
     }
 
-    static async criar(nome, emoji, cor = '#6c5ce7') {
+    static async criar(nome, emoji, cor = '#6c5ce7', ativo = true) {
         try {
             const [result] = await pool.query(
-                'INSERT INTO emocoes (nome, emoji, cor) VALUES (?, ?, ?)',
-                [nome, emoji, cor]
+                'INSERT INTO emocoes (nome, emoji, cor, ativo) VALUES (?, ?, ?, ?)',
+                [nome, emoji, cor, ativo]
             );
             
             return {
@@ -50,7 +50,7 @@ class Emocoes {
                 nome,
                 emoji,
                 cor,
-                ativo: true
+                ativo
             };
         } catch (error) {
             console.error('Erro ao criar emoção:', error);

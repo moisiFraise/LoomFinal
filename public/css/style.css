@@ -9,9 +9,19 @@
     --laranja: #fdcb6e;
     --rosa: #e84393;
     --roxo: #6c5ce7;
+    --roxo-hover: #5a4ecc;
     --vermelho: #d63031;
     --vinho: #b71540;
     --amarelo: #ffeaa7;
+    
+    /* Variáveis para modais e cards */
+    --card-bg: #ffffff;
+    --border-color: #e0e0e0;
+    --input-bg: #ffffff;
+    --texto-principal: #2d3436;
+    --texto-secundario: #636e72;
+    --comment: #6c757d;
+    --roxo-claro: rgba(108, 92, 231, 0.3);
 }
 
 

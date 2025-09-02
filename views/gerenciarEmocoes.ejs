@@ -27,49 +27,51 @@
         </div>
     </div>
 
+    <!-- Overlay para modal de emoção -->
+    <div id="modal-overlay" class="overlay" onclick="fecharModalEmocao()" style="display: none;"></div>
+    
     <!-- Modal para nova emoção -->
-    <div id="modal-emocao" class="modal" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modal-titulo">Nova Emoção</h3>
-                <button class="modal-close" onclick="fecharModalEmocao()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <form id="form-emocao">
-                <input type="hidden" id="emocao-id">
-                
-                <div class="form-group">
-                    <label for="emocao-nome">Nome da Emoção</label>
-                    <input type="text" id="emocao-nome" required maxlength="50">
-                </div>
+    <div class="form-container" id="modal-emocao" style="display: none;">
+        <form id="form-emocao">
+            <input type="hidden" id="emocao-id">
+            
+            <h2 id="modal-titulo">Nova Emoção</h2>
+            
+            <p class="form-subtitulo">Nome da Emoção</p>
+            <input type="text" id="emocao-nome" placeholder="Nome da emoção" required maxlength="50">
 
-                <div class="form-group">
-                    <label for="emocao-emoji">Emoji</label>
-                    <input type="text" id="emocao-emoji" required maxlength="10" placeholder="😊">
-                </div>
+            <p class="form-subtitulo">Emoji</p>
+            <input type="text" id="emocao-emoji" placeholder="😊" required maxlength="10">
 
-                <div class="form-group">
-                    <label for="emocao-cor">Cor</label>
-                    <input type="color" id="emocao-cor" value="#6c5ce7">
-                </div>
+            <p class="form-subtitulo">Cor</p>
+            <input type="color" id="emocao-cor" value="#6c5ce7">
 
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="emocao-ativo" checked>
-                        Emoção ativa
+            <p class="form-subtitulo">Status da emoção</p>
+            <div class="radio-group">
+                <div class="radio-option">
+                    <input type="radio" id="emocao-ativa" name="emocao-status" value="true" checked>
+                    <label for="emocao-ativa">
+                        <i class="fas fa-check"></i>
+                        Ativa
+                        <span class="option-description">Disponível para seleção</span>
                     </label>
                 </div>
-
-                <div class="form-actions">
-                    <button type="button" onclick="fecharModalEmocao()">Cancelar</button>
-                    <button type="submit">Salvar</button>
+                <div class="radio-option">
+                    <input type="radio" id="emocao-inativa" name="emocao-status" value="false">
+                    <label for="emocao-inativa">
+                        <i class="fas fa-times"></i>
+                        Inativa
+                        <span class="option-description">Não aparece para seleção</span>
+                    </label>
                 </div>
-            </form>
-        </div>
-    </div>
+            </div>
 
-    <div id="modal-overlay" class="modal-overlay" onclick="fecharModalEmocao()" style="display: none;"></div>
+            <div class="form-buttons">
+                <button type="submit" class="botao-padrao" id="confirmar-emocao">Salvar</button>
+                <button type="button" id="cancelar-emocao" onclick="fecharModalEmocao()">Cancelar</button>
+            </div>
+        </form>
+    </div>
 
     <script>
         const userId = '<%= typeof userId !== "undefined" && userId ? userId : null %>';

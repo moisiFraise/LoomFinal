@@ -78,7 +78,7 @@ function abrirModalNovaEmocao() {
     document.getElementById('emocao-nome').value = '';
     document.getElementById('emocao-emoji').value = '';
     document.getElementById('emocao-cor').value = '#6c5ce7';
-    document.getElementById('emocao-ativo').checked = true;
+    document.getElementById('emocao-ativa').checked = true;
     
     mostrarModal();
 }
@@ -100,7 +100,12 @@ async function editarEmocao(id) {
         document.getElementById('emocao-nome').value = emocao.nome;
         document.getElementById('emocao-emoji').value = emocao.emoji;
         document.getElementById('emocao-cor').value = emocao.cor;
-        document.getElementById('emocao-ativo').checked = emocao.ativo;
+        
+        if (emocao.ativo) {
+            document.getElementById('emocao-ativa').checked = true;
+        } else {
+            document.getElementById('emocao-inativa').checked = true;
+        }
         
         mostrarModal();
         
@@ -117,7 +122,7 @@ async function salvarEmocao(event) {
     const nome = document.getElementById('emocao-nome').value.trim();
     const emoji = document.getElementById('emocao-emoji').value.trim();
     const cor = document.getElementById('emocao-cor').value;
-    const ativo = document.getElementById('emocao-ativo').checked;
+    const ativo = document.getElementById('emocao-ativa').checked;
     
     if (!nome || !emoji) {
         alert('Nome e emoji são obrigatórios');
@@ -211,7 +216,7 @@ async function removerEmocao(id) {
 }
 
 function mostrarModal() {
-    document.getElementById('modal-emocao').style.display = 'flex';
+    document.getElementById('modal-emocao').style.display = 'block';
     document.getElementById('modal-overlay').style.display = 'block';
     document.body.style.overflow = 'hidden';
 }

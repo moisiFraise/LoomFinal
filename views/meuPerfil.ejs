@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="/css/menu.css">
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/atualizacoes.css">
+    <link rel="stylesheet" href="/css/emocoes-atualizacao.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
@@ -70,6 +71,7 @@
                 <% publicacoes.forEach(pub => { %>
                     <div class="atualizacao-item publicacao-item <%= pub.visibilidade %>" data-clube-id="<%= pub.id_clube %>" data-porcentagem="<%= pub.porcentagem_leitura || 0 %>" data-id="<%= pub.id %>">
                         <div class="atualizacao-header publicacao-header">
+                         <span class="atualizacao-nome"><%= pub.nome %></span>
                             <div class="atualizacao-usuario-info">
                                 <div class="usuario-avatar" title="<%= usuario.nome %>">
                                     <% if (usuario.foto_perfil) { %>
@@ -79,7 +81,12 @@
                                     <% } %>
                                 </div>
                                 <div class="atualizacao-usuario-data">
-                                    <span class="atualizacao-usuario"><%= usuario.nome %></span>
+                                    <span class="atualizacao-usuario">
+                                        <%= usuario.nome %>
+                                        <% if (pub.emocao_emoji) { %>
+                                            <span class="atualizacao-emocao" style="background-color: <%= pub.emocao_cor %>"><%= pub.emocao_emoji %> <%= pub.emocao_nome %></span>
+                                        <% } %>
+                                    </span>
                                     <span class="atualizacao-data"><%= new Date(pub.data_postagem).toLocaleDateString('pt-BR') %> às <%= new Date(pub.data_postagem).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}) %></span>
                                 </div>
                             </div>
