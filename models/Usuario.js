@@ -1,11 +1,15 @@
 const pool = require('../config/database');
+const bcrypt = require('bcrypt');
 
 class Usuario {
   static async criar(nome, email, senha) { //Crud
     try {
+      // Hash da senha antes de armazenar
+      const senhaHash = await bcrypt.hash(senha, 10);
+      
       const [result] = await pool.query(
         'INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)',
-        [nome, email, senha]  
+        [nome, email, senhaHash]  
       );
       
       return { id: result.insertId, nome, email };
@@ -31,8 +35,33 @@ class Usuario {
     }
   }
 
-  static async verificarSenha(senha, senhaBanco) {
-    return senha === senhaBanco;
+  static async verificarSenha(senha, senhaBanco, usuarioId = null) {
+    try {
+      // Verifica se a senha no banco já está hasheada (inicia com $2b$)
+      if (senhaBanco.startsWith('$2b$')) {
+        // Senha já está hasheada, usa bcrypt
+        return await bcrypt.compare(senha, senhaBanco);
+      } else {
+        // Senha antiga em texto plano, compara diretamente
+        if (senha === senhaBanco) {
+          // Senha correta - aproveita para atualizar com hash se tivermos o ID
+          if (usuarioId) {
+            try {
+              const senhaHash = await bcrypt.hash(senha, 10);
+              await pool.query('UPDATE usuarios SET senha = ? WHERE id = ?', [senhaHash, usuarioId]);
+              console.log(`Senha do usuário ${usuarioId} migrada para hash`);
+            } catch (updateError) {
+              console.error('Erro ao atualizar senha para hash:', updateError);
+            }
+          }
+          return true;
+        }
+        return false;
+      }
+    } catch (error) {
+      console.error('Erro ao verificar senha:', error);
+      return false;
+    }
   }
   static async buscarPorId(id) {
     try {
@@ -84,7 +113,9 @@ static async atualizar(id, dados) { //crUd
     
     if (dados.senha) {
       campos.push('senha = ?');
-      valores.push(dados.senha);
+      // Hash da senha antes de atualizar
+      const senhaHash = await bcrypt.hash(dados.senha, 10);
+      valores.push(senhaHash);
     }
     
     if (dados.estado) {

@@ -770,7 +770,7 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ erro: 'Email ou senha incorretos.' });
     }
     
-    const senhaCorreta = await Usuario.verificarSenha(senha, usuario.senha);
+    const senhaCorreta = await Usuario.verificarSenha(senha, usuario.senha, usuario.id);
     console.log('Senha correta:', senhaCorreta ? 'Sim' : 'Não');
     
     if (!senhaCorreta) {
