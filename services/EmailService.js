@@ -21,7 +21,22 @@ class EmailService {
   }
 
   async enviarEmailResetSenha(email, nomeUsuario, token) {
-    const resetUrl = `${process.env.BASE_URL || 'http://localhost:3000'}/reset-senha?token=${token}`;
+    // Detectar automaticamente o ambiente
+    let baseUrl;
+    if (process.env.NODE_ENV === 'production') {
+      baseUrl = 'https://loom-final.vercel.app';
+    } else if (process.env.BASE_URL) {
+      baseUrl = process.env.BASE_URL;
+    } else {
+      // Fallback para desenvolvimento
+      const port = process.env.PORT || 3000;
+      baseUrl = `http://localhost:${port}`;
+    }
+    
+    const resetUrl = `${baseUrl}/reset-senha?token=${token}`;
+    
+    console.log(`🌐 Ambiente: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🔗 URL de reset gerada: ${resetUrl}`);
     
     const htmlContent = `
       <!DOCTYPE html>
