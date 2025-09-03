@@ -288,3 +288,60 @@ CREATE TABLE IF NOT EXISTS comentarios (
 
 -- Adicionar campo gif_url na tabela atualizacoes
 ALTER TABLE atualizacoes ADD COLUMN gif_url VARCHAR(500) DEFAULT NULL;
+
+-- Adicionar coluna gif_url à tabela comentarios
+-- Este script corrige o erro "Unknown column 'gif_url' in 'field list'"
+
+USE loom_db;
+
+-- Verificar se a coluna já existe antes de tentar adicionar
+SET @column_exists = (
+    SELECT COUNT(*) 
+    FROM INFORMATION_SCHEMA.COLUMNS 
+    WHERE TABLE_SCHEMA = 'loom_db' 
+    AND TABLE_NAME = 'comentarios' 
+    AND COLUMN_NAME = 'gif_url'
+);
+
+-- Adicionar a coluna somente se ela não existir
+SET @sql = IF(@column_exists > 0, 
+    'SELECT "Coluna gif_url já existe na tabela comentarios"',
+    'ALTER TABLE comentarios ADD COLUMN gif_url VARCHAR(500) DEFAULT NULL'
+);
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- Verificar a estrutura da tabela após a alteração
+DESCRIBE comentarios;
+
+
+-- Adicionar colunas para reset de senha
+ALTER TABLE usuarios 
+ADD COLUMN reset_token VARCHAR(255) NULL,
+ADD COLUMN reset_token_expira DATETIME NULL;
+
+-- Criar índice para melhor performance na busca por token
+CREATE INDEX idx_reset_token ON usuarios(reset_token);
+
+
+-- Tabela de emoções
+CREATE TABLE IF NOT EXISTS emocoes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nome VARCHAR(50) NOT NULL UNIQUE,
+  emoji VARCHAR(10) NOT NULL,
+  cor VARCHAR(7) DEFAULT '#6c5ce7',
+  ativo BOOLEAN DEFAULT TRUE,
+  data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+
+-- Modificar tabela atualizacoes para incluir emoção
+ALTER TABLE atualizacoes 
+ADD COLUMN id_emocao INT DEFAULT NULL,
+ADD FOREIGN KEY (id_emocao) REFERENCES emocoes(id) ON DELETE SET NULL;
+
+-- Também adicionar gif_url se não existir ainda
+ALTER TABLE atualizacoes 
+ADD COLUMN gif_url VARCHAR(255) DEFAULT NULL;

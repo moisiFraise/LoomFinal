@@ -1,3 +1,5 @@
 npx nodemon app.js
 
 <%- include('partials/menu') %>  ==== para incluir menu em qualquer pagina
+
+nkucovvbhyknunqc

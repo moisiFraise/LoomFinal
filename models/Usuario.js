@@ -195,5 +195,82 @@ static async atualizar(id, dados) { //crUd
     throw error;
   }
 }
+
+  // Métodos para reset de senha
+  static async salvarTokenReset(email, token) {
+    try {
+      const agora = new Date();
+      const [result] = await pool.query(
+        'UPDATE usuarios SET reset_token = ?, reset_token_expira = ? WHERE email = ?',
+        [token, agora, email]
+      );
+      
+      return result.affectedRows > 0;
+    } catch (error) {
+      console.error('Erro ao salvar token de reset:', error);
+      throw error;
+    }
+  }
+
+  static async buscarPorTokenReset(token) {
+    try {
+      const [rows] = await pool.query(
+        'SELECT * FROM usuarios WHERE reset_token = ?',
+        [token]
+      );
+      
+      return rows[0];
+    } catch (error) {
+      console.error('Erro ao buscar usuário por token:', error);
+      throw error;
+    }
+  }
+
+  static async atualizarSenhaPorToken(token, novaSenha) {
+    try {
+      // Verificar se o token existe e não expirou
+      const usuario = await this.buscarPorTokenReset(token);
+      if (!usuario) {
+        throw new Error('Token inválido');
+      }
+
+      // Verificar se não expirou (1 hora)
+      const agora = new Date();
+      const expiracao = new Date(usuario.reset_token_expira);
+      expiracao.setHours(expiracao.getHours() + 1);
+
+      if (agora > expiracao) {
+        throw new Error('Token expirado');
+      }
+
+      // Hash da nova senha
+      const senhaHash = await bcrypt.hash(novaSenha, 10);
+
+      // Atualizar senha e limpar token
+      const [result] = await pool.query(
+        'UPDATE usuarios SET senha = ?, reset_token = NULL, reset_token_expira = NULL WHERE reset_token = ?',
+        [senhaHash, token]
+      );
+
+      return result.affectedRows > 0;
+    } catch (error) {
+      console.error('Erro ao atualizar senha por token:', error);
+      throw error;
+    }
+  }
+
+  static async limparTokenReset(email) {
+    try {
+      const [result] = await pool.query(
+        'UPDATE usuarios SET reset_token = NULL, reset_token_expira = NULL WHERE email = ?',
+        [email]
+      );
+      
+      return result.affectedRows > 0;
+    } catch (error) {
+      console.error('Erro ao limpar token de reset:', error);
+      throw error;
+    }
+  }
 }
 module.exports = Usuario;

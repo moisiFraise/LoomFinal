@@ -10,6 +10,7 @@ const multer = require('multer');
 const streamifier = require('streamifier');
 const fileUpload = require('express-fileupload');
 const cloudinary = require('cloudinary').v2;
+const EmailService = require('./services/EmailService');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -203,6 +204,190 @@ app.post('/logout', (req, res) => {
     
     res.json({ success: true });
   });
+});
+
+// Rota de teste para verificar configuração do email
+app.get('/api/test-email-config', async (req, res) => {
+  try {
+    if (!process.env.EMAIL_PASSWORD) {
+      return res.status(400).json({ 
+        erro: '❌ EMAIL_PASSWORD não configurado no arquivo .env',
+        instrucoes: 'Siga as instruções no arquivo CONFIGURAR_GMAIL.md'
+      });
+    }
+
+    const emailService = new EmailService();
+    
+    // Apenas testar a conexão, não enviar email
+    await emailService.transporter.verify();
+    
+    res.json({ 
+      sucesso: '✅ Configuração do Gmail está correta!',
+      email: 'loom.leitura@gmail.com',
+      status: 'Pronto para enviar emails'
+    });
+  } catch (error) {
+    console.error('❌ Erro na configuração do email:', error);
+    
+    let mensagemErro = '❌ Configuração do Gmail incorreta: ';
+    let instrucoes = [];
+    
+    if (error.code === 'EAUTH') {
+      mensagemErro += 'Erro de autenticação';
+      instrucoes = [
+        '1. Acesse myaccount.google.com com a conta loom.leitura@gmail.com',
+        '2. Vá em Segurança → Verificação em duas etapas (OBRIGATÓRIO)',
+        '3. Depois vá em Segurança → Senhas de app',
+        '4. Gere uma nova senha de app para "Loom - Sistema Email"',
+        '5. Copie a senha de 16 dígitos (sem espaços)',
+        '6. Adicione no .env: EMAIL_PASSWORD=suasenhaDeapp',
+        '7. Reinicie o servidor'
+      ];
+    } else {
+      mensagemErro += error.message;
+      instrucoes = ['Verifique sua conexão com a internet'];
+    }
+    
+    res.status(500).json({ 
+      erro: mensagemErro,
+      instrucoes: instrucoes,
+      codigo: error.code || 'DESCONHECIDO'
+    });
+  }
+});
+
+// Rota para solicitar reset de senha
+app.post('/api/esqueci-senha', async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ erro: 'Email é obrigatório' });
+    }
+
+    // Verificar configuração do email ANTES de tudo
+    if (!process.env.EMAIL_PASSWORD) {
+      console.error('❌ EMAIL_PASSWORD não configurado');
+      return res.status(500).json({ 
+        erro: 'Sistema de email não configurado. Entre em contato com o administrador.',
+        config_error: true
+      });
+    }
+
+    // Verificar se o usuário existe
+    const usuario = await Usuario.buscarPorEmail(email);
+    
+    if (!usuario) {
+      // Por segurança, não revelamos se o email existe ou não
+      return res.json({ 
+        mensagem: 'Se o email existir em nosso sistema, você receberá as instruções de reset de senha.' 
+      });
+    }
+
+    // Gerar token único
+    const token = EmailService.gerarToken();
+    
+    // Salvar token no banco
+    await Usuario.salvarTokenReset(email, token);
+    
+    // Criar instância do serviço de email
+    const emailService = new EmailService();
+    
+    // Testar conexão antes de enviar
+    try {
+      console.log('🔍 Testando conexão SMTP...');
+      await emailService.transporter.verify();
+      console.log('✅ Conexão SMTP verificada');
+    } catch (verifyError) {
+      console.error('❌ Falha na verificação SMTP:', verifyError.message);
+      await Usuario.limparTokenReset(email);
+      
+      return res.status(500).json({ 
+        erro: 'Sistema de email temporariamente indisponível. Tente novamente em alguns minutos.',
+        tech_error: 'SMTP_CONFIG_ERROR'
+      });
+    }
+    
+    // Enviar email
+    try {
+      console.log('📧 Enviando email de reset...');
+      await emailService.enviarEmailResetSenha(email, usuario.nome, token);
+      console.log('✅ Email enviado com sucesso');
+      
+      res.json({ 
+        mensagem: 'Se o email existir em nosso sistema, você receberá as instruções de reset de senha.' 
+      });
+    } catch (emailError) {
+      console.error('❌ Erro ao enviar email:', emailError.message);
+      // Limpar token se falhou o envio
+      await Usuario.limparTokenReset(email);
+      
+      // Erro específico para o usuário
+      let mensagemErro = 'Erro ao enviar email. Tente novamente mais tarde.';
+      
+      if (emailError.message.includes('authentication')) {
+        mensagemErro = 'Sistema de email temporariamente indisponível. Tente novamente em alguns minutos.';
+      }
+      
+      res.status(500).json({ 
+        erro: mensagemErro,
+        tech_error: emailError.code || 'EMAIL_SEND_ERROR'
+      });
+    }
+  } catch (error) {
+    console.error('❌ Erro no processo de reset de senha:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+});
+
+// Página de reset de senha
+app.get('/reset-senha', (req, res) => {
+  const { token } = req.query;
+  
+  if (!token) {
+    return res.redirect('/autenticacao?erro=token_invalido');
+  }
+  
+  res.render('reset-senha', { 
+    titulo: 'Loom - Redefinir Senha',
+    token: token 
+  });
+});
+
+// Processar nova senha
+app.post('/api/reset-senha', async (req, res) => {
+  try {
+    const { token, novaSenha, confirmarSenha } = req.body;
+    
+    if (!token || !novaSenha || !confirmarSenha) {
+      return res.status(400).json({ erro: 'Todos os campos são obrigatórios' });
+    }
+    
+    if (novaSenha !== confirmarSenha) {
+      return res.status(400).json({ erro: 'As senhas não coincidem' });
+    }
+    
+    if (novaSenha.length < 6) {
+      return res.status(400).json({ erro: 'A senha deve ter pelo menos 6 caracteres' });
+    }
+    
+    // Atualizar senha usando o token
+    const sucesso = await Usuario.atualizarSenhaPorToken(token, novaSenha);
+    
+    if (!sucesso) {
+      return res.status(400).json({ erro: 'Token inválido ou expirado' });
+    }
+    
+    res.json({ mensagem: 'Senha redefinida com sucesso! Você já pode fazer login.' });
+  } catch (error) {
+    console.error('Erro ao redefinir senha:', error);
+    
+    if (error.message === 'Token inválido' || error.message === 'Token expirado') {
+      return res.status(400).json({ erro: error.message });
+    }
+    
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
 });
 
 app.get('/api/session-check', (req, res) => {
@@ -424,6 +609,42 @@ app.post('/api/emergency-cleanup', async (req, res) => {
     res.json({ success: true, message: 'Sessões expiradas removidas' });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Setup inicial para reset de senha (sem autenticação para primeira execução)
+app.post('/api/setup-reset-senha', async (req, res) => {
+  try {
+    // Adicionar colunas para reset de senha se não existirem
+    try {
+      await pool.query(`
+        ALTER TABLE usuarios 
+        ADD COLUMN reset_token VARCHAR(255) NULL,
+        ADD COLUMN reset_token_expira DATETIME NULL
+      `);
+      
+      // Criar índice para melhor performance
+      await pool.query(`
+        CREATE INDEX idx_reset_token ON usuarios(reset_token)
+      `);
+      
+      res.json({ 
+        success: true, 
+        message: 'Sistema de reset de senha configurado com sucesso!' 
+      });
+    } catch (alterError) {
+      if (alterError.message.includes('Duplicate column name')) {
+        res.json({ 
+          success: true, 
+          message: 'Sistema de reset de senha já está configurado.' 
+        });
+      } else {
+        throw alterError;
+      }
+    }
+  } catch (error) {
+    console.error('Erro ao configurar reset de senha:', error);
+    res.status(500).json({ erro: 'Erro ao configurar sistema de reset de senha' });
   }
 });
 

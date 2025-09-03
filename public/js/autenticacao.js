@@ -162,7 +162,7 @@ if (formularioLogin) {
             }
         });
     }
-        const inputs = document.querySelectorAll('input');
+    const inputs = document.querySelectorAll('input');
     inputs.forEach(input => {
         input.addEventListener('focus', () => {
             input.parentElement.classList.add('input-ativo');
@@ -174,4 +174,157 @@ if (formularioLogin) {
             }
         });
     });
+
+    // Funcionalidade "Esqueci minha senha"
+    const linkEsqueciSenha = document.getElementById('link-esqueci-senha');
+    const modalEsqueciSenha = document.getElementById('modal-esqueci-senha');
+    const fecharModal = document.getElementById('fechar-modal');
+    const cancelarRecuperacao = document.getElementById('cancelar-recuperacao');
+    const formularioEsqueciSenha = document.getElementById('formulario-esqueci-senha');
+
+    // Abrir modal
+    if (linkEsqueciSenha) {
+        linkEsqueciSenha.addEventListener('click', (e) => {
+            e.preventDefault();
+            modalEsqueciSenha.style.display = 'flex';
+            document.getElementById('email-recuperacao').focus();
+        });
+    }
+
+    // Fechar modal
+    function fecharModalEsqueciSenha() {
+        modalEsqueciSenha.style.display = 'none';
+        formularioEsqueciSenha.reset();
+        // Limpar mensagens
+        const mensagemAnterior = formularioEsqueciSenha.querySelector('.mensagem');
+        if (mensagemAnterior) {
+            mensagemAnterior.remove();
+        }
+    }
+
+    if (fecharModal) {
+        fecharModal.addEventListener('click', fecharModalEsqueciSenha);
+    }
+
+    if (cancelarRecuperacao) {
+        cancelarRecuperacao.addEventListener('click', fecharModalEsqueciSenha);
+    }
+
+    // Fechar modal ao clicar no overlay
+    modalEsqueciSenha.addEventListener('click', (e) => {
+        if (e.target === modalEsqueciSenha) {
+            fecharModalEsqueciSenha();
+        }
+    });
+
+    // Enviar solicitação de recuperação
+    if (formularioEsqueciSenha) {
+        formularioEsqueciSenha.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email-recuperacao').value;
+            const botaoEnviar = document.getElementById('enviar-recuperacao');
+            const loadingText = botaoEnviar.querySelector('.loading-text');
+            const normalText = botaoEnviar.querySelector('.normal-text');
+            
+            // Validação básica
+            if (!email || !email.includes('@')) {
+                mostrarMensagemModal(formularioEsqueciSenha, 'erro', 'Por favor, digite um email válido.');
+                return;
+            }
+
+            // Mostrar loading
+            botaoEnviar.disabled = true;
+            loadingText.style.display = 'inline';
+            normalText.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/esqueci-senha', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    mostrarMensagemModal(formularioEsqueciSenha, 'sucesso', data.mensagem);
+                    
+                    // Fechar modal após 3 segundos
+                    setTimeout(() => {
+                        fecharModalEsqueciSenha();
+                        mostrarToast('Verifique sua caixa de email (e pasta de spam) para as instruções de reset.', 'sucesso');
+                    }, 3000);
+                } else {
+                    mostrarMensagemModal(formularioEsqueciSenha, 'erro', data.erro || 'Erro ao enviar email');
+                }
+
+            } catch (error) {
+                console.error('Erro ao solicitar reset de senha:', error);
+                mostrarMensagemModal(formularioEsqueciSenha, 'erro', 'Erro de conexão. Tente novamente.');
+            } finally {
+                // Esconder loading
+                botaoEnviar.disabled = false;
+                loadingText.style.display = 'none';
+                normalText.style.display = 'inline';
+            }
+        });
+    }
+
+    // Função para mostrar mensagem no modal
+    function mostrarMensagemModal(formulario, tipo, mensagem) {
+        const mensagemAnterior = formulario.querySelector('.mensagem');
+        if (mensagemAnterior) {
+            mensagemAnterior.remove();
+        }
+        
+        const divMensagem = document.createElement('div');
+        divMensagem.className = `mensagem mensagem-${tipo}`;
+        divMensagem.textContent = mensagem;
+        
+        const emailInput = formulario.querySelector('#email-recuperacao');
+        formulario.insertBefore(divMensagem, emailInput.parentElement);
+        
+        if (tipo === 'sucesso') {
+            setTimeout(() => {
+                if (divMensagem.parentElement) {
+                    divMensagem.remove();
+                }
+            }, 5000);
+        }
+    }
+
+    // Função para mostrar toast notification
+    function mostrarToast(mensagem, tipo) {
+        const container = document.getElementById('mensagem-container');
+        if (!container) return;
+
+        const toast = document.createElement('div');
+        toast.className = `mensagem-toast ${tipo}`;
+        toast.textContent = mensagem;
+
+        container.appendChild(toast);
+
+        // Auto remover após 5 segundos
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.style.animation = 'slideOutToast 0.3s ease forwards';
+                setTimeout(() => toast.remove(), 300);
+            }
+        }, 5000);
+    }
+
+    // Verificar parâmetros da URL para mostrar mensagens
+    const erro = urlParams.get('erro');
+    const sucesso = urlParams.get('sucesso');
+
+    if (erro === 'token_invalido') {
+        mostrarToast('Link de recuperação inválido ou expirado. Solicite um novo.', 'erro');
+    }
+
+    if (sucesso === 'senha_redefinida') {
+        mostrarToast('Senha redefinida com sucesso! Você já pode fazer login.', 'sucesso');
+    }
 });

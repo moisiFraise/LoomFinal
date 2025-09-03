@@ -193,3 +193,198 @@ label {
     border-color: var(--rosa);
     box-shadow: 0 0 0 3px rgba(232, 67, 147, 0.1);
 }
+
+/* Estilos para "Esqueci minha senha" */
+.esqueci-senha {
+    text-align: center;
+    margin-top: 15px;
+}
+
+.esqueci-senha a {
+    color: var(--roxo);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.esqueci-senha a:hover {
+    color: var(--rosa);
+    text-decoration: underline;
+}
+
+/* Estilos do Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    animation: fadeInModal 0.3s ease;
+}
+
+.modal-content {
+    background: var(--current-line);
+    border-radius: 12px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    animation: slideInModal 0.3s ease;
+}
+
+.modal-header {
+    padding: 20px 25px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: var(--roxo);
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #999;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+    background-color: rgba(244, 67, 54, 0.1);
+    color: #f44336;
+}
+
+.modal-body {
+    padding: 25px;
+}
+
+.modal-body p {
+    margin: 0 0 20px;
+    color: var(--paragrafo);
+    line-height: 1.5;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.botao-secundario {
+    background: transparent;
+    border: 1px solid #ddd;
+    color: var(--paragrafo);
+}
+
+.botao-secundario::before {
+    display: none;
+}
+
+.botao-secundario:hover {
+    background-color: #f5f5f5;
+    border-color: #ccc;
+}
+
+@keyframes fadeInModal {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideInModal {
+    from { 
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px);
+    }
+    to { 
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Container para mensagens */
+#mensagem-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    max-width: 400px;
+}
+
+.mensagem-toast {
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    animation: slideInToast 0.3s ease;
+    position: relative;
+    border-left: 4px solid;
+}
+
+.mensagem-toast.sucesso {
+    background-color: var(--current-line);
+    border-left-color: var(--ciano);
+    color: var(--ciano);
+}
+
+.mensagem-toast.erro {
+    background-color: var(--current-line);
+    border-left-color: var(--vermelho);
+    color: var(--vermelho);
+}
+
+@keyframes slideInToast {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Loading states */
+.loading-text {
+    opacity: 0.7;
+}
+
+/* Responsividade */
+@media (max-width: 480px) {
+    .modal-content {
+        width: 95%;
+        margin: 10px;
+    }
+    
+    .modal-buttons {
+        flex-direction: column;
+    }
+    
+    .modal-header {
+        padding: 15px 20px 0;
+    }
+    
+    .modal-body {
+        padding: 20px;
+    }
+}
