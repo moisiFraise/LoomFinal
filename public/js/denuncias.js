@@ -102,7 +102,7 @@ function renderizarDenuncias(denuncias) {
                         <h4>Denunciado</h4>
                         <p>${denuncia.nome_denunciado}</p>
                         <small>${denuncia.email_denunciado}</small>
-                        ${denuncia.estado_denunciado === 'suspenso' ? '<span class="status-suspenso">SUSPENSO</span>' : ''}
+                        ${denuncia.estado_denunciado === 'inativo' ? '<span class="status-suspenso">SUSPENSO</span>' : ''}
                     </div>
                 </div>
                 

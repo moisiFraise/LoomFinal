@@ -41,7 +41,7 @@ class Atualizacoes {
     static async listarPorClube(idClube, idLeitura) {
         try {
             const [rows] = await pool.query(
-                `SELECT a.*, u.nome as nome_usuario, u.foto_perfil,
+                `SELECT a.*, u.nome as nome_usuario, u.foto_perfil, u.estado as estado_usuario,
                         e.nome as emocao_nome, e.emoji as emocao_emoji, e.cor as emocao_cor,
                         CASE 
                             WHEN p.id_usuario IS NULL THEN 1 
@@ -65,7 +65,7 @@ class Atualizacoes {
         static async listarPorLeitura(idClube, idLeitura) {
         try {
             const [atualizacoes] = await pool.query(
-                `SELECT a.*, u.nome as nome_usuario, u.foto_perfil,
+                `SELECT a.*, u.nome as nome_usuario, u.foto_perfil, u.estado as estado_usuario,
                         e.nome as emocao_nome, e.emoji as emocao_emoji, e.cor as emocao_cor
                  FROM atualizacoes a
                  JOIN usuarios u ON a.id_usuario = u.id
@@ -103,7 +103,7 @@ class Atualizacoes {
     static async obterPorId(id) {
         try {
             const [rows] = await pool.query(
-                `SELECT a.*, u.nome as nome_usuario, u.foto_perfil,
+                `SELECT a.*, u.nome as nome_usuario, u.foto_perfil, u.estado as estado_usuario,
                         e.nome as emocao_nome, e.emoji as emocao_emoji, e.cor as emocao_cor
                  FROM atualizacoes a
                  JOIN usuarios u ON a.id_usuario = u.id

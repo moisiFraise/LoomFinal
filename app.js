@@ -115,36 +115,62 @@ if (missingEnvVars.length > 0) {
   console.error('Variáveis de ambiente ausentes:', missingEnvVars.join(', '));
 }
 
-function verificarAutenticacao(req, res, next) {
+async function verificarAutenticacao(req, res, next) {
   if (!req.session.userId) {
     return res.redirect('/autenticacao');
   }
   
-  // Verificar se a sessão ainda é válida (não expirada)
-  if (req.session.cookie && req.session.cookie.expires) {
-    const now = new Date();
-    const expires = new Date(req.session.cookie.expires);
+  try {
+    // Verificar se o usuário ainda existe e está ativo
+    const usuario = await Usuario.buscarPorId(req.session.userId);
     
-    if (expires <= now) {
-      console.log('Sessão expirada detectada, forçando logout');
+    if (!usuario) {
+      console.log('Usuário não encontrado, forçando logout');
       req.session.destroy(() => {
         res.clearCookie('loom_session');
         return res.redirect('/autenticacao');
       });
       return;
     }
+    
+    if (usuario.estado === 'inativo') {
+      console.log('Usuário suspenso tentando acessar, forçando logout');
+      req.session.destroy(() => {
+        res.clearCookie('loom_session');
+        return res.redirect('/autenticacao?erro=usuario_suspenso');
+      });
+      return;
+    }
+    
+    // Verificar se a sessão ainda é válida (não expirada)
+    if (req.session.cookie && req.session.cookie.expires) {
+      const now = new Date();
+      const expires = new Date(req.session.cookie.expires);
+      
+      if (expires <= now) {
+        console.log('Sessão expirada detectada, forçando logout');
+        req.session.destroy(() => {
+          res.clearCookie('loom_session');
+          return res.redirect('/autenticacao');
+        });
+        return;
+      }
+    }
+    
+    // Headers anti-cache extremamente agressivos
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate, private, max-age=0',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+      'Last-Modified': new Date().toISOString(),
+      'ETag': Date.now().toString()
+    });
+    
+    next();
+  } catch (error) {
+    console.error('Erro ao verificar autenticação:', error);
+    return res.redirect('/autenticacao');
   }
-  
-  // Headers anti-cache extremamente agressivos
-  res.set({
-    'Cache-Control': 'no-cache, no-store, must-revalidate, private, max-age=0',
-    'Pragma': 'no-cache',
-    'Expires': '0',
-    'Last-Modified': new Date().toISOString(),
-    'ETag': Date.now().toString()
-  });
-  
-  next();
 }
 
 // Middleware para verificar se admin está tentando acessar página restrita
@@ -2330,7 +2356,7 @@ app.post('/api/clube/:id/atualizacoes/:atualizacaoId', verificarAutenticacao, as
     );
     
     const [atualizacaoAtualizada] = await pool.query(
-      'SELECT a.*, u.nome as nome_usuario FROM atualizacoes a JOIN usuarios u ON a.id_usuario = u.id WHERE a.id = ?',
+      'SELECT a.*, u.nome as nome_usuario, u.estado as estado_usuario FROM atualizacoes a JOIN usuarios u ON a.id_usuario = u.id WHERE a.id = ?',
       [atualizacaoId]
     );
     

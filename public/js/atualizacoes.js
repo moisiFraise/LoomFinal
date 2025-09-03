@@ -59,6 +59,30 @@ function renderizarAtualizacoes(atualizacoes) {
         const dataFormatada = data.toLocaleDateString('pt-BR') + ' às ' + 
                              data.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
         const isAutor = a.id_usuario == userId;
+        const usuarioSuspenso = a.estado_usuario === 'inativo';
+        
+        // Se usuário está suspenso, mostrar conteúdo diferente
+        if (usuarioSuspenso) {
+            return `
+                <div class="atualizacao-item atualizacao-suspensa" data-id="${a.id}">
+                    <div class="atualizacao-header">
+                        <div class="atualizacao-usuario-info">
+                            <div class="usuario-avatar">
+                                <div class="usuario-avatar-placeholder suspensa">⚠</div>
+                            </div>
+                            <div class="atualizacao-usuario-data">
+                                <span class="atualizacao-usuario suspensa">
+                                    Usuário suspenso
+                                </span>
+                                <span class="atualizacao-data">${dataFormatada}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="atualizacao-conteudo-suspensa">
+                        <p><em>Este conteúdo foi removido pois o usuário foi suspenso por violação das regras da comunidade.</em></p>
+                    </div>
+                </div>`;
+        }
         
         // Criar avatar do usuário
         const avatarHtml = a.foto_perfil ? 

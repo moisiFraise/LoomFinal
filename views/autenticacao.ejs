@@ -26,6 +26,23 @@
         
         <div class="conteudo-aba ativo" id="login">
             <h2>Bem-vindo de volta!</h2>
+            
+            <script>
+                // Verificar se há mensagem de erro na URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const erro = urlParams.get('erro');
+                
+                if (erro === 'usuario_suspenso') {
+                    const mensagemErro = document.createElement('div');
+                    mensagemErro.className = 'mensagem-erro';
+                    mensagemErro.style.cssText = 'background: #ff4757; color: white; padding: 15px; margin-bottom: 20px; border-radius: 8px; text-align: center; font-weight: 500;';
+                    mensagemErro.textContent = 'Sua conta foi suspensa por violação das regras da comunidade. Entre em contato com o suporte para mais informações.';
+                    
+                    const h2 = document.querySelector('#login h2');
+                    h2.parentNode.insertBefore(mensagemErro, h2.nextSibling);
+                }
+            </script>
+            
             <form id="formulario-login">
                 <div class="grupo-formulario">
                     <label for="login-email">Email</label>

@@ -128,7 +128,7 @@ class Denuncias {
 
       if (acao === 'suspender_usuario') {
         await connection.query(
-          'UPDATE usuarios SET estado = "suspenso" WHERE id = ?',
+          'UPDATE usuarios SET estado = "inativo" WHERE id = ?',
           [denuncia.id_denunciado]
         );
 
