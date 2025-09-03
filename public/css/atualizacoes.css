@@ -122,7 +122,16 @@
     background: rgba(40, 42, 54, 0.8);
     backdrop-filter: blur(5px);
     z-index: 1000;
-    display: none;
+    display: none !important;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+#overlay-atualizacao.show {
+    display: block !important;
+    visibility: visible;
+    opacity: 1;
 }
 
 #modal-atualizacao {
@@ -137,6 +146,16 @@
     overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: var(--roxo) var(--current-line);
+    display: none !important;
+    visibility: hidden;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+#modal-atualizacao.show {
+    display: block !important;
+    visibility: visible;
+    opacity: 1;
 }
 
 #modal-atualizacao::-webkit-scrollbar {

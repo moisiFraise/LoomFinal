@@ -1,6 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('overlay-atualizacao').style.display = 'none';
-    document.getElementById('modal-atualizacao').style.display = 'none';
+    // Garantir que os modals estejam ocultos ao carregar a página
+    const overlay = document.getElementById('overlay-atualizacao');
+    const modal = document.getElementById('modal-atualizacao');
+    
+    if (overlay) {
+        overlay.classList.remove('show');
+    }
+    
+    if (modal) {
+        modal.classList.remove('show');
+    }
     
     carregarAtualizacoes();
 });
@@ -388,8 +397,13 @@ async function abrirModalAtualizacao(event) {
     const confirmarBtn = document.getElementById('confirmarAtualizacao');
     if (confirmarBtn) confirmarBtn.textContent = 'Publicar';
     
-    document.getElementById('overlay-atualizacao').style.display = 'block';
-    document.getElementById('modal-atualizacao').style.display = 'block';
+    const overlay = document.getElementById('overlay-atualizacao');
+    const modal = document.getElementById('modal-atualizacao');
+    
+    if (overlay && modal) {
+        overlay.classList.add('show');
+        modal.classList.add('show');
+    }
     
     setTimeout(() => {
         const comentarioInput = document.getElementById('atualizacao-comentario');
@@ -425,8 +439,13 @@ function editarAtualizacao(id) {
             if (document.getElementById('confirmarAtualizacao'))
                 document.getElementById('confirmarAtualizacao').textContent = 'Salvar Alterações';
             
-            document.getElementById('overlay-atualizacao').style.display = 'block';
-            document.getElementById('modal-atualizacao').style.display = 'block';
+            const overlay = document.getElementById('overlay-atualizacao');
+            const modal = document.getElementById('modal-atualizacao');
+            
+            if (overlay && modal) {
+                overlay.classList.add('show');
+                modal.classList.add('show');
+            }
             
             setTimeout(() => {
                 const comentarioInput = document.getElementById('atualizacao-comentario');
@@ -471,8 +490,16 @@ function excluirAtualizacao(id) {
 }
 
 function fecharModalAtualizacao() {
-    document.getElementById('overlay-atualizacao').style.display = 'none';
-    document.getElementById('modal-atualizacao').style.display = 'none';
+    const overlay = document.getElementById('overlay-atualizacao');
+    const modal = document.getElementById('modal-atualizacao');
+    
+    if (overlay) {
+        overlay.classList.remove('show');
+    }
+    
+    if (modal) {
+        modal.classList.remove('show');
+    }
 }
 
 function calcularPorcentagem() {
