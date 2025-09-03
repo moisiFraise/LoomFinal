@@ -103,6 +103,12 @@ class GiphyManager {
             overlay.style.display = 'block';
             modal.style.display = 'block';
             
+            // Adicionar classes para animação
+            setTimeout(() => {
+                overlay.classList.add('show');
+                modal.classList.add('show');
+            }, 10);
+            
             // Limpar pesquisa anterior
             document.getElementById('giphy-search-input').value = '';
             document.getElementById('selected-gif-preview').style.display = 'none';
@@ -145,8 +151,15 @@ class GiphyManager {
         const modal = document.getElementById('modal-giphy');
         
         if (overlay && modal) {
-            overlay.style.display = 'none';
-            modal.style.display = 'none';
+            // Remover classes de animação
+            overlay.classList.remove('show');
+            modal.classList.remove('show');
+            
+            // Esconder após animação
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                modal.style.display = 'none';
+            }, 300);
         }
         
         this.selectedGif = null;

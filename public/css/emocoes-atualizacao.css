@@ -77,15 +77,53 @@
 
 @media (max-width: 768px) {
     .emocoes-container {
-        gap: 8px;
+        gap: 6px;
+        padding: 12px;
+        justify-content: center;
     }
     
     .emocao-item {
-        padding: 6px 10px;
+        padding: 10px 14px;
+        font-size: 0.85rem;
+        flex: 0 0 auto;
+        min-width: 80px;
+        justify-content: center;
+        border-radius: 25px;
+    }
+    
+    .emocao-emoji {
+        font-size: 1.1rem;
+    }
+    
+    .emocao-nome {
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
+    
+    .carregando-emocoes,
+    .sem-emocoes {
+        padding: 16px;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .emocoes-container {
+        gap: 4px;
+        padding: 10px;
+    }
+    
+    .emocao-item {
+        padding: 8px 12px;
+        min-width: 70px;
         font-size: 0.8rem;
     }
     
     .emocao-emoji {
         font-size: 1rem;
+    }
+    
+    .emocao-nome {
+        font-size: 0.75rem;
     }
 }

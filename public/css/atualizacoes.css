@@ -1136,6 +1136,15 @@
   backdrop-filter: blur(5px);
   z-index: 3000;
   display: none;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.overlay-giphy.show {
+  display: block;
+  visibility: visible;
+  opacity: 1;
 }
 
 .modal-giphy {
@@ -1145,93 +1154,131 @@
   transform: translate(-50%, -50%);
   z-index: 3001;
   width: 90%;
-  max-width: 800px;
-  max-height: 80vh;
-  background: white;
+  max-width: 650px;
+  max-height: 85vh;
+  background: var(--current-line);
+  border: 2px solid var(--roxo);
   border-radius: 15px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 32px rgba(189, 147, 249, 0.3);
   display: none;
   overflow: hidden;
+  visibility: hidden;
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.modal-giphy.show {
+  display: block;
+  visibility: visible;
+  opacity: 1;
 }
 
 .modal-header-giphy {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid #e0e0e0;
-  background: #f8f9fa;
+  padding: 20px;
+  border-bottom: 1px solid var(--selection);
+  background: var(--current-line);
 }
 
 .modal-header-giphy h3 {
   margin: 0;
-  color: #2c3e50;
-  font-size: 1.3rem;
+  color: var(--foreground);
+  font-size: 1.4rem;
+  font-weight: 600;
 }
 
 .modal-close-giphy {
   background: none;
   border: none;
-  color: #6c757d;
+  color: var(--paragrafo);
   font-size: 1.5rem;
   cursor: pointer;
-  padding: 0.5rem;
+  padding: 8px;
   border-radius: 50%;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .modal-close-giphy:hover {
-  background-color: #e9ecef;
-  color: #2c3e50;
+  background-color: var(--selection);
+  color: var(--foreground);
+  transform: scale(1.1);
 }
 
 .modal-body-giphy {
-  padding: 1.5rem;
+  padding: 20px;
   max-height: 60vh;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--roxo) var(--current-line);
+}
+
+.modal-body-giphy::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-body-giphy::-webkit-scrollbar-track {
+  background: var(--current-line);
+  border-radius: 10px;
+}
+
+.modal-body-giphy::-webkit-scrollbar-thumb {
+  background-color: var(--roxo);
+  border-radius: 10px;
+  border: 2px solid var(--current-line);
 }
 
 .giphy-search {
   display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
+  gap: 10px;
+  margin-bottom: 20px;
 }
 
 #giphy-search-input {
   flex: 1;
-  padding: 0.75rem;
-  border: 2px solid #e0e0e0;
+  padding: 12px 16px;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-size: 1rem;
-  transition: border-color 0.3s;
+  background-color: var(--input-bg);
+  color: var(--text-primary);
+  transition: all 0.3s ease;
 }
 
 #giphy-search-input:focus {
   outline: none;
-  border-color: #4169E1;
-  box-shadow: 0 0 0 2px rgba(65, 105, 225, 0.1);
+  border-color: var(--roxo);
+  box-shadow: 0 0 0 2px rgba(106, 90, 205, 0.2);
 }
 
 #giphy-search-btn {
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #4169E1 0%, #1e3a8a 100%);
-  color: white;
+  padding: 12px 20px;
+  background: linear-gradient(45deg, var(--roxo), var(--rosa));
+  color: var(--current-line);
   border: none;
   border-radius: 8px;
   cursor: pointer;
   font-size: 1rem;
-  transition: all 0.3s;
+  font-weight: 600;
+  transition: all 0.3s ease;
 }
 
 #giphy-search-btn:hover {
-  background: linear-gradient(135deg, #1e3a8a 0%, #4169E1 100%);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(106, 90, 205, 0.4);
 }
 
 .giphy-trending h4 {
   margin: 0 0 1rem 0;
-  color: #2c3e50;
+  color: var(--foreground);
   font-size: 1.1rem;
+  font-weight: 600;
 }
 
 .giphy-grid {
@@ -1245,27 +1292,30 @@
 .gif-item {
   position: relative;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
-  transition: all 0.3s;
-  background: #f8f9fa;
+  transition: all 0.3s ease;
+  background: var(--input-bg);
+  border: 2px solid var(--border-color);
 }
 
 .gif-item:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(189, 147, 249, 0.3);
+  border-color: var(--roxo);
 }
 
 .gif-item.selected {
-  ring: 3px solid #4169E1;
-  box-shadow: 0 0 0 3px rgba(65, 105, 225, 0.3);
+  border: 2px solid var(--roxo);
+  box-shadow: 0 0 0 4px rgba(106, 90, 205, 0.3);
+  transform: scale(1.02);
 }
 
 .gif-item img {
   width: 100%;
   height: 120px;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 10px;
 }
 
 .gif-overlay {
@@ -1274,13 +1324,13 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(65, 105, 225, 0.8);
+  background: rgba(106, 90, 205, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transition: opacity 0.3s;
-  border-radius: 8px;
+  transition: all 0.3s ease;
+  border-radius: 10px;
 }
 
 .gif-item:hover .gif-overlay,
@@ -1289,8 +1339,9 @@
 }
 
 .gif-overlay i {
-  color: white;
+  color: var(--foreground);
   font-size: 2rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .loading-giphy,
@@ -1298,24 +1349,30 @@
 .error-gifs {
   text-align: center;
   padding: 2rem;
-  color: #6c757d;
+  color: var(--paragrafo);
   font-style: italic;
+  background: var(--input-bg);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
 }
 
 .error-gifs {
-  color: #dc3545;
+  color: var(--vermelho);
+  background: rgba(214, 48, 49, 0.1);
+  border-color: var(--vermelho);
 }
 
 .selected-gif-preview {
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #e0e0e0;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--selection);
 }
 
 .selected-gif-preview h4 {
   margin: 0 0 1rem 0;
-  color: #2c3e50;
+  color: var(--foreground);
   font-size: 1rem;
+  font-weight: 600;
 }
 
 .selected-gif-container {
@@ -1325,72 +1382,77 @@
 .selected-gif-container img {
   max-width: 200px;
   max-height: 150px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 2px solid var(--roxo);
 }
 
 .modal-footer-giphy {
   display: flex;
-  gap: 1rem;
+  gap: 12px;
   justify-content: flex-end;
-  padding: 1.5rem;
-  border-top: 1px solid #e0e0e0;
-  background: #f8f9fa;
+  padding: 20px;
+  border-top: 1px solid var(--selection);
+  background: var(--current-line);
 }
 
 .btn-cancelar-giphy,
 .btn-confirmar-giphy,
 .btn-remover-gif {
-  padding: 0.75rem 1.5rem;
+  padding: 12px 20px;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
   cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
-  transition: all 0.3s;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  min-height: 44px;
 }
 
 .btn-cancelar-giphy {
-  background: #6c757d;
-  color: white;
+  background: linear-gradient(45deg, var(--vermelho), var(--laranja));
+  color: var(--foreground);
 }
 
 .btn-cancelar-giphy:hover {
-  background: #5a6268;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(248, 28, 28, 0.4);
 }
 
 .btn-remover-gif {
-  background: #dc3545;
-  color: white;
+  background: linear-gradient(45deg, var(--vermelho), var(--laranja));
+  color: var(--foreground);
 }
 
 .btn-remover-gif:hover {
-  background: #c82333;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(248, 28, 28, 0.4);
 }
 
 .btn-confirmar-giphy {
-  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-  color: white;
+  background: linear-gradient(45deg, var(--roxo), var(--rosa));
+  color: var(--current-line);
 }
 
 .btn-confirmar-giphy:hover:not(:disabled) {
-  background: linear-gradient(135deg, #20c997 0%, #28a745 100%);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(106, 90, 205, 0.4);
 }
 
 .btn-confirmar-giphy:disabled {
-  background: #6c757d;
+  background: var(--paragrafo);
   cursor: not-allowed;
   opacity: 0.6;
+  transform: none;
 }
 
 /* Preview de GIF na atualização */
 .gif-preview {
   margin: 1rem 0;
   padding: 1rem;
-  background: #f8f9fa;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
 }
 
 .gif-preview-header {
@@ -1402,29 +1464,36 @@
 
 .gif-preview-header span {
   font-size: 0.9rem;
-  color: #6c757d;
+  color: var(--text-primary);
   font-weight: 500;
 }
 
 .btn-remover-preview {
   background: none;
   border: none;
-  color: #dc3545;
+  color: var(--vermelho);
   cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 4px;
-  transition: all 0.3s;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-remover-preview:hover {
-  background: #fff5f5;
+  background: rgba(214, 48, 49, 0.1);
+  transform: scale(1.1);
 }
 
 .gif-preview img {
   max-width: 200px;
   max-height: 150px;
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 2px solid var(--selection);
 }
 
 /* Botão para adicionar GIF */
@@ -1493,22 +1562,125 @@
   .comentarios-lista {
     max-height: 300px;
   }
+  
+  /* Modal de GIF para tablets */
+  .modal-giphy {
+    width: 95%;
+    max-width: 600px;
+  }
+  
+  .giphy-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+  }
+  
+  .modal-footer-giphy {
+    gap: 10px;
+  }
 }
 
 @media (max-width: 768px) {
-    #modal-atualizacao, #form-atualizacao {
-        max-height: 85vh;
-        width: 90%; 
+    /* Modal principal */
+    #modal-atualizacao {
+        width: 95vw;
+        max-width: none;
+        max-height: 95vh;
+        margin: 2.5vh auto;
+        top: 2.5vh;
+        left: 2.5vw;
+        transform: none;
     }
     
     #form-atualizacao {
-        padding: 15px;
+        padding: 16px;
+        gap: 16px;
+        max-height: none;
     }
     
-    #form-atualizacao > * {
-        margin-bottom: 6px;
+    #form-atualizacao h2 {
+        font-size: 1.3rem;
+        margin-bottom: 16px;
     }
     
+    /* Seção de emoções */
+    .emocoes-container {
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+    }
+    
+    .emocao-item {
+        flex: 0 0 auto;
+        min-width: 60px;
+        font-size: 0.85rem;
+        padding: 8px 12px;
+    }
+    
+    /* Input de comentário */
+    .atualizacao-input {
+        min-height: 80px;
+        padding: 12px;
+        font-size: 0.95rem;
+        margin-bottom: 12px;
+    }
+    
+    /* Container de página */
+    .pagina-input-container {
+        flex-direction: column;
+        gap: 12px;
+        padding: 12px;
+        text-align: center;
+    }
+    
+    .pagina-input-container > div:first-child {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        align-items: center;
+    }
+    
+    .pagina-input {
+        width: 100px;
+        height: 42px;
+        font-size: 1.1rem;
+    }
+    
+    .porcentagem-leitura {
+        font-size: 1rem;
+        padding: 8px 16px;
+    }
+    
+    /* Visualização de progresso */
+    .progresso-visualizacao {
+        margin-top: 12px;
+    }
+    
+    .progresso-barra {
+        height: 8px;
+    }
+    
+    /* Botão de GIF */
+    .btn-adicionar-gif {
+        padding: 12px;
+        font-size: 0.9rem;
+        margin-top: 8px;
+    }
+    
+    /* Botões de ação */
+    .form-actions {
+        gap: 12px;
+        margin-top: 16px;
+    }
+    
+    #confirmarAtualizacao,
+    #cancelarAtualizacao {
+        padding: 14px;
+        font-size: 1rem;
+        border-radius: 12px;
+        font-weight: 600;
+    }
+    
+    /* Estilos para atualizações existentes */
     .atualizacao-footer {
         flex-direction: column;
         gap: 15px;
@@ -1559,8 +1731,145 @@
 }
 
 @media (max-height: 600px) {
-    #modal-atualizacao, #form-atualizacao {
+    #modal-atualizacao {
+        max-height: 98vh;
+        top: 1vh;
+        margin: 0;
+    }
+    
+    #form-atualizacao {
+        padding: 12px;
+        gap: 12px;
+    }
+    
+    #form-atualizacao h2 {
+        font-size: 1.2rem;
+        margin-bottom: 12px;
+    }
+    
+    .atualizacao-input {
+        min-height: 60px;
+    }
+}
+
+@media (max-width: 480px) {
+    #modal-atualizacao {
+        width: 98vw;
+        left: 1vw;
+        top: 1vh;
+        max-height: 98vh;
+    }
+    
+    #form-atualizacao {
+        padding: 12px;
+        gap: 12px;
+        border-radius: 12px;
+    }
+    
+    #form-atualizacao h2 {
+        font-size: 1.2rem;
+        margin-bottom: 12px;
+    }
+    
+    .form-subtitulo {
+        font-size: 0.9rem;
+        margin-bottom: 6px;
+    }
+    
+    .atualizacao-input {
+        min-height: 70px;
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+    
+    .pagina-input-container {
+        padding: 10px;
+        gap: 10px;
+    }
+    
+    .pagina-input {
+        width: 90px;
+        height: 40px;
+        font-size: 1rem;
+    }
+    
+    .btn-adicionar-gif {
+        padding: 10px;
+        font-size: 0.85rem;
+    }
+    
+    #confirmarAtualizacao,
+    #cancelarAtualizacao {
+        padding: 12px;
+        font-size: 0.95rem;
+        min-height: 44px;
+    }
+    
+    /* Modal de GIF responsivo */
+    .modal-giphy {
+        width: 98vw;
+        max-width: none;
         max-height: 95vh;
+        margin: 2.5vh auto;
+        top: 2.5vh;
+        left: 1vw;
+        transform: none;
+    }
+    
+    .modal-header-giphy {
+        padding: 16px;
+    }
+    
+    .modal-header-giphy h3 {
+        font-size: 1.2rem;
+    }
+    
+    .modal-body-giphy {
+        padding: 16px;
+    }
+    
+    .giphy-search {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    #giphy-search-input {
+        padding: 10px 12px;
+        font-size: 0.95rem;
+    }
+    
+    #giphy-search-btn {
+        padding: 10px 16px;
+        font-size: 0.95rem;
+    }
+    
+    .giphy-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 8px;
+        max-height: 250px;
+    }
+    
+    .gif-item img {
+        height: 100px;
+    }
+    
+    .modal-footer-giphy {
+        padding: 16px;
+        gap: 8px;
+        flex-direction: column;
+    }
+    
+    .btn-cancelar-giphy,
+    .btn-confirmar-giphy,
+    .btn-remover-gif {
+        padding: 12px;
+        font-size: 0.9rem;
+        width: 100%;
+    }
+    
+    .selected-gif-container img {
+        max-width: 150px;
+        max-height: 120px;
     }
 }
 
