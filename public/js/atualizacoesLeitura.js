@@ -141,7 +141,7 @@ function renderizarAtualizacoes() {
         
         container.innerHTML = `
             <div class="sem-atualizacoes">
-                <i class="fa fa-comments-o"></i>
+                <i class="far fa-comment"></i>
                 <p>${mensagem}</p>
             </div>
         `;
@@ -232,11 +232,11 @@ function renderizarAtualizacoes() {
                     </div>
                     <div class="atualizacao-interacoes">
                         <button class="botao-curtir" data-id="${a.id}" onclick="alternarCurtida(${a.id})">
-                            <i class="fa fa-heart-o"></i>
+                            <i class="far fa-heart"></i>
                         </button>
                         <span class="contador-curtidas" data-id="${a.id}"></span>
                         <button class="botao-comentar" onclick="comentariosManager.toggleComentarios(${a.id}, 'comentarios-${a.id}', ${userId})">
-                            <i class="fa fa-comment-o"></i>
+                            <i class="far fa-comment"></i>
                             <span class="comentarios-count" data-atualizacao-id="${a.id}">0</span>
                         </button>
                     </div>

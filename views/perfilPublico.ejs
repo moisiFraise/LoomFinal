@@ -108,11 +108,11 @@
                             </div>
                             <div class="atualizacao-interacoes acoes-publicacao">
                                 <button class="botao-curtir" data-id="<%= pub.id %>" onclick="alternarCurtida(<%= pub.id %>)">
-                                    <i class="fa fa-heart-o"></i>
+                                    <i class="fas fa-heart"></i>
                                 </button>
                                 <span class="contador-curtidas" data-id="<%= pub.id %>">0</span>
                                 <button class="botao-comentar" onclick="comentariosManager.toggleComentarios(<%= pub.id %>, 'comentarios-<%= pub.id %>', <%= userId %>)">
-                                    <i class="fa fa-comment-o"></i>
+                                    <i class="far fa-comment"></i>
                                     <span class="comentarios-count" data-atualizacao-id="<%= pub.id %>">0</span>
                                 </button>
                             </div>

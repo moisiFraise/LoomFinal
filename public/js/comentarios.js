@@ -134,7 +134,7 @@ class ComentariosManager {
         container.innerHTML = `
             <div class="comentarios-section">
                 <h4 class="comentarios-titulo">
-                    <i class="fas fa-comments"></i>
+                    <i class="far fa-comment"></i>
                     Comentários (${comentarios.length})
                 </h4>
                 

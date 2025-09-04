@@ -139,11 +139,11 @@ function renderizarAtualizacoes(atualizacoes) {
                     </div>
                     <div class="atualizacao-interacoes">
                         <button class="botao-curtir" data-id="${a.id}" onclick="alternarCurtida(${a.id})">
-                            <i class="fa fa-heart-o"></i>
+                            <i class="far fa-heart"></i>
                         </button>
                         <span class="contador-curtidas" data-id="${a.id}"></span>
                         <button class="botao-comentar" onclick="comentariosManager.toggleComentarios(${a.id}, 'comentarios-${a.id}', ${userId})">
-                            <i class="fa fa-comment-o"></i>
+                            <i class="far fa-comment"></i>
                             <span class="comentarios-count" data-atualizacao-id="${a.id}">0</span>
                         </button>
                     </div>
@@ -210,7 +210,7 @@ function criarModalDenuncia() {
             <div class="modal-header">
                 <h3>Denunciar Comentário</h3>
                 <button class="modal-close" onclick="fecharModalDenuncia()" type="button">
-                    <i class="fa fa-times"></i>
+                    <i class="far fa-times"></i>
                 </button>
             </div>
             <div class="modal-body">
@@ -331,7 +331,7 @@ async function enviarDenuncia() {
         
         const botaoEnviar = document.querySelector('.btn-confirmar');
         const textoOriginal = botaoEnviar.textContent;
-        botaoEnviar.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Enviando...';
+        botaoEnviar.innerHTML = '<i class="far fa-spinner fa-spin"></i> Enviando...';
         botaoEnviar.disabled = true;
         
         const response = await fetch('/api/denuncias', {
@@ -560,7 +560,7 @@ async function salvarAtualizacao() {
         
         const botaoConfirmar = document.getElementById('confirmarAtualizacao');
         const textoOriginal = botaoConfirmar.textContent;
-        botaoConfirmar.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Salvando...';
+        botaoConfirmar.innerHTML = '<i class="far fa-spinner fa-spin"></i> Salvando...';
         botaoConfirmar.disabled = true;
         
         const url = atualizacaoParaEditar 

@@ -73,10 +73,10 @@ const CurtidasSyncManager = {
             const icone = botaoCurtir.querySelector('i');
             if (curtido) {
                 botaoCurtir.classList.add('curtido');
-                icone.className = 'fa fa-heart';
+                icone.className = 'fas fa-heart';
             } else {
                 botaoCurtir.classList.remove('curtido');
-                icone.className = 'fa fa-heart-o';
+                icone.className = 'far fa-heart';
             }
         }
         
@@ -138,10 +138,10 @@ function atualizarBotaoCurtida(idAtualizacao, curtido, totalCurtidas) {
     if (botaoCurtir) {
         if (curtido) {
             botaoCurtir.classList.add('curtido');
-            botaoCurtir.innerHTML = '<i class="fa fa-heart"></i>';
+            botaoCurtir.innerHTML = '<i class="far fa-heart"></i>';
         } else {
             botaoCurtir.classList.remove('curtido');
-            botaoCurtir.innerHTML = '<i class="fa fa-heart-o"></i>';
+            botaoCurtir.innerHTML = '<i class="fas fa-heart"></i>';
         }
     }
     

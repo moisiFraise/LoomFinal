@@ -973,7 +973,7 @@ async function carregarLeiturasClube(clubeId) {
                             ${data.leituraAtual.data_fim ? `<p><strong>Previsão de término:</strong> ${new Date(data.leituraAtual.data_fim).toLocaleDateString('pt-BR')}</p>` : ''}
                             <div class="leitura-acoes">
                                 <button class="botao-ver-atualizacoes" data-leitura-id="${data.leituraAtual.id}" data-leitura-titulo="${escapeHtml(data.leituraAtual.titulo)}">
-                                    <i class="fa fa-comments"></i> Ver Atualizações
+                                    <i class="far fa-comment"></i> Ver Atualizações
                                 </button>
                             </div>
                         </div>
@@ -1006,7 +1006,7 @@ async function carregarLeiturasClube(clubeId) {
                             ${leitura.data_fim ? `<p><strong>Finalizado em:</strong> ${new Date(leitura.data_fim).toLocaleDateString('pt-BR')}</p>` : ''}
                             <div class="leitura-acoes">
                                 <button class="botao-ver-atualizacoes" data-leitura-id="${leitura.id}" data-leitura-titulo="${escapeHtml(leitura.titulo)}">
-                                    <i class="fa fa-comments"></i> Ver Atualizações
+                                    <i class="far fa-comment"></i> Ver Atualizações
                                 </button>
                             </div>
                         </div>
