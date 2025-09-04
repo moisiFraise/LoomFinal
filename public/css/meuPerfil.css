@@ -566,9 +566,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--background);
+    color: var(--paragrafo);
     font-size: 48px;
-    font-weight: bold;
     border: 3px solid var(--roxo);
 }
 
