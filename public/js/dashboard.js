@@ -317,25 +317,13 @@ function renderizarMeusClubes(clubesCriados, clubesParticipando) {
             ${ehCriador ? '<span class="criador-badge">Criador</span>' : ''}
             <div class="clube-acoes">
                 <button class="botao-padrao" onclick="acessarClube(${clube.id})">Acessar</button>
-                ${ehCriador ? `<button class="botao-editar" onclick="editarClube(${clube.id})">Editar</button>` : ''}
             </div>
         `;
         
         clubesGrid.appendChild(clubeCard);
     });
 }
-function editarClube(clubeId) {
-    const botao = event.target.closest('.botao-editar');
-    const textoOriginal = botao.innerHTML;
-    botao.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando...';
-    botao.disabled = true;
-    
-    setTimeout(() => {
-        alert(`Funcionalidade de edição do clube ${clubeId} a ser implementada`);
-        botao.innerHTML = textoOriginal;
-        botao.disabled = false;
-    }, 500);
-}
+
 function acessarClube(clubeId) {
     if (!clubeId) {
         console.error('ID do clube inválido:', clubeId);
