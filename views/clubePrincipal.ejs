@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="/css/votacao.css">
     <link rel="stylesheet" href="/css/configuracoes.css">
     <link rel="stylesheet" href="/css/sair-clube.css">
-    <link rel="stylesheet" href="/css/emocoes-atualizacao.css">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <title><%= titulo %></title>
 </head>
@@ -557,13 +557,7 @@
                     <form id="form-atualizacao">
                         <h2 id="modal-titulo">Nova Atualização de Leitura</h2>
                         
-                        <div class="form-group">
-                            <p class="form-subtitulo">Como você está se sentindo com a leitura?</p>
-                            <div id="emocoes-container" class="emocoes-container">
-                                <div class="carregando-emocoes">Carregando emoções...</div>
-                            </div>
-                        </div>
-                        
+
                         <div class="form-group">
                             <p class="form-subtitulo">O que você está achando da leitura?</p>
                             <textarea id="atualizacao-comentario" class="atualizacao-input" 
@@ -719,54 +713,9 @@
             }
         }
         
-        // Variáveis globais para emoções
-        let emocoesList = [];
-        let emocaoSelecionada = null;
 
-        // Carregar emoções disponíveis
-        async function carregarEmocoes() {
-            try {
-                const response = await fetch('/api/emocoes');
-                if (response.ok) {
-                    emocoesList = await response.json();
-                    renderizarEmocoes();
-                }
-            } catch (error) {
-                console.error('Erro ao carregar emoções:', error);
-                document.getElementById('emocoes-container').innerHTML = 
-                    '<div class="sem-emocoes">Emoções não disponíveis</div>';
-            }
-        }
 
-        function renderizarEmocoes() {
-            const container = document.getElementById('emocoes-container');
-            
-            if (emocoesList.length === 0) {
-                container.innerHTML = '<div class="sem-emocoes">Nenhuma emoção disponível</div>';
-                return;
-            }
-            
-            container.innerHTML = emocoesList.map(emocao => `
-                <div class="emocao-item" data-id="${emocao.id}" onclick="selecionarEmocao(${emocao.id})">
-                    <span class="emocao-emoji">${emocao.emoji}</span>
-                    <span class="emocao-nome">${emocao.nome}</span>
-                </div>
-            `).join('');
-        }
 
-        function selecionarEmocao(id) {
-            // Remover seleção anterior
-            document.querySelectorAll('.emocao-item').forEach(item => {
-                item.classList.remove('selecionada');
-            });
-            
-            // Adicionar seleção atual
-            const item = document.querySelector(`[data-id="${id}"]`);
-            if (item) {
-                item.classList.add('selecionada');
-                emocaoSelecionada = id;
-            }
-        }
 
         // Configurar data mínima quando a página carregar
         document.addEventListener('DOMContentLoaded', function() {
@@ -774,7 +723,7 @@
             setMinDate('data-fim');
             setMinDate('data-fim-votacao');
             setMinDate('data-encontro');
-            carregarEmocoes();
+
         });
     </script>
     <script src="/js/clubePrincipal.js"></script>

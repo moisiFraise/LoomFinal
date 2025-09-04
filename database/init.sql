@@ -326,27 +326,12 @@ ADD COLUMN reset_token_expira DATETIME NULL;
 CREATE INDEX idx_reset_token ON usuarios(reset_token);
 
 
--- Tabela de emoções
-CREATE TABLE IF NOT EXISTS emocoes (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  nome VARCHAR(50) NOT NULL UNIQUE,
-  emoji VARCHAR(10) NOT NULL,
-  cor VARCHAR(7) DEFAULT '#6c5ce7',
-  ativo BOOLEAN DEFAULT TRUE,
-  data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- Remover sistema de emoções - tabela e referências
+DROP TABLE IF EXISTS emocoes;
 
--- Alterar tabela existente para UTF8MB4 se já existir
-ALTER TABLE emocoes CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- Aumentar tamanho do campo emoji para emojis compostos
-ALTER TABLE emocoes MODIFY emoji VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
-
--- Modificar tabela atualizacoes para incluir emoção
-ALTER TABLE atualizacoes 
-ADD COLUMN id_emocao INT DEFAULT NULL,
-ADD FOREIGN KEY (id_emocao) REFERENCES emocoes(id) ON DELETE SET NULL;
+-- Remover campo de emoção da tabela atualizacoes
+ALTER TABLE atualizacoes DROP FOREIGN KEY IF EXISTS atualizacoes_ibfk_4;
+ALTER TABLE atualizacoes DROP COLUMN IF EXISTS id_emocao;
 
 -- Também adicionar gif_url se não existir ainda
 ALTER TABLE atualizacoes 

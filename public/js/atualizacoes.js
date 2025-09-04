@@ -122,7 +122,6 @@ function renderizarAtualizacoes(atualizacoes) {
                             <span class="atualizacao-usuario" onclick="irParaPerfil(${a.id_usuario})" title="Ver perfil de ${a.nome_usuario}">
                                 ${a.nome_usuario}
                                 ${a.usuario_saiu_do_clube ? '<span class="usuario-saiu-clube">(não faz mais parte do clube)</span>' : ''}
-                                ${a.emocao_emoji ? `<span class="atualizacao-emocao" style="background-color: ${a.emocao_cor}">${a.emocao_emoji} ${a.emocao_nome}</span>` : ''}
                             </span>
                             <span class="atualizacao-data">${dataFormatada}</span>
                         </div>
@@ -407,13 +406,7 @@ async function abrirModalAtualizacao(event) {
     document.getElementById('atualizacao-pagina').value = '';
     document.getElementById('porcentagem-valor').textContent = '0%';
     
-    // Limpar seleção de emoção
-    if (typeof emocaoSelecionada !== 'undefined') {
-        emocaoSelecionada = null;
-        document.querySelectorAll('.emocao-item').forEach(item => {
-            item.classList.remove('selecionada');
-        });
-    }
+
     
     const modalTitulo = document.getElementById('modal-titulo');
     if (modalTitulo) modalTitulo.textContent = 'Nova Atualização de Leitura';
@@ -574,13 +567,10 @@ async function salvarAtualizacao() {
             ? `/api/clube/${clubeId}/atualizacoes/${atualizacaoParaEditar.id}`
             : `/api/clube/${clubeId}/atualizacoes`;
         
-        // Obter emoção selecionada (se disponível)
-        const idEmocao = emocaoSelecionada || null;
-        
         const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ conteudo: comentario, paginaAtual, gifUrl, idEmocao })
+            body: JSON.stringify({ conteudo: comentario, paginaAtual, gifUrl })
         });
         
         const data = await response.json();
