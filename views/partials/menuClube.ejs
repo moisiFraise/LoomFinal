@@ -1,97 +1,124 @@
 <div class="clube-layout">
-    <div class="clube-menu-lateral">
+    <!-- Menu horizontal fixo inferior -->
+    <div class="clube-menu-inferior">
         <div class="menu-item menu-item-ativo" data-secao="discussao" onclick="mudarSecaoClube('discussao')">
             <i class="fa fa-home"></i>
             <span>Início</span>
         </div>
         <div class="menu-item" data-secao="livros-anteriores" onclick="mudarSecaoClube('livros-anteriores')">
             <i class="fa fa-book"></i>
-            <span>Leituras do clube</span>
+            <span>Leituras</span>
         </div>
         <div class="menu-item" data-secao="sugestoes-livros" onclick="mudarSecaoClube('sugestoes-livros')">
-            <i class="fa fa-lightbulb-o"></i>
+            <i class="fa fa-lightbulb"></i>
             <span>Sugestões</span>
         </div>
         <div class="menu-item" data-secao="encontros" onclick="mudarSecaoClube('encontros')">
             <i class="fa fa-calendar"></i>
             <span>Encontros</span>
-        </div>            
+        </div>
         <div class="menu-item" data-secao="membros" onclick="mudarSecaoClube('membros')">
             <i class="fa fa-users"></i>
             <span>Membros</span>
         </div>
-        <!-- Votação visível para todos os membros -->
         <div class="menu-item" data-secao="decidir-livro" onclick="mudarSecaoClube('decidir-livro')">
-            <i class="fa fa-bar-chart"></i>
+            <i class="fa fa-chart-bar"></i>
             <span>Votação</span>
         </div>
-        <!--criador do clube -->
-        <div id="opcoes-criador" style="display: none;">
-            <div class="menu-separador"></div>
-            <div class="menu-item" data-secao="configuracoes-clube" onclick="mudarSecaoClube('configuracoes-clube')">
-                <i class="fa fa-cog"></i>
-                <span>Configurações</span>
-            </div>
+
+        <!-- Criador do clube -->
+        <div id="opcoes-criador" class="menu-item-extra" data-secao="configuracoes-clube" style="display: none;">
+            <i class="fa fa-cog"></i>
+            <span>Configurações</span>
         </div>
-        
-        <!--membro do clube (não criador) -->
-        <div id="opcoes-membro" style="display: none;">
-            <div class="menu-separador"></div>
-            <div class="menu-item menu-item-danger" onclick="sairDoClube()">
-                <i class="fa fa-sign-out"></i>
-                <span>Sair do Clube</span>
-            </div>
+
+        <!-- Membro do clube -->
+        <div id="opcoes-membro" class="menu-item-extra" style="display: none;" onclick="sairDoClube()">
+            <i class="fa fa-sign-out-alt"></i>
+            <span>Sair do Clube</span>
         </div>
-    </div>
-    
-    <div class="menu-mobile-toggle" onclick="toggleMenuMobile()">
-        <i class="fa fa-bars"></i>
     </div>
 </div>
 
-<script>
-    function toggleMenuMobile() {
-        const menu = document.querySelector('.clube-menu-lateral');
-        menu.classList.toggle('menu-mobile-open');
-        
-        if (menu.classList.contains('menu-mobile-open')) {
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = '';
-        }
+<style>
+/* Barra inferior */
+.clube-menu-inferior {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: #6c5ce7;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 5px 0;
+    z-index: 9999;
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.3);
+}
+
+/* Itens do menu */
+.clube-menu-inferior .menu-item,
+.clube-menu-inferior .menu-item-extra {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.clube-menu-inferior .menu-item i,
+.clube-menu-inferior .menu-item-extra i {
+    font-size: 20px;
+    margin-bottom: 2px;
+}
+
+.clube-menu-inferior .menu-item span,
+.clube-menu-inferior .menu-item-extra span {
+    display: inline;
+}
+
+/* Hover */
+.clube-menu-inferior .menu-item:hover,
+.clube-menu-inferior .menu-item-extra:hover {
+    transform: scale(1.1);
+}
+
+/* Responsivo para telas pequenas */
+@media (max-width: 768px) {
+    .clube-menu-inferior .menu-item span,
+    .clube-menu-inferior .menu-item-extra span {
+        display: none; /* esconder texto */
     }
-    
-    // Adicionar event listeners para todos os itens do menu
-    document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.menu-item').forEach(item => {
-            item.addEventListener('click', function() {
-                const secao = this.getAttribute('data-secao');
-                console.log('Clicou no menu:', secao);
-                
-                if (secao) {
-                    mudarSecaoClube(secao);
-                }
-                
-                // Fechar menu mobile se estiver aberto
-                if (window.innerWidth <= 768) {
-                    document.querySelector('.clube-menu-lateral').classList.remove('menu-mobile-open');
-                    document.body.style.overflow = '';
-                }
-            });
+
+    /* Mostrar apenas o ícone de info */
+    #menu-info {
+        display: flex !important;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Ajustar visibilidade de acordo com o tipo de usuário
+    const isCriador = !!window.isCriadorClube;
+    const criadorEl = document.getElementById('opcoes-criador');
+    const membroEl = document.getElementById('opcoes-membro');
+
+    if (criadorEl) criadorEl.style.display = isCriador ? 'flex' : 'none';
+    if (membroEl) membroEl.style.display = isCriador ? 'none' : 'flex';
+
+    // Event listeners
+    document.querySelectorAll('.menu-item, .menu-item-extra').forEach(item => {
+        item.addEventListener('click', function() {
+            const secao = this.getAttribute('data-secao');
+            if (secao && typeof mudarSecaoClube === 'function') {
+                mudarSecaoClube(secao);
+            }
         });
     });
+});
 
-    // Fechar menu mobile ao clicar fora
-    document.addEventListener('click', function(event) {
-        const menu = document.querySelector('.clube-menu-lateral');
-        const menuToggle = document.querySelector('.menu-mobile-toggle');
-        
-        if (window.innerWidth <= 768 && 
-            menu && menu.classList.contains('menu-mobile-open') && 
-            !menu.contains(event.target) && 
-            !menuToggle.contains(event.target)) {
-            menu.classList.remove('menu-mobile-open');
-            document.body.style.overflow = '';
-        }
-    });
 </script>

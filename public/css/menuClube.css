@@ -1,127 +1,133 @@
-.clube-layout {
-    width: 275px;
-    flex-shrink: 0;
-    height: 100%;
-    background-color: var(--current-line);
-    border-right: 1px solid var(--selection);
-}
-.clube-menu-lateral {
-    width: 100%;
-    height: fit-content;
-    position: sticky;
-    top: 20px;
-    padding: 15px 0;
-    border-radius: 16px;
-    background-color: var(--current-line);
-    transition: all 0.3s ease;
+/* Menu Flutuante Vermelho */
+.nav {
+  right: 20px;
+  z-index: 1000;
+  width: 45px;
+  bottom: 20px;
+  height: 45px;
+  display: block;
+  position: fixed;
+  line-height: 45px;
+  border-radius: 50%;
+  box-shadow: 0 0 5px 0 rgba(0, 0, 0, .75);
 }
 
-.menu-item {
-    display: flex;
-    align-items: center;
-    padding: 12px 20px;
-    margin: 4px 10px;
-    border-radius: 30px;
-    cursor: pointer;
-    transition: background-color 0.2s, color 0.2s;
-    font-weight: 500;
+.mask {
+  z-index: 21;
+  color: #fff;
+  width: inherit;
+  height: inherit;
+  cursor: pointer;
+  font-size: 28px;
+  text-align: center;
+  border-radius: 50%;
+  position: absolute;
+  background: #f23363;
+  transition: all .1s ease-in-out 0s;
+  top: 0;
+  left: 0;
 }
 
-.menu-item:hover {
-    background-color: rgba(106, 90, 205, 0.1);
-    color: var(--roxo);
+.nav.active .mask {
+  background: #cf0e3f;
+  transform: rotate(-135deg);
 }
 
-.menu-item i {
-    margin-right: 16px;
-    font-size: 20px;
-    width: 24px;
-    text-align: center;
+.nav:after {
+  top: 0;
+  left: 0;
+  content: '';
+  width: inherit;
+  height: inherit;
+  border-radius: 50%;
+  position: absolute;
+  background: #f23363;
+  transition: all .1s ease-in-out 0s;
+  z-index: 18;
 }
 
-.menu-item span {
-    font-size: 16px;
+.nav.active:after {
+  top: -125px;
+  left: -125px;
+  width: 350px;
+  height: 350px;
 }
 
-.menu-item-ativo {
-    background-color: rgba(106, 90, 205, 0.1);
-    color: var(--roxo);
-    font-weight: 700;
+.nav-item {
+  top: 0;
+  left: 0;
+  z-index: 19;
+  width: 45px;
+  height: 45px;
+  color: #fff;
+  font-size: 20px;
+  transform: translate(0, 0);
+  line-height: 45px;
+  border-radius: 50%;
+  position: absolute;
+  text-align: center;
+  text-decoration: none;
+  background: rgba(242, 51, 99, 0.9);
+  transition: all .3s cubic-bezier(.68, 1.55, .265, 1);
+  opacity: 0;
+  visibility: hidden;
 }
 
-.menu-item-danger {
-    color: #dc3545;
+.nav.active .nav-item {
+  opacity: 1;
+  visibility: visible;
 }
 
-.menu-item-danger:hover {
-    background-color: rgba(220, 53, 69, 0.1);
-    color: #dc3545;
+.nav.active .nav-count-1 {
+  transform: translate(10px, -100px);
 }
 
-.menu-item-ativo:hover {
-    background-color: rgba(106, 90, 205, 0.15);
+.nav.active .nav-count-2 {
+  transform: translate(-35px, -80px);
 }
 
-.menu-separador {
-    height: 1px;
-    background-color: #e6ecf0;
-    margin: 10px 0;
+.nav.active .nav-count-3 {
+  transform: translate(-80px, -45px);
 }
 
-.menu-mobile-toggle {
-    display: none;
-    align-items: center;
-    justify-content: center;
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background-color: var(--roxo);
-    color: white;
-    z-index: 100;
-    cursor: pointer;
+.nav.active .nav-count-4 {
+  transform: translate(-100px, 0);
 }
 
+.invisible {
+  display: none;
+}
+
+/* Hover effects */
+.nav-item:hover {
+  background: rgba(242, 51, 99, 1);
+  transform: scale(1.1);
+}
+
+.nav.active .nav-count-1:hover {
+  transform: translate(10px, -100px) scale(1.1);
+}
+
+.nav.active .nav-count-2:hover {
+  transform: translate(-35px, -80px) scale(1.1);
+}
+
+.nav.active .nav-count-3:hover {
+  transform: translate(-80px, -45px) scale(1.1);
+}
+
+.nav.active .nav-count-4:hover {
+  transform: translate(-100px, 0) scale(1.1);
+}
+
+.mask:hover {
+  background: #cf0e3f;
+}
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
-    .clube-layout {
-        width: 100%;
-    }
-    
-    .clube-menu-lateral {
-        position: fixed;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        width: 275px;
-        margin: 0;
-        padding: 10px 0;
-        border-radius: 0;
-        z-index: 90;
-        background-color: var(--current-line);
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-        overflow-y: auto;
-        transform: translateX(-100%);
-        transition: transform 0.3s ease;
-        height: 100vh;
-    }
-    
-    .clube-menu-lateral.menu-mobile-open {
-        transform: translateX(0);
-    }
-    
-    .menu-mobile-toggle {
-        display: flex;
-    }
-}
-
-@media (max-width: 480px) {
-    .header-container {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
+  .nav {
+    right: 15px;
+    bottom: 15px;
+  }
 }
