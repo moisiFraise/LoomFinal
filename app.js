@@ -38,7 +38,7 @@ const Emocoes = require('./models/Emocoes');
 
 
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
+app.use(bodyParser.json({ charset: 'utf-8' }));
 // Configurar Content-Type para manifest.json
 app.use(express.static(path.join(__dirname, 'public'), {
   setHeaders: (res, path) => {
@@ -677,16 +677,26 @@ app.post('/api/setup-reset-senha', async (req, res) => {
 // Setup inicial de emoções (sem autenticação para primeira execução)
 app.post('/api/setup-emocoes', async (req, res) => {
   try {
-    // Criar tabela de emoções
+    // Criar tabela de emoções com suporte a emojis
     await pool.query(`
       CREATE TABLE IF NOT EXISTS emocoes (
         id INT AUTO_INCREMENT PRIMARY KEY,
         nome VARCHAR(50) NOT NULL UNIQUE,
-        emoji VARCHAR(10) NOT NULL,
+        emoji VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
         cor VARCHAR(7) DEFAULT '#6c5ce7',
         ativo BOOLEAN DEFAULT TRUE,
         data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    
+    // Alterar tabela existente para UTF8MB4 se necessário
+    await pool.query(`
+      ALTER TABLE emocoes CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+    `);
+    
+    // Aumentar tamanho do campo emoji para emojis compostos
+    await pool.query(`
+      ALTER TABLE emocoes MODIFY emoji VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
     `);
 
     // Inserir emoções padrão
@@ -775,6 +785,7 @@ app.post('/api/admin/init-emocoes', verificarAutenticacao, async (req, res) => {
       console.log('Coluna id_emocao pode já existir:', alterError.message);
     }
 
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.json({ 
       success: true, 
       message: 'Sistema de emoções inicializado com sucesso!' 
@@ -802,6 +813,7 @@ app.get('/api/clube/:clubeId/atualizacoes/:id/curtidas', verificarAutenticacao, 
 // Listar emoções ativas (para usuários)
 app.get('/api/emocoes', verificarAutenticacao, async (req, res) => {
   try {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
     const emocoes = await Emocoes.listarTodas();
     res.json(emocoes);
   } catch (error) {
@@ -818,6 +830,7 @@ app.get('/api/admin/emocoes', verificarAutenticacao, async (req, res) => {
       return res.status(403).json({ erro: 'Acesso negado' });
     }
 
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
     const emocoes = await Emocoes.listarTodasAdmin();
     res.json(emocoes);
   } catch (error) {
@@ -841,6 +854,7 @@ app.post('/api/admin/emocoes', verificarAutenticacao, async (req, res) => {
     }
 
     const emocao = await Emocoes.criar(nome, emoji, cor, ativo);
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.status(201).json(emocao);
   } catch (error) {
     console.error('Erro ao criar emoção:', error);
@@ -870,6 +884,7 @@ app.put('/api/admin/emocoes/:id', verificarAutenticacao, async (req, res) => {
       return res.status(404).json({ erro: 'Emoção não encontrada' });
     }
 
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.json(emocao);
   } catch (error) {
     console.error('Erro ao atualizar emoção:', error);

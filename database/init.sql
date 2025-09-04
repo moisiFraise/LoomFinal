@@ -334,7 +334,13 @@ CREATE TABLE IF NOT EXISTS emocoes (
   cor VARCHAR(7) DEFAULT '#6c5ce7',
   ativo BOOLEAN DEFAULT TRUE,
   data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Alterar tabela existente para UTF8MB4 se já existir
+ALTER TABLE emocoes CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Aumentar tamanho do campo emoji para emojis compostos
+ALTER TABLE emocoes MODIFY emoji VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 
 -- Modificar tabela atualizacoes para incluir emoção

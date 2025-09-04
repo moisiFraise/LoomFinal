@@ -9,7 +9,9 @@ const dbConfig = {
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  connectTimeout: 60000 // Aumentar timeout
+  connectTimeout: 60000, // Aumentar timeout
+  charset: 'utf8mb4',
+  collation: 'utf8mb4_unicode_ci'
 };
 console.log('Tentando conectar ao banco de dados com as configurações:', {
   host: dbConfig.host,
