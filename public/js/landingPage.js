@@ -81,7 +81,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
   console.log('Botão de instalação mostrado');
 });
 
-/*// Debug: Forçar exibição do botão após 3 segundos se não detectar PWA
+// Debug: Forçar exibição do botão após 3 segundos se não detectar PWA
 setTimeout(() => {
   if (installButton && installButton.style.display === 'none') {
     console.log('Forçando exibição do botão para teste');
@@ -103,7 +103,7 @@ setTimeout(() => {
       alert(`PWA Status:\n${JSON.stringify(checks, null, 2)}`);
     });
   }
-}, 3000);*/
+}, 3000);
 
 // Evento de clique no botão de instalação
 installButton.addEventListener('click', async () => {
