@@ -687,11 +687,28 @@ app.get('/api/curtidas/:id/status', verificarAutenticacao, async (req, res) => {
   }
 });
 
-app.get('/api/clube/:clubeId/atualizacoes/:id/curtidas', verificarAutenticacao, (req, res) => {
-  // Retornar dados padrão para evitar erro
-  res.json({ curtido: false, total: 0 });
-});
+app.get('/api/clube/:clubeId/atualizacoes/:atualizacaoId/curtidas', verificarAutenticacao, async (req, res) => {
+  try {
+    const { clubeId, atualizacaoId } = req.params;
+    const userId = req.user.id;
 
+    const [participacoes] = await pool.query(
+      'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
+      [userId, clubeId]
+    );
+    if (participacoes.length === 0) {
+      return res.status(403).json({ erro: 'Não é membro do clube' });
+    }
+
+    const curtido = await Curtidas.verificarCurtida(atualizacaoId, userId);
+    const total = await Curtidas.contarCurtidas(atualizacaoId);
+
+    res.json({ curtido, total });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ erro: 'Erro ao buscar status da curtida' });
+  }
+});
 
 
 // Rota para sair do clube
