@@ -3,7 +3,7 @@
   "short_name": "Loom",
   "description": "Aplicação web para gerenciar e interagir em clubes de leitura",
   "start_url": "/autenticacao",
-  "display": "browser",
+  "display": "standalone",
   "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#6c5ce7",
