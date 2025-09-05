@@ -674,10 +674,17 @@ app.post('/api/setup-reset-senha', async (req, res) => {
   }
 });
 
-// Rota temporária para curtidas (evitar erro 404)
-app.get('/api/curtidas/:id/status', verificarAutenticacao, (req, res) => {
-  // Retornar dados padrão para evitar erro
-  res.json({ curtido: false, total: 0 });
+
+// Verificar curtida ao carregar a página
+app.get('/api/curtidas/:id/status', verificarAutenticacao, async (req, res) => {
+  try {
+    const curtido = await Curtidas.verificarCurtida(req.params.id, req.user.id);
+    const total = await Curtidas.contarCurtidas(req.params.id);
+    res.json({ curtido, total });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ erro: 'Erro ao buscar status da curtida' });
+  }
 });
 
 app.get('/api/clube/:clubeId/atualizacoes/:id/curtidas', verificarAutenticacao, (req, res) => {
