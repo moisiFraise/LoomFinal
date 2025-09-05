@@ -40,7 +40,7 @@ fetch('/manifest.json')
   .catch(error => console.error('Erro ao carregar manifest:', error));
 
 // Service Worker DESABILITADO temporariamente
-/*
+
 // Registrar Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -69,7 +69,6 @@ if ('serviceWorker' in navigator) {
       });
   });
 }
-*/
 
 // Capturar evento de instalação PWA
 window.addEventListener('beforeinstallprompt', (e) => {
