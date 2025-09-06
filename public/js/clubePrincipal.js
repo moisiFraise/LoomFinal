@@ -1036,48 +1036,75 @@ function verAtualizacoesLeitura(idLeitura, tituloLeitura) {
 }
 
 async function carregarMembrosCompleto() {
+    const container = document.getElementById('clube-membros-lista-completa');
+    
+    // Mostrar indicador de carregamento
+    container.innerHTML = `<p class="loading-membros"><i class="fa fa-spinner fa-spin"></i> Carregando membros...</p>`;
+    
     try {
         const response = await fetch(`/api/clube/${clubeId}/membros`);
         const data = await response.json();
-        
-        if (response.ok) {
-            const container = document.getElementById('clube-membros-lista-completa');
-            
-            if (data.membros && data.membros.length > 0) {
-                container.innerHTML = `
-                    <div class="membros-grid">
-                        ${data.membros.map(membro => `
-                            <div class="membro-card ${membro.is_criador ? 'membro-criador' : ''}">
-                                <div class="membro-avatar">
-                                    ${membro.foto_perfil ? 
-                                        `<img src="${escapeHtml(membro.foto_perfil)}" alt="${escapeHtml(membro.nome)}" class="membro-foto-perfil" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                         <div class="membro-inicial" style="display:none;">${escapeHtml(membro.nome).charAt(0).toUpperCase()}</div>` : 
-                                        `<div class="membro-inicial">${escapeHtml(membro.nome).charAt(0).toUpperCase()}</div>`
-                                    }
-                                </div>
-                                <div class="membro-info">
-                                    <h4 class="membro-nome-clicavel" onclick="irParaPerfil(${membro.id})" style="cursor: pointer; color: var(--principal); text-decoration: underline;">
-                                        ${escapeHtml(membro.nome)}
-                                    </h4>
-                                    <p class="membro-email">${escapeHtml(membro.email)}</p>
-                                    ${membro.is_criador ? '<span class="badge-criador">Criador</span>' : ''}
-                                    ${membro.data_entrada ? `<p class="membro-data-entrada">Membro desde ${new Date(membro.data_entrada).toLocaleDateString('pt-BR')}</p>` : ''}
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-            } else {
-                container.innerHTML = '<p class="sem-membros">Nenhum membro encontrado.</p>';
-            }
-        } else {
+
+        if (!response.ok) {
             console.error('Erro ao carregar membros:', data.erro);
-            document.getElementById('clube-membros-lista-completa').innerHTML = '<p class="erro-membros">Erro ao carregar membros do clube.</p>';
+            container.innerHTML = '<p class="erro-membros">Erro ao carregar membros do clube.</p>';
+            return;
         }
+
+        if (!data.membros || data.membros.length === 0) {
+            container.innerHTML = '<p class="sem-membros">Nenhum membro encontrado.</p>';
+            return;
+        }
+
+        // Gerar HTML dos membros
+        const membrosHTML = data.membros.map(membro => {
+            const avatarHtml = membro.foto_perfil
+                ? `<img src="${escapeHtml(membro.foto_perfil)}" alt="${escapeHtml(membro.nome)}" class="membro-foto-perfil"
+                        onerror="this.style.display='none'; this.parentNode.querySelector('.membro-inicial').style.display='flex';">
+                   <div class="membro-inicial" style="display:none;">${escapeHtml(membro.nome).charAt(0).toUpperCase()}</div>`
+                : `<div class="membro-inicial">${escapeHtml(membro.nome).charAt(0).toUpperCase()}</div>`;
+
+            const criadorBadge = membro.is_criador ? `<span class="badge-criador">Criador</span>` : '';
+            const dataEntrada = membro.data_entrada 
+                ? `<p class="membro-data-entrada">Membro desde ${new Date(membro.data_entrada).toLocaleDateString('pt-BR')}</p>` 
+                : '';
+
+            const statusUsuario = membro.estado_usuario === 'inativo'
+                ? `<span class="usuario-suspenso">(Usuário suspenso)</span>`
+                : '';
+
+            return `
+                <div class="membro-card ${membro.is_criador ? 'membro-criador' : ''}">
+                    <div class="membro-avatar">
+                        ${avatarHtml}
+                    </div>
+                    <div class="membro-info">
+                        <h4 class="membro-nome-clicavel" onclick="irParaPerfil(${membro.id})" 
+                            style="cursor: pointer; color: var(--principal); text-decoration: underline;">
+                            ${escapeHtml(membro.nome)} ${statusUsuario}
+                        </h4>
+                        <p class="membro-email">${escapeHtml(membro.email)}</p>
+                        ${criadorBadge}
+                        ${dataEntrada}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = `<div class="membros-grid">${membrosHTML}</div>`;
+
     } catch (error) {
         console.error('Erro ao carregar membros:', error);
-        document.getElementById('clube-membros-lista-completa').innerHTML = '<p class="erro-membros">Erro ao conectar com o servidor.</p>';
+        container.innerHTML = '<p class="erro-membros">Erro ao conectar com o servidor.</p>';
     }
+}
+
+// Função auxiliar segura para escapar HTML
+function escapeHtml(text) {
+    if (!text) return '';
+    return text.replace(/[&<>"'`=\/]/g, char => ({
+        '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;', '/':'&#x2F;', '`':'&#x60;', '=':'&#x3D;'
+    }[char]));
 }
 function voltarParaTelaAnterior() {
     window.history.back();

@@ -1793,38 +1793,43 @@ app.get('/api/clube/:id', verificarAutenticacao, async (req, res) => {
     res.status(500).json({ erro: 'Erro ao buscar informações do clube' });
   }
 });
-
 app.get('/api/clube/:id/membros', verificarAutenticacao, async (req, res) => {
   try {
     const clubeId = req.params.id;
-    
-    const [clubeRows] = await pool.query('SELECT id_criador FROM clubes WHERE id = ?', [clubeId]);
-    
+
+    // Verifica se o clube existe
+    const [clubeRows] = await pool.query(
+      'SELECT id_criador FROM clubes WHERE id = ?', 
+      [clubeId]
+    );
+
     if (clubeRows.length === 0) {
       return res.status(404).json({ erro: 'Clube não encontrado' });
     }
-    
+
     const idCriador = clubeRows[0].id_criador;
-    
+
+    // Busca membros com informações adicionais
     const [membrosRows] = await pool.query(`
-      SELECT u.id, u.nome, u.email, 
-             (CASE WHEN u.id = ? THEN 1 ELSE 0 END) as is_criador
+      SELECT u.id, u.nome, u.email, u.foto_perfil, p.data_entrada,
+             (CASE WHEN u.id = ? THEN 1 ELSE 0 END) AS is_criador,
+             u.estado
       FROM usuarios u
       JOIN participacoes p ON u.id = p.id_usuario
       WHERE p.id_clube = ?
       ORDER BY is_criador DESC, u.nome
     `, [idCriador, clubeId]);
-    
+
     res.json({
-      idCriador: idCriador,
+      idCriador,
       membros: membrosRows
     });
+
   } catch (error) {
     console.error('Erro ao buscar membros do clube:', error);
     res.status(500).json({ erro: 'Erro ao buscar membros do clube' });
   }
 });
-
 app.get('/api/clube/:id/permissoes', verificarAutenticacao, async (req, res) => {
   try {
     const clubeId = req.params.id;
