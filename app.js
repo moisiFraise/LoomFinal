@@ -114,18 +114,16 @@ const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
 if (missingEnvVars.length > 0) {
   console.error('Variáveis de ambiente ausentes:', missingEnvVars.join(', '));
 }
-
 async function verificarAutenticacao(req, res, next) {
   if (!req.session.userId) {
     return res.redirect('/autenticacao');
   }
   
   try {
-    // Verificar se o usuário ainda existe e está ativo
     const usuario = await Usuario.buscarPorId(req.session.userId);
     
-    if (!usuario) {
-      console.log('Usuário não encontrado, forçando logout');
+    if (!usuario || usuario.estado === 'inativo') {
+      console.log('Usuário inválido ou inativo, forçando logout');
       req.session.destroy(() => {
         res.clearCookie('loom_session');
         return res.redirect('/autenticacao');
@@ -133,31 +131,20 @@ async function verificarAutenticacao(req, res, next) {
       return;
     }
     
-    if (usuario.estado === 'inativo') {
-      console.log('Usuário suspenso tentando acessar, forçando logout');
+    // Definir req.user para as rotas subsequentes
+    req.user = { id: usuario.id };
+
+    // Verificar expiração da sessão
+    if (req.session.cookie?.expires && new Date(req.session.cookie.expires) <= new Date()) {
+      console.log('Sessão expirada detectada, forçando logout');
       req.session.destroy(() => {
         res.clearCookie('loom_session');
-        return res.redirect('/autenticacao?erro=usuario_suspenso');
+        return res.redirect('/autenticacao');
       });
       return;
     }
     
-    // Verificar se a sessão ainda é válida (não expirada)
-    if (req.session.cookie && req.session.cookie.expires) {
-      const now = new Date();
-      const expires = new Date(req.session.cookie.expires);
-      
-      if (expires <= now) {
-        console.log('Sessão expirada detectada, forçando logout');
-        req.session.destroy(() => {
-          res.clearCookie('loom_session');
-          return res.redirect('/autenticacao');
-        });
-        return;
-      }
-    }
-    
-    // Headers anti-cache extremamente agressivos
+    // Headers anti-cache
     res.set({
       'Cache-Control': 'no-cache, no-store, must-revalidate, private, max-age=0',
       'Pragma': 'no-cache',
@@ -686,24 +673,34 @@ app.get('/api/curtidas/:id/status', verificarAutenticacao, async (req, res) => {
     res.status(500).json({ erro: 'Erro ao buscar status da curtida' });
   }
 });
-
 app.get('/api/clube/:clubeId/atualizacoes/:atualizacaoId/curtidas', verificarAutenticacao, async (req, res) => {
   try {
+    // Garantir que o middleware definiu o usuário
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ erro: 'Usuário não autenticado' });
+    }
+
     const { clubeId, atualizacaoId } = req.params;
     const userId = req.user.id;
 
+    // Verifica se o usuário é membro do clube
     const [participacoes] = await pool.query(
       'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
       [userId, clubeId]
     );
-    if (participacoes.length === 0) {
+
+    if (!participacoes || participacoes.length === 0) {
       return res.status(403).json({ erro: 'Não é membro do clube' });
     }
 
+    // Verifica se o usuário já curtiu a atualização
     const curtido = await Curtidas.verificarCurtida(atualizacaoId, userId);
+
+    // Conta o total de curtidas da atualização
     const total = await Curtidas.contarCurtidas(atualizacaoId);
 
     res.json({ curtido, total });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ erro: 'Erro ao buscar status da curtida' });

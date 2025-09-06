@@ -21,10 +21,7 @@
                 <% if (usuarioPerfil.foto_perfil) { %>
                     <img src="<%= usuarioPerfil.foto_perfil %>" alt="Foto de <%= usuarioPerfil.nome %>" id="foto-perfil">
                 <% } else { %>
-                    <img src="<%= usuario.foto_perfil || '/uploads/perfil/default-profile.jpg' %>" alt="Foto de perfil" id="foto-perfil">
-
-    <i class="fas fa-user"></i>
-</div>
+                    <img src="/uploads/perfil/default-profile.jpg" alt="Foto de perfil" id="foto-perfil">
                 <% } %>
             </div>
             <div class="info-perfil">
@@ -59,11 +56,15 @@
         </div>
         
         <div class="lista-publicacoes">
-            <% if (!publicacoes || publicacoes.length === 0) { %>
+            <% let temPublicacoes = publicacoes && publicacoes.length > 0; %>
+
+            <% if (!temPublicacoes) { %>
                 <div class="sem-publicacoes">
                     <p>Este usuário ainda não fez publicações públicas.</p>
                 </div>
-            <% } else { %>
+            <% } %>
+
+            <% if (temPublicacoes) { %>
                 <% publicacoes.forEach(pub => { %>
                     <div class="atualizacao-item publicacao-item publico" data-clube-id="<%= pub.id_clube %>" data-porcentagem="<%= pub.porcentagem_leitura || 0 %>" data-id="<%= pub.id %>">
                         <div class="atualizacao-header publicacao-header">
@@ -153,51 +154,6 @@
         function voltarPagina() {
             window.history.back();
         }
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            // Configurar barras de progresso
-            document.querySelectorAll('.publicacao-item').forEach(item => {
-                const progressBar = item.querySelector('.progresso');
-                const percentageText = item.querySelector('.porcentagem');
-                
-                try {
-                    const percentage = parseInt(item.getAttribute('data-porcentagem') || '0');
-                    const safePercentage = isNaN(percentage) ? 0 : Math.max(0, Math.min(100, percentage));
-                    
-                    if (progressBar) progressBar.style.width = safePercentage + '%';
-                    if (percentageText) percentageText.textContent = safePercentage + '% concluído';
-                } catch (e) {
-                    console.error('Erro ao configurar barra de progresso:', e);
-                    if (progressBar) progressBar.style.width = '0%';
-                    if (percentageText) percentageText.textContent = '0% concluído';
-                }
-            });
-
-            // Configurar filtros
-            const btnsFiltro = document.querySelectorAll('.btn-filtro');
-            if (btnsFiltro) {
-                btnsFiltro.forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        const filtro = this.dataset.filtro;
-                        
-                        btnsFiltro.forEach(b => b.classList.remove('ativo'));
-                        this.classList.add('ativo');
-                        
-                        const publicacoes = document.querySelectorAll('.publicacao-item');
-                        
-                        publicacoes.forEach(pub => {
-                            if (filtro === 'todas') {
-                                pub.style.display = 'block';
-                            } else if (filtro === 'publicas' && pub.classList.contains('publico')) {
-                                pub.style.display = 'block';
-                            } else {
-                                pub.style.display = 'none';
-                            }
-                        });
-                    });
-                });
-            }
-        });
     </script>
     <script src="/js/perfilPublico.js"></script>
     <script src="/js/curtidas.js"></script>
