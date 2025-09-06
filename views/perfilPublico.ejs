@@ -41,11 +41,11 @@
         <div class="estatisticas">
             <div class="estatistica">
                 <span class="numero"><%= clubes.length || 0 %></span>
-                <span class="label">Clubes Públicos</span>
+                <span class="label">Clubes</span>
             </div>
             <div class="estatistica">
                 <span class="numero"><%= publicacoes.length || 0 %></span>
-                <span class="label">Publicações Públicas</span>
+                <span class="label">Publicações</span>
             </div>
         </div>
         
@@ -54,96 +54,122 @@
             <button class="btn-filtro ativo" data-filtro="todas">Todas</button>
             <button class="btn-filtro" data-filtro="publicas">Públicas</button>
         </div>
-        
         <div class="lista-publicacoes">
-            <% let temPublicacoes = publicacoes && publicacoes.length > 0; %>
+    <% let temPublicacoes = publicacoes && publicacoes.length > 0; %>
 
-            <% if (!temPublicacoes) { %>
-                <div class="sem-publicacoes">
-                    <p>Este usuário ainda não fez publicações públicas.</p>
+    <% if (!temPublicacoes) { %>
+        <div class="sem-publicacoes">
+            <p>Este usuário ainda não fez publicações.</p>
+        </div>
+    <% } %>
+
+ <% if (temPublicacoes) { %>
+    <% publicacoes.forEach(pub => { %>
+        <div class="atualizacao-item publicacao-item <%= pub.visibilidade === 'publico' ? 'publico' : 'privado' %>" 
+             data-clube-id="<%= pub.id_clube %>" 
+             data-porcentagem="<%= pub.porcentagem_leitura || 0 %>" 
+             data-id="<%= pub.id %>">
+
+            <div class="atualizacao-header publicacao-header">
+                <div class="atualizacao-usuario-info">
+                    <div class="usuario-avatar" onclick="irParaPerfil(<%= pub.id_usuario %>)" title="Ver perfil de <%= usuarioPerfil.nome %>">
+                        <% if (usuarioPerfil.foto_perfil) { %>
+                            <img src="<%= usuarioPerfil.foto_perfil %>" alt="<%= usuarioPerfil.nome %>" onerror="this.parentElement.innerHTML='<div class=\\'usuario-avatar-placeholder\\'><%= usuarioPerfil.nome.charAt(0).toUpperCase() %></div>'">
+                        <% } else { %>
+                            <div class="usuario-avatar-placeholder"><%= usuarioPerfil.nome.charAt(0).toUpperCase() %></div>
+                        <% } %>
+                    </div>
+                    <div class="atualizacao-usuario-data">
+                        <span class="atualizacao-usuario" onclick="irParaPerfil(<%= pub.id_usuario %>)" title="Ver perfil de <%= usuarioPerfil.nome %>">
+                            <%= usuarioPerfil.nome %>
+                            <% if (pub.emocao_emoji) { %>
+                                <span class="atualizacao-emocao" style="background-color: <%= pub.emocao_cor %>"><%= pub.emocao_emoji %> <%= pub.emocao_nome %></span>
+                            <% } %>
+                        </span>
+                        <span class="atualizacao-data"><%= new Date(pub.data_postagem).toLocaleDateString('pt-BR') %> às <%= new Date(pub.data_postagem).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}) %></span>
+                    </div>
+                </div>
+                <div class="clube-info">
+                    <span class="clube-nome"><%= pub.nome_clube %></span>
+                    <span class="clube-publico <%= pub.visibilidade === 'privado' ? 'privado-indicador' : '' %>">
+                        <i class="fas <%= pub.visibilidade === 'publico' ? 'fa-globe' : 'fa-lock' %>"></i> 
+                        <%= pub.visibilidade === 'publico' ? 'Público' : 'Privado' %>
+                    </span>
+                </div>
+            </div>
+
+            <div class="atualizacao-conteudo publicacao-conteudo">
+                <p><%= pub.conteudo %></p>
+            </div>
+
+            <% if (pub.gif_url) { %>
+                <div class="gif-container">
+                    <img src="<%= pub.gif_url %>" alt="GIF" loading="lazy">
                 </div>
             <% } %>
 
-            <% if (temPublicacoes) { %>
-                <% publicacoes.forEach(pub => { %>
-                    <div class="atualizacao-item publicacao-item publico" data-clube-id="<%= pub.id_clube %>" data-porcentagem="<%= pub.porcentagem_leitura || 0 %>" data-id="<%= pub.id %>">
-                        <div class="atualizacao-header publicacao-header">
-                            <div class="atualizacao-usuario-info">
-                                <div class="usuario-avatar" onclick="irParaPerfil(<%= pub.id_usuario %>)" title="Ver perfil de <%= usuarioPerfil.nome %>">
-                                    <% if (usuarioPerfil.foto_perfil) { %>
-                                        <img src="<%= usuarioPerfil.foto_perfil %>" alt="<%= usuarioPerfil.nome %>" onerror="this.parentElement.innerHTML='<div class=\\'usuario-avatar-placeholder\\'><%= usuarioPerfil.nome.charAt(0).toUpperCase() %></div>'">
-                                    <% } else { %>
-                                        <div class="usuario-avatar-placeholder"><%= usuarioPerfil.nome.charAt(0).toUpperCase() %></div>
-                                    <% } %>
-                                </div>
-                                <div class="atualizacao-usuario-data">
-                                    <span class="atualizacao-usuario" onclick="irParaPerfil(<%= pub.id_usuario %>)" title="Ver perfil de <%= usuarioPerfil.nome %>">
-                                        <%= usuarioPerfil.nome %>
-                                        <% if (pub.emocao_emoji) { %>
-                                            <span class="atualizacao-emocao" style="background-color: <%= pub.emocao_cor %>"><%= pub.emocao_emoji %> <%= pub.emocao_nome %></span>
-                                        <% } %>
-                                    </span>
-                                    <span class="atualizacao-data"><%= new Date(pub.data_postagem).toLocaleDateString('pt-BR') %> às <%= new Date(pub.data_postagem).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}) %></span>
-                                </div>
-                            </div>
-                            <div class="clube-info">
-                                <span class="clube-nome"><%= pub.nome_clube %></span>
-                                <span class="clube-publico"><i class="fas fa-globe"></i></span>
-                            </div>
-                        </div>
-                        <div class="atualizacao-conteudo publicacao-conteudo">
-                            <p><%= pub.conteudo %></p>
-                        </div>
-                        <% if (pub.gif_url) { %>
-                            <div class="gif-container">
-                                <img src="<%= pub.gif_url %>" alt="GIF" loading="lazy">
-                            </div>
-                        <% } %>
-                        <div class="atualizacao-footer publicacao-footer">
-                            <div class="atualizacao-progresso progresso-leitura">
-                                <div class="progresso-barra-container barra-progresso">
-                                    <div class="progresso-barra progresso" style="width: <%= pub.porcentagem_leitura || 0 %>%;"></div>
-                                </div>
-                                <span class="progresso-texto porcentagem"><%= pub.porcentagem_leitura || 0 %>% concluído</span>
-                            </div>
-                            <div class="atualizacao-interacoes acoes-publicacao">
-                                <button class="botao-curtir" data-id="<%= pub.id %>" onclick="alternarCurtida(<%= pub.id %>)">
-                                    <i class="fas fa-heart"></i>
-                                </button>
-                                <span class="contador-curtidas" data-id="<%= pub.id %>">0</span>
-                                <button class="botao-comentar" onclick="comentariosManager.toggleComentarios(<%= pub.id %>, 'comentarios-<%= pub.id %>', <%= userId %>)">
-                                    <i class="far fa-comment"></i>
-                                    <span class="comentarios-count" data-atualizacao-id="<%= pub.id %>">0</span>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="comentarios-container" id="comentarios-<%= pub.id %>" style="display: none;"></div>
-                    </div>
-                <% }); %>
-            <% } %>
-        </div>
-        
-        <% if (clubes.length > 0) { %>
-            <h2 class="publicacoes-titulo">Clubes Públicos</h2>
-            <div class="clubes-publicos-lista">
-                <% clubes.forEach(clube => { %>
-                    <div class="clube-publico-item">
-                        <div class="clube-publico-header">
-                            <h3><%= clube.nome %></h3>
-                            <span class="clube-publico"><i class="fas fa-globe"></i> Público</span>
-                        </div>
-                        <% if (clube.descricao) { %>
-                            <p class="clube-publico-descricao"><%= clube.descricao %></p>
-                        <% } %>
-                        <div class="clube-publico-stats">
-                            <span><i class="fas fa-users"></i> <%= clube.total_membros || 0 %> membros</span>
-                            <span><i class="fas fa-map-marker-alt"></i> <%= clube.modelo || 'Online' %></span>
-                        </div>
-                    </div>
-                <% }); %>
-            </div>
-        <% } %>
+            <div class="atualizacao-footer publicacao-footer">
+                <div class="atualizacao-progresso progresso-leitura">
+    <div class="progresso-barra-container barra-progresso">
+        <div class="progresso-barra progresso" style="width: <%= pub.porcentagem_leitura || 0 %>%;"></div>
     </div>
+    <span class="progresso-texto porcentagem"><%= pub.porcentagem_leitura || 0 %>% concluído</span>
+</div>
+<% if (pub.nome_leitura) { %>
+    <div class="nome-leitura">
+        <i class="fas fa-book-open"></i> <%= pub.nome_leitura %>
+    </div>
+<% } %>
+
+                <div class="atualizacao-interacoes acoes-publicacao">
+                    <button class="botao-curtir" data-id="<%= pub.id %>" onclick="alternarCurtidaSegura(<%= pub.id %>)">
+                        <i class="fas fa-heart"></i>
+                    </button>
+                    <span class="contador-curtidas" data-id="<%= pub.id %>">0</span>
+
+                    <button class="botao-comentar" onclick="abrirComentariosSegura(<%= pub.id %>)">
+                        <i class="far fa-comment"></i>
+                        <span class="comentarios-count" data-atualizacao-id="<%= pub.id %>">0</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="comentarios-container" id="comentarios-<%= pub.id %>" style="display: none;"></div>
+        </div>
+    <% }); %>
+<% } %>
+
+
+<% if (clubes.length > 0) { %>
+    <h2 class="publicacoes-titulo">Clubes do Usuário</h2>
+    <div class="clubes-publicos-lista">
+        <% clubes.forEach(clube => { %>
+            <div class="clube-publico-item <%= clube.visibilidade === 'publico' ? 'publico' : 'privado' %>">
+                <div class="clube-publico-header">
+                    <h3><%= clube.nome %></h3>
+                    <span class="clube-publico <%= clube.visibilidade === 'privado' ? 'privado-indicador' : '' %>">
+                        <i class="fas <%= clube.visibilidade === 'publico' ? 'fa-globe' : 'fa-lock' %>"></i> 
+                        <%= clube.visibilidade === 'publico' ? 'Público' : 'Privado' %>
+                    </span>
+                </div>
+
+                <% if (clube.descricao) { %>
+                    <p class="clube-publico-descricao"><%= clube.descricao %></p>
+                <% } %>
+
+                <div class="clube-publico-stats">
+                    <span><i class="fas fa-users"></i> <%= clube.total_membros || 0 %> membros</span>
+                    <span><i class="fas fa-map-marker-alt"></i> <%= clube.modelo || 'Online' %></span>
+                </div>
+                <% if (clube.eMembro) { %>
+    <button class="btn-entrar-clube" onclick="window.location.href='/clube/<%= clube.id %>'">
+        Ver Clube
+    </button>
+<% } %>
+            </div>
+        <% }); %>
+    </div>
+<% } %>
     
     <div class="notificacao" style="display: none;"></div>
     

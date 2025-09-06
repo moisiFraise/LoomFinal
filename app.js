@@ -960,33 +960,45 @@ app.get('/perfil/:id', verificarAutenticacao, verificarRestricaoAdmin, async (re
       return res.redirect('/dashboard');
     }
     
-    // Buscar clubes públicos do usuário
-    const [clubesCriados] = await pool.query(
-      'SELECT id, nome, descricao, modelo, visibilidade, (SELECT COUNT(*) FROM participacoes WHERE id_clube = clubes.id) as total_membros FROM clubes WHERE id_criador = ? AND visibilidade = "publico"',
-      [perfilId]
-    );
+    // Buscar clubes todos do usuario
+const [clubesCriados] = await pool.query(
+  'SELECT id, nome, descricao, modelo, visibilidade, (SELECT COUNT(*) FROM participacoes WHERE id_clube = clubes.id) as total_membros FROM clubes WHERE id_criador = ?',
+  [perfilId]
+);
     
-    const [clubesParticipando] = await pool.query(
-      `SELECT c.id, c.nome, c.descricao, c.modelo, c.visibilidade, 
-              (SELECT COUNT(*) FROM participacoes WHERE id_clube = c.id) as total_membros 
-       FROM clubes c 
-       JOIN participacoes p ON c.id = p.id_clube 
-       WHERE p.id_usuario = ? AND c.visibilidade = "publico" AND c.id_criador != ?`,
-      [perfilId, perfilId]
-    );
+const [clubesParticipando] = await pool.query(
+  `SELECT c.id, c.nome, c.descricao, c.modelo, c.visibilidade, 
+          (SELECT COUNT(*) FROM participacoes WHERE id_clube = c.id) as total_membros 
+   FROM clubes c 
+   JOIN participacoes p ON c.id = p.id_clube 
+   WHERE p.id_usuario = ? AND c.id_criador != ?`,
+  [perfilId, perfilId]
+);
     
     const clubes = [...clubesCriados, ...clubesParticipando];
+
+    for (let clube of clubes) {
+  const [membro] = await pool.query(
+    'SELECT 1 FROM participacoes WHERE id_clube = ? AND id_usuario = ? LIMIT 1',
+    [clube.id, req.session.userId]
+  );
+  clube.eMembro = membro.length > 0; // true se participa, false caso contrário
+}
     
-    // Buscar publicações públicas do usuário
-    const [publicacoes] = await pool.query(`
-      SELECT a.*, c.nome as nome_clube, c.visibilidade, 
-             (SELECT COUNT(*) FROM curtidas WHERE id_atualizacao = a.id) as curtidas
-      FROM atualizacoes a
-      JOIN clubes c ON a.id_clube = c.id
-      WHERE a.id_usuario = ? AND c.visibilidade = "publico"
-      ORDER BY a.data_postagem DESC
-      LIMIT 50
-    `, [perfilId]);
+    // Buscar publicações tofas do usuário
+const [publicacoes] = await pool.query(`
+  SELECT a.*, 
+         c.nome as nome_clube, 
+         c.visibilidade,
+         l.titulo as nome_leitura,
+         (SELECT COUNT(*) FROM curtidas WHERE id_atualizacao = a.id) as curtidas
+  FROM atualizacoes a
+  JOIN clubes c ON a.id_clube = c.id
+  LEFT JOIN leituras l ON a.id_leitura = l.id
+  WHERE a.id_usuario = ?
+  ORDER BY a.data_postagem DESC
+  LIMIT 50
+`, [perfilId]);
     
     res.render('perfilPublico', { 
       titulo: `Loom - Perfil de ${usuarioPerfil.nome}`,

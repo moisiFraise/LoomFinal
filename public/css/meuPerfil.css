@@ -654,3 +654,24 @@ body {
         gap: 10px;
     }
 }
+.privado-indicador {
+    color: #e74c3c; /* vermelho */
+    font-weight: bold;
+}
+
+.btn-entrar-clube{
+    background: linear-gradient(45deg, var(--roxo), var(--rosa));
+    color: var(--current-line);
+    padding: 12px;
+    border: none;
+    border-radius: 15px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.nome-leitura {
+    margin-top: 4px;
+    font-size: 0.9rem;
+    color: #555;
+    font-style: italic;
+}
