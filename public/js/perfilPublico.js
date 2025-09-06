@@ -120,7 +120,9 @@ async function carregarContadorCurtidas(idAtualizacao) {
 // Funções seguras para interações
 // ============================
 function verificarPrivado(item, callback) {
-    if (item.classList.contains('privado')) {
+    const eMembro = item.getAttribute('data-membro') === 'true';
+
+    if (!eMembro) {
         Swal.fire('Para curtir ou comentar, entre no clube de leitura');
         return;
     }

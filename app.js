@@ -987,14 +987,10 @@ const [clubesParticipando] = await pool.query(
     
     // Buscar publicações tofas do usuário
 const [publicacoes] = await pool.query(`
-  SELECT a.*, 
-         c.nome as nome_clube, 
-         c.visibilidade,
-         l.titulo as nome_leitura,
+  SELECT a.*, c.nome as nome_clube, c.visibilidade, 
          (SELECT COUNT(*) FROM curtidas WHERE id_atualizacao = a.id) as curtidas
   FROM atualizacoes a
   JOIN clubes c ON a.id_clube = c.id
-  LEFT JOIN leituras l ON a.id_leitura = l.id
   WHERE a.id_usuario = ?
   ORDER BY a.data_postagem DESC
   LIMIT 50
@@ -2316,6 +2312,28 @@ app.post('/api/curtidas/:id', verificarAutenticacao, async (req, res) => {
       return res.status(401).json({ erro: 'Usuário não autenticado' });
     }
 
+    // Buscar o clube da atualização
+    const [rows] = await pool.query(
+      'SELECT id_clube FROM atualizacoes WHERE id = ? LIMIT 1',
+      [idAtualizacao]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ erro: 'Atualização não encontrada' });
+    }
+
+    const idClube = rows[0].id_clube;
+
+    // Verificar se o usuário é membro do clube
+    const [membro] = await pool.query(
+      'SELECT 1 FROM participacoes WHERE id_usuario = ? AND id_clube = ? LIMIT 1',
+      [idUsuario, idClube]
+    );
+
+    if (membro.length === 0) {
+      return res.status(403).json({ erro: 'Você precisa ser membro do clube para curtir' });
+    }
+
     // Verifica se já curtiu
     const [jaCurtiu] = await pool.query(
       'SELECT 1 FROM curtidas WHERE id_usuario = ? AND id_atualizacao = ? LIMIT 1',
@@ -2323,7 +2341,7 @@ app.post('/api/curtidas/:id', verificarAutenticacao, async (req, res) => {
     );
 
     if (jaCurtiu.length > 0) {
-      // Se já curtiu, remover
+      // Remover curtida
       await pool.query(
         'DELETE FROM curtidas WHERE id_usuario = ? AND id_atualizacao = ?',
         [idUsuario, idAtualizacao]
@@ -2331,7 +2349,7 @@ app.post('/api/curtidas/:id', verificarAutenticacao, async (req, res) => {
       const total = await Curtidas.contarCurtidas(idAtualizacao);
       return res.json({ sucesso: true, curtido: false, total });
     } else {
-      // Se não curtiu, adicionar
+      // Adicionar curtida
       await pool.query(
         'INSERT INTO curtidas (id_usuario, id_atualizacao) VALUES (?, ?)',
         [idUsuario, idAtualizacao]
@@ -2342,6 +2360,15 @@ app.post('/api/curtidas/:id', verificarAutenticacao, async (req, res) => {
   } catch (error) {
     console.error('Erro ao processar curtida:', error);
     res.status(500).json({ erro: 'Erro ao processar curtida' });
+  }
+});
+app.get('/api/curtidas/:id/count', verificarAutenticacao, async (req, res) => {
+  try {
+    const total = await Curtidas.contarCurtidas(req.params.id);
+    res.json({ total });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ erro: 'Erro ao buscar total de curtidas' });
   }
 });
 app.get('/clube/:clubeId/leitura/:idLeitura/atualizacoes', verificarAutenticacao, verificarRestricaoAdmin, async (req, res) => {

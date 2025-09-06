@@ -66,9 +66,10 @@
  <% if (temPublicacoes) { %>
     <% publicacoes.forEach(pub => { %>
         <div class="atualizacao-item publicacao-item <%= pub.visibilidade === 'publico' ? 'publico' : 'privado' %>" 
-             data-clube-id="<%= pub.id_clube %>" 
-             data-porcentagem="<%= pub.porcentagem_leitura || 0 %>" 
-             data-id="<%= pub.id %>">
+     data-clube-id="<%= pub.id_clube %>" 
+     data-porcentagem="<%= pub.porcentagem_leitura || 0 %>" 
+     data-id="<%= pub.id %>"
+     data-membro="<%= pub.eMembro ? 'true' : 'false' %>">
 
             <div class="atualizacao-header publicacao-header">
                 <div class="atualizacao-usuario-info">
