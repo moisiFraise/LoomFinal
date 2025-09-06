@@ -2306,6 +2306,44 @@ app.get('/api/clube/:id/atualizacoes/:atualizacaoId/curtidas', verificarAutentic
     res.status(500).json({ erro: 'Erro ao verificar curtidas' });
   }
 });
+// Alternar curtida em uma atualização (perfil público ou genérico)
+app.post('/api/curtidas/:id', verificarAutenticacao, async (req, res) => {
+  try {
+    const idAtualizacao = req.params.id;
+    const idUsuario = req.session.userId || (req.user && req.user.id);
+
+    if (!idUsuario) {
+      return res.status(401).json({ erro: 'Usuário não autenticado' });
+    }
+
+    // Verifica se já curtiu
+    const [jaCurtiu] = await pool.query(
+      'SELECT 1 FROM curtidas WHERE id_usuario = ? AND id_atualizacao = ? LIMIT 1',
+      [idUsuario, idAtualizacao]
+    );
+
+    if (jaCurtiu.length > 0) {
+      // Se já curtiu, remover
+      await pool.query(
+        'DELETE FROM curtidas WHERE id_usuario = ? AND id_atualizacao = ?',
+        [idUsuario, idAtualizacao]
+      );
+      const total = await Curtidas.contarCurtidas(idAtualizacao);
+      return res.json({ sucesso: true, curtido: false, total });
+    } else {
+      // Se não curtiu, adicionar
+      await pool.query(
+        'INSERT INTO curtidas (id_usuario, id_atualizacao) VALUES (?, ?)',
+        [idUsuario, idAtualizacao]
+      );
+      const total = await Curtidas.contarCurtidas(idAtualizacao);
+      return res.json({ sucesso: true, curtido: true, total });
+    }
+  } catch (error) {
+    console.error('Erro ao processar curtida:', error);
+    res.status(500).json({ erro: 'Erro ao processar curtida' });
+  }
+});
 app.get('/clube/:clubeId/leitura/:idLeitura/atualizacoes', verificarAutenticacao, verificarRestricaoAdmin, async (req, res) => {
     try {
         const { clubeId, idLeitura } = req.params;
