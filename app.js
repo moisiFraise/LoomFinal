@@ -948,61 +948,62 @@ app.get('/perfil/:id', verificarAutenticacao, verificarRestricaoAdmin, async (re
   try {
     const perfilId = req.params.id;
     const usuarioLogado = await Usuario.buscarPorId(req.session.userId);
-    
+
     // Se for o próprio usuário, redireciona para meuPerfil
     if (parseInt(perfilId) === parseInt(req.session.userId)) {
       return res.redirect('/meuPerfil');
     }
-    
+
     const usuarioPerfil = await Usuario.buscarPorId(perfilId);
-    
     if (!usuarioPerfil) {
       return res.redirect('/dashboard');
     }
-    
-    // Buscar clubes todos do usuario
-const [clubesCriados] = await pool.query(
-  'SELECT id, nome, descricao, modelo, visibilidade, (SELECT COUNT(*) FROM participacoes WHERE id_clube = clubes.id) as total_membros FROM clubes WHERE id_criador = ?',
-  [perfilId]
-);
-    
-const [clubesParticipando] = await pool.query(
-  `SELECT c.id, c.nome, c.descricao, c.modelo, c.visibilidade, 
-          (SELECT COUNT(*) FROM participacoes WHERE id_clube = c.id) as total_membros 
-   FROM clubes c 
-   JOIN participacoes p ON c.id = p.id_clube 
-   WHERE p.id_usuario = ? AND c.id_criador != ?`,
-  [perfilId, perfilId]
-);
-    
+
+    // Buscar clubes criados pelo usuário
+    const [clubesCriados] = await pool.query(
+      'SELECT id, nome, descricao, modelo, visibilidade, (SELECT COUNT(*) FROM participacoes WHERE id_clube = clubes.id) as total_membros FROM clubes WHERE id_criador = ?',
+      [perfilId]
+    );
+
+    // Buscar clubes que o usuário participa
+    const [clubesParticipando] = await pool.query(
+      `SELECT c.id, c.nome, c.descricao, c.modelo, c.visibilidade,
+              (SELECT COUNT(*) FROM participacoes WHERE id_clube = c.id) as total_membros
+       FROM clubes c
+       JOIN participacoes p ON c.id = p.id_clube
+       WHERE p.id_usuario = ? AND c.id_criador != ?`,
+      [perfilId, perfilId]
+    );
+
     const clubes = [...clubesCriados, ...clubesParticipando];
 
+    // Marcar se o usuário logado é membro de cada clube
     for (let clube of clubes) {
-  const [membro] = await pool.query(
-    'SELECT 1 FROM participacoes WHERE id_clube = ? AND id_usuario = ? LIMIT 1',
-    [clube.id, req.session.userId]
-  );
-  clube.eMembro = membro.length > 0; // true se participa, false caso contrário
-}
-    
-    // Buscar publicações tofas do usuário
-const [publicacoes] = await pool.query(`
-  SELECT a.*, c.nome as nome_clube, c.visibilidade, 
-         (SELECT COUNT(*) FROM curtidas WHERE id_atualizacao = a.id) as curtidas
+      const [membro] = await pool.query(
+        'SELECT 1 FROM participacoes WHERE id_clube = ? AND id_usuario = ? LIMIT 1',
+        [clube.id, req.session.userId]
+      );
+      clube.eMembro = membro.length > 0;
+    }
+
+    // Buscar publicações (atualizações) do usuário, incluindo a leitura associada
+    const [publicacoes] = await pool.query(`
+  SELECT a.*, c.nome AS nome_clube, c.visibilidade, l.titulo AS nome_leitura
   FROM atualizacoes a
   JOIN clubes c ON a.id_clube = c.id
+  LEFT JOIN leituras l ON a.id_leitura = l.id
   WHERE a.id_usuario = ?
   ORDER BY a.data_postagem DESC
   LIMIT 50
 `, [perfilId]);
-    
-    res.render('perfilPublico', { 
+
+    res.render('perfilPublico', {
       titulo: `Loom - Perfil de ${usuarioPerfil.nome}`,
       userId: req.session.userId,
       userType: usuarioLogado ? usuarioLogado.tipo : null,
-      usuarioPerfil: usuarioPerfil,
-      clubes: clubes,
-      publicacoes: publicacoes
+      usuarioPerfil,
+      clubes,
+      publicacoes
     });
   } catch (error) {
     console.error('Erro ao carregar perfil público:', error);
