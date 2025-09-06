@@ -324,10 +324,14 @@ async function enviarDenuncia() {
         const motivo = document.getElementById('denuncia-motivo').value;
         const descricao = document.getElementById('denuncia-descricao').value;
         
-        if (!motivo) {
-            alert('Por favor, selecione um motivo para a denúncia');
-            return;
-        }
+       if (!motivo) {
+    Swal.fire({
+        icon: 'warning',
+        title: 'Ops!',
+        text: 'Por favor, selecione um motivo para a denúncia'
+    });
+    return;
+}
         
         const botaoEnviar = document.querySelector('.btn-confirmar');
         const textoOriginal = botaoEnviar.textContent;
@@ -357,16 +361,20 @@ async function enviarDenuncia() {
         // Mostrar mensagem de sucesso
         mostrarMensagemSucesso('Denúncia enviada com sucesso! Será analisada em breve.');
         
-    } catch (error) {
-        console.error('Erro ao enviar denúncia:', error);
-        alert(error.message || 'Erro ao enviar denúncia. Tente novamente.');
-    } finally {
-        const botaoEnviar = document.querySelector('.btn-confirmar');
-        if (botaoEnviar) {
-            botaoEnviar.textContent = 'Enviar Denúncia';
-            botaoEnviar.disabled = false;
-        }
+  } catch (error) {
+    console.error('Erro ao enviar denúncia:', error);
+    Swal.fire({
+        icon: 'error',
+        title: 'Erro',
+        text: error.message || 'Erro ao enviar denúncia. Tente novamente.'
+    });
+} finally {
+    const botaoEnviar = document.querySelector('.btn-confirmar');
+    if (botaoEnviar) {
+        botaoEnviar.textContent = 'Enviar Denúncia';
+        botaoEnviar.disabled = false;
     }
+}
 }
 
 function mostrarMensagemSucesso(mensagem) {
@@ -396,10 +404,14 @@ async function abrirModalAtualizacao(event) {
         }
     }
     
-    if (!leituraAtualInfo) {
-        alert('Não há leitura atual neste clube');
-        return;
-    }
+   if (!leituraAtualInfo) {
+    Swal.fire({
+        icon: 'info',
+        title: 'Atenção',
+        text: 'Não há leitura atual neste clube'
+    });
+    return;
+}
     
     atualizacaoParaEditar = null;
     document.getElementById('atualizacao-comentario').value = '';
@@ -479,9 +491,13 @@ function editarAtualizacao(id) {
             }
         })
         .catch(error => {
-            console.error('Erro ao editar atualização:', error);
-            alert('Erro ao carregar dados da atualização. Tente novamente.');
-        });
+    console.error('Erro ao editar atualização:', error);
+    Swal.fire({
+        icon: 'error',
+        title: 'Erro',
+        text: 'Erro ao carregar dados da atualização. Tente novamente.'
+    });
+});
 }
 
 function excluirAtualizacao(id) {
@@ -499,10 +515,14 @@ function excluirAtualizacao(id) {
                 document.body.appendChild(mensagem);
                 setTimeout(() => document.body.removeChild(mensagem), 3000);
             })
-            .catch(error => {
-                console.error('Erro ao excluir atualização:', error);
-                alert('Erro ao excluir atualização. Tente novamente.');
-            });
+           .catch(error => {
+    console.error('Erro ao excluir atualização:', error);
+    Swal.fire({
+        icon: 'error',
+        title: 'Erro',
+        text: 'Erro ao excluir atualização. Tente novamente.'
+    });
+});
     }
 }
 
@@ -546,17 +566,27 @@ async function salvarAtualizacao() {
         const paginaAtual = parseInt(document.getElementById('atualizacao-pagina').value);
         const gifUrl = document.getElementById('atualizacao-gif-url') ? document.getElementById('atualizacao-gif-url').value : '';
         
-        if (!comentario) {
-            alert('Por favor, compartilhe seus pensamentos sobre o livro');
-            document.getElementById('atualizacao-comentario').focus();
-            return;
-        }
+      if (!comentario) {
+    Swal.fire({
+        icon: 'warning',
+        title: 'Ops!',
+        text: 'Por favor, compartilhe seus pensamentos sobre o livro'
+    }).then(() => {
+        document.getElementById('atualizacao-comentario')?.focus();
+    });
+    return;
+}
         
-        if (!paginaAtual || paginaAtual <= 0) {
-            alert('Por favor, informe uma página válida');
-            document.getElementById('atualizacao-pagina').focus();
-            return;
-        }
+       if (!paginaAtual || paginaAtual <= 0) {
+    Swal.fire({
+        icon: 'warning',
+        title: 'Ops!',
+        text: 'Por favor, informe uma página válida'
+    }).then(() => {
+        document.getElementById('atualizacao-pagina')?.focus();
+    });
+    return;
+}
         
         const botaoConfirmar = document.getElementById('confirmarAtualizacao');
         const textoOriginal = botaoConfirmar.textContent;
@@ -587,16 +617,20 @@ async function salvarAtualizacao() {
         document.body.appendChild(mensagem);
         setTimeout(() => document.body.removeChild(mensagem), 3000);
         
-    } catch (error) {
-        alert(error.message || 'Erro ao publicar atualização. Tente novamente.');
-        console.error('Erro ao salvar atualização:', error);
-    } finally {
-        const botaoConfirmar = document.getElementById('confirmarAtualizacao');
-        if (botaoConfirmar) {
-            botaoConfirmar.textContent = atualizacaoParaEditar ? 'Salvar Alterações' : 'Publicar';
-            botaoConfirmar.disabled = false;
-        }
+    }catch (error) {
+    console.error('Erro ao salvar atualização:', error);
+    Swal.fire({
+        icon: 'error',
+        title: 'Erro',
+        text: error.message || 'Erro ao publicar atualização. Tente novamente.'
+    });
+} finally {
+    const botaoConfirmar = document.getElementById('confirmarAtualizacao');
+    if (botaoConfirmar) {
+        botaoConfirmar.textContent = atualizacaoParaEditar ? 'Salvar Alterações' : 'Publicar';
+        botaoConfirmar.disabled = false;
     }
+}
 }
 
 // Função para carregar contador de comentários

@@ -43,8 +43,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const categorias = await response.json();
             renderizarCategorias(categorias);
         } catch (error) {
-            console.error('Erro:', error);
-            alert('Não foi possível carregar as categorias. Por favor, tente novamente.');
+    console.error('Erro:', error);
+    Swal.fire({
+        icon: 'error',
+        title: 'Erro',
+        text: 'Não foi possível carregar as categorias. Por favor, tente novamente.'
+    });
         }
     }
     
@@ -117,10 +121,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const id = document.getElementById('categoria-id').value;
         const nome = document.getElementById('categoria-nome').value;
         
-        if (!nome.trim()) {
-            alert('O nome da categoria é obrigatório');
-            return;
-        }
+       if (!nome.trim()) {
+    Swal.fire({
+        icon: 'warning',
+        title: 'Ops!',
+        text: 'O nome da categoria é obrigatório'
+    });
+    return;
+}
         
         try {
             let url = '/api/categorias';
@@ -147,11 +155,21 @@ document.addEventListener('DOMContentLoaded', function() {
             modalCategoria.classList.remove('show');
             carregarCategorias();
             
-            alert(id ? 'Categoria atualizada com sucesso!' : 'Categoria criada com sucesso!');
-        } catch (error) {
-            console.error('Erro:', error);
-            alert(error.message || 'Erro ao salvar categoria. Por favor, tente novamente.');
-        }
+           Swal.fire({
+    icon: 'success',
+    title: 'Sucesso!',
+    text: id ? 'Categoria atualizada com sucesso!' : 'Categoria criada com sucesso!',
+    timer: 3000,
+    showConfirmButton: false
+});
+        }catch (error) {
+    console.error('Erro:', error);
+    Swal.fire({
+        icon: 'error',
+        title: 'Erro',
+        text: error.message || 'Erro ao salvar categoria. Por favor, tente novamente.'
+    });
+}
     }
     
     function abrirModalConfirmarExclusao(id) {
@@ -175,13 +193,23 @@ document.addEventListener('DOMContentLoaded', function() {
             modalConfirmar.classList.remove('show');
             carregarCategorias();
             
-            alert('Categoria excluída com sucesso!');
+            Swal.fire({
+    icon: 'success',
+    title: 'Sucesso!',
+    text: 'Categoria excluída com sucesso!',
+    timer: 3000,
+    showConfirmButton: false
+});
         } catch (error) {
-            console.error('Erro:', error);
-            alert(error.message || 'Erro ao excluir categoria. Por favor, tente novamente.');
-        } finally {
-            categoriaIdParaExcluir = null;
-        }
+    console.error('Erro:', error);
+    Swal.fire({
+        icon: 'error',
+        title: 'Erro',
+        text: error.message || 'Erro ao excluir categoria. Por favor, tente novamente.'
+    });
+} finally {
+    categoriaIdParaExcluir = null;
+}
     }
     
     async function verClubesDaCategoria(id, nome) {
@@ -222,8 +250,12 @@ document.addEventListener('DOMContentLoaded', function() {
             
             modalClubes.classList.add('show');
         } catch (error) {
-            console.error('Erro:', error);
-            alert('Não foi possível carregar os clubes desta categoria. Por favor, tente novamente.');
-        }
+    console.error('Erro:', error);
+    Swal.fire({
+        icon: 'error',
+        title: 'Erro',
+        text: 'Não foi possível carregar os clubes desta categoria. Por favor, tente novamente.'
+    });
+}
     }
 });

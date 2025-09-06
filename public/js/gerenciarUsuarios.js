@@ -116,9 +116,13 @@ document.addEventListener('DOMContentLoaded', function() {
             modalEditar.classList.add('show');
             
         } catch (error) {
-            console.error('Erro ao abrir modal de edição:', error);
-            alert('Erro ao carregar dados do usuário');
-        }
+    console.error('Erro ao abrir modal de edição:', error);
+    Swal.fire({
+        icon: 'error',
+        title: 'Erro',
+        text: 'Erro ao carregar dados do usuário'
+    });
+}
     }
     async function atualizarUsuario() {
         try {
@@ -128,9 +132,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const estado = document.getElementById('usuario-estado').value;
             
             if (!email) {
-                alert('O email é obrigatório');
-                return;
-            }
+    Swal.fire({
+        icon: 'warning',
+        title: 'Atenção',
+        text: 'O email é obrigatório'
+    });
+    return;
+}
             
             const dados = { email, estado };
             
@@ -151,14 +159,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error(erro.erro || 'Erro ao atualizar usuário');
             }
             
-            alert('Usuário atualizado com sucesso!');
-            modalEditar.classList.remove('show');
-            carregarUsuarios();
+           Swal.fire({
+    icon: 'success',
+    title: 'Sucesso!',
+    text: 'Usuário atualizado com sucesso!',
+    timer: 3000,
+    showConfirmButton: false
+});
+modalEditar.classList.remove('show');
+carregarUsuarios();
             
         } catch (error) {
-            console.error('Erro ao atualizar usuário:', error);
-            alert(error.message || 'Erro ao atualizar usuário');
-        }
+    console.error('Erro ao atualizar usuário:', error);
+    Swal.fire({
+        icon: 'error',
+        title: 'Erro',
+        text: error.message || 'Erro ao atualizar usuário'
+    });
+}
     }
     async function abrirModalClubes(id) {
         try {
@@ -209,8 +227,12 @@ document.addEventListener('DOMContentLoaded', function() {
             modalClubes.classList.add('show');
             
         } catch (error) {
-            console.error('Erro ao abrir modal de clubes:', error);
-            alert('Erro ao carregar clubes do usuário');
-        }
+    console.error('Erro ao abrir modal de clubes:', error);
+    Swal.fire({
+        icon: 'error',
+        title: 'Erro',
+        text: 'Erro ao carregar clubes do usuário'
+    });
+}
     }
 });

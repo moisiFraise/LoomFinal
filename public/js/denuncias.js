@@ -154,9 +154,13 @@ async function verDetalhes(denunciaId) {
         const denuncia = await response.json();
         mostrarModalDetalhes(denuncia);
     } catch (error) {
-        console.error('Erro ao carregar detalhes:', error);
-        alert('Erro ao carregar detalhes da denúncia');
-    }
+    console.error('Erro ao carregar detalhes:', error);
+    Swal.fire({
+        icon: 'error',
+        title: 'Erro',
+        text: 'Erro ao carregar detalhes da denúncia'
+    });
+}
 }
 
 function mostrarModalDetalhes(denuncia) {
@@ -302,7 +306,11 @@ async function processarDenuncia(denunciaId, acao) {
         }, 5000);
         
     } catch (error) {
-        console.error('Erro ao processar denúncia:', error);
-        alert(error.message || 'Erro ao processar denúncia. Tente novamente.');
-    }
+    console.error('Erro ao processar denúncia:', error);
+    Swal.fire({
+        icon: 'error',
+        title: 'Erro',
+        text: error.message || 'Erro ao processar denúncia. Tente novamente.'
+    });
+}
 }

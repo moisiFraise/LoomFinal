@@ -127,8 +127,12 @@ async function alternarCurtida(atualizacaoId) {
         
         const botaoCurtir = document.querySelector(`.botao-curtir[data-id="${atualizacaoId}"]`);
         if (botaoCurtir) botaoCurtir.disabled = false;
-        
-        alert('Não foi possível processar sua curtida. Tente novamente.');
+Swal.fire({
+    icon: 'error',
+    title: 'Erro',
+    text: 'Não foi possível processar sua curtida. Tente novamente.'
+});        
+
     }
 }
 function atualizarBotaoCurtida(idAtualizacao, curtido, totalCurtidas) {

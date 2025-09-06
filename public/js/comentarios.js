@@ -212,11 +212,14 @@ class ComentariosManager {
             const input = document.getElementById(`comentario-input-${idAtualizacao}`);
             const conteudo = input.value.trim();
             
-            if (!conteudo) {
-                alert('Por favor, escreva um comentário antes de enviar.');
-                return;
-            }
-
+           if (!conteudo) {
+    Swal.fire({
+        icon: 'warning',
+        title: 'Ops!',
+        text: 'Por favor, escreva um comentário antes de enviar.'
+    });
+    return;
+}
             const btn = event.target.closest('.btn-comentar');
             const originalText = btn.innerHTML;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
@@ -230,8 +233,12 @@ class ComentariosManager {
             this.atualizarContadorComentarios(idAtualizacao);
 
         } catch (error) {
-            alert('Erro ao adicionar comentário: ' + error.message);
-        } finally {
+    Swal.fire({
+        icon: 'error',
+        title: 'Erro',
+        text: 'Erro ao adicionar comentário: ' + error.message
+    });
+} finally {
             const btn = document.querySelector('.btn-comentar');
             if (btn) {
                 btn.innerHTML = '<i class="fas fa-paper-plane"></i> Comentar';
@@ -250,17 +257,25 @@ class ComentariosManager {
             if (novoConteudo === null) return; // Usuário cancelou
             
             if (!novoConteudo.trim()) {
-                alert('Comentário não pode estar vazio.');
-                return;
-            }
+    Swal.fire({
+        icon: 'warning',
+        title: 'Ops!',
+        text: 'Comentário não pode estar vazio.'
+    });
+    return;
+}
 
             await this.editarComentario(idComentario, novoConteudo);
             await this.carregarComentarios(idAtualizacao);
             this.renderizarComentarios(idAtualizacao, containerId, currentUserId);
             
-        } catch (error) {
-            alert('Erro ao editar comentário: ' + error.message);
-        }
+       } catch (error) {
+    Swal.fire({
+        icon: 'error',
+        title: 'Erro',
+        text: 'Erro ao editar comentário: ' + error.message
+    });
+}
     }
 
     async excluirComentarioHandler(idComentario, idAtualizacao, containerId, currentUserId) {
@@ -277,8 +292,12 @@ class ComentariosManager {
             this.atualizarContadorComentarios(idAtualizacao);
             
         } catch (error) {
-            alert('Erro ao excluir comentário: ' + error.message);
-        }
+    Swal.fire({
+        icon: 'error',
+        title: 'Erro',
+        text: 'Erro ao excluir comentário: ' + error.message
+    });
+}
     }
 
     async atualizarContadorComentarios(idAtualizacao) {

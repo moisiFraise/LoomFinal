@@ -293,9 +293,13 @@ async function excluirAtualizacao(id) {
             carregarAtualizacoesLeitura(); // Recarregar lista
             
         } catch (error) {
-            console.error('Erro ao excluir atualização:', error);
-            alert('Erro ao excluir atualização. Tente novamente.');
-        }
+    console.error('Erro ao excluir atualização:', error);
+    Swal.fire({
+        icon: 'error',
+        title: 'Erro',
+        text: 'Erro ao excluir atualização. Tente novamente.'
+    });
+}
     }
 }
 
@@ -305,8 +309,11 @@ function abrirModalDenuncia(atualizacaoId, nomeUsuario) {
         window.abrirModalDenuncia(atualizacaoId, nomeUsuario);
     } else {
         // Implementação básica se a função não estiver disponível
-        alert('Funcionalidade de denúncia temporariamente indisponível');
-    }
+Swal.fire({
+    icon: 'info',
+    title: 'Atenção',
+    text: 'Funcionalidade de denúncia temporariamente indisponível'
+});    }
 }
 
 function voltarParaClube() {

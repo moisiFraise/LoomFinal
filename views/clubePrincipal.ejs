@@ -696,19 +696,35 @@
                 
                 const data = await response.json();
                 
-                if (!response.ok) {
-                    alert('Erro: ' + (data.erro || 'Não foi possível sair do clube'));
-                    return;
-                }
-                
-                alert(data.mensagem);
-                // Redirecionar para dashboard
-                window.location.href = '/dashboard';
-                
-            } catch (error) {
-                console.error('Erro ao sair do clube:', error);
-                alert('Erro ao sair do clube. Tente novamente.');
-            }
+               if (!response.ok) {
+    Swal.fire({
+        icon: 'error',
+        title: 'Erro',
+        text: data.erro || 'Não foi possível sair do clube'
+    });
+    return;
+}
+
+// Mensagem de sucesso
+Swal.fire({
+    icon: 'success',
+    title: 'Sucesso!',
+    text: data.mensagem,
+    timer: 3000,
+    showConfirmButton: false
+}).then(() => {
+    // Redirecionar para dashboard após a notificação
+    window.location.href = '/dashboard';
+});
+
+} catch (error) {
+    console.error('Erro ao sair do clube:', error);
+    Swal.fire({
+        icon: 'error',
+        title: 'Erro',
+        text: 'Erro ao sair do clube. Tente novamente.'
+    });
+}
         }
         
 

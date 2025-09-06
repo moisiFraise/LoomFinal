@@ -168,10 +168,14 @@ async function salvarVisibilidade() {
         const visibilidade = document.getElementById('visibilidade').value;
         const senha = document.getElementById('senha').value;
         
-        if (visibilidade === 'privado' && !senha) {
-            alert('Clubes privados precisam de uma senha de acesso');
-            return;
-        }
+       if (visibilidade === 'privado' && !senha) {
+    Swal.fire({
+        icon: 'warning',
+        title: 'Atenção',
+        text: 'Clubes privados precisam de uma senha de acesso'
+    });
+    return;
+}
         
         const response = await fetch(`/api/admin/clubes/${id}/visibilidade`, {
             method: 'PUT',
@@ -189,11 +193,21 @@ async function salvarVisibilidade() {
         fecharModal('modal-visibilidade');
         carregarClubes();
         
-        alert('Visibilidade atualizada com sucesso!');
-    } catch (error) {
-        console.error('Erro:', error);
-        alert(error.message || 'Erro ao atualizar visibilidade. Tente novamente.');
-    }
+       Swal.fire({
+    icon: 'success',
+    title: 'Sucesso!',
+    text: 'Visibilidade atualizada com sucesso!',
+    timer: 3000,
+    showConfirmButton: false
+});
+} catch (error) {
+    console.error('Erro:', error);
+    Swal.fire({
+        icon: 'error',
+        title: 'Erro',
+        text: error.message || 'Erro ao atualizar visibilidade. Tente novamente.'
+    });
+}
 }
 
 async function salvarModelo() {
@@ -217,10 +231,19 @@ async function salvarModelo() {
         fecharModal('modal-modelo');
         carregarClubes();
         
-        alert('Modelo atualizado com sucesso!');
-    } catch (error) {
-        console.error('Erro:', error);
-        alert(error.message || 'Erro ao atualizar modelo. Tente novamente.');
-    }
+     Swal.fire({
+    icon: 'success',
+    title: 'Sucesso!',
+    text: 'Modelo atualizado com sucesso!',
+    timer: 3000,
+    showConfirmButton: false
+});
+} catch (error) {
+    console.error('Erro:', error);
+    Swal.fire({
+        icon: 'error',
+        title: 'Erro',
+        text: error.message || 'Erro ao atualizar modelo. Tente novamente.'
+    });
 }
-s
+}

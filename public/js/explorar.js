@@ -164,9 +164,13 @@ async function confirmarSenha(clubeId) {
     const senha = document.getElementById('senha-clube').value;
     
     if (!senha) {
-        alert('Por favor, digite a senha do clube.');
-        return;
-    }
+    Swal.fire({
+        icon: 'warning',
+        title: 'Atenção',
+        text: 'Por favor, digite a senha do clube.'
+    });
+    return;
+}
     
     try {
         const response = await fetch('/api/explorar/entrar-privado', {
@@ -184,14 +188,24 @@ async function confirmarSenha(clubeId) {
         }
         
         fecharDialogSenha();
-        alert(data.mensagem);
+Swal.fire({
+    icon: 'success',
+    title: 'Sucesso!',
+    text: data.mensagem,
+    timer: 3000,
+    showConfirmButton: false
+});
         
         participacoes.push(clubeId);
         renderizarClubes(todosClubes);
         
     } catch (error) {
-        alert(error.message);
-    }
+    Swal.fire({
+        icon: 'error',
+        title: 'Erro',
+        text: error.message
+    });
+}
 }
 
 async function entrarClube(clubeId) {
@@ -206,19 +220,30 @@ async function entrarClube(clubeId) {
         
         const data = await response.json();
         
-        if (!response.ok) {
-            throw new Error(data.erro || 'Erro ao entrar no clube');
-        }
-        
-        alert(data.mensagem);
-        
-        participacoes.push(clubeId);
-        
-        renderizarClubes(todosClubes);
-        
-    } catch (error) {
-        alert(error.message);
-    }
+       if (!response.ok) {
+    throw new Error(data.erro || 'Erro ao entrar no clube');
+}
+
+// Mensagem de sucesso
+Swal.fire({
+    icon: 'success',
+    title: 'Sucesso!',
+    text: data.mensagem,
+    timer: 3000,
+    showConfirmButton: false
+});
+
+participacoes.push(clubeId);
+
+renderizarClubes(todosClubes);
+
+} catch (error) {
+    Swal.fire({
+        icon: 'error',
+        title: 'Erro',
+        text: error.message
+    });
+}
 }
 
 function verClube(clubeId) {

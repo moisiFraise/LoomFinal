@@ -448,7 +448,16 @@ document.addEventListener('keydown', function(event) {
 document.getElementById('overlay-exclusao').addEventListener('click', fecharModalExclusao);
 
 function mostrarNotificacao(mensagem, tipo) {
-    if (typeof mostrarNotificacao === 'undefined') {
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            icon: tipo === 'erro' ? 'error' : 'success',
+            title: tipo === 'erro' ? 'Erro' : 'Sucesso',
+            text: mensagem,
+            timer: tipo === 'erro' ? undefined : 3000,
+            showConfirmButton: tipo === 'erro'
+        });
+    } else {
+        // Fallback para alert se SweetAlert não estiver disponível
         if (tipo === 'erro') {
             alert('Erro: ' + mensagem);
         } else {

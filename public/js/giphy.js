@@ -88,10 +88,14 @@ class GiphyManager {
 
     async abrirModal(context = 'atualizacao', gifAtual = null) {
         // Verificar se a API key foi carregada
-        if (!this.apiKey) {
-            alert('Serviço de GIFs temporariamente indisponível. Tente novamente mais tarde.');
-            return;
-        }
+       if (!this.apiKey) {
+    Swal.fire({
+        icon: 'warning',
+        title: 'Atenção',
+        text: 'Serviço de GIFs temporariamente indisponível. Tente novamente mais tarde.'
+    });
+    return;
+}
 
         this.currentContext = context;
         this.selectedGif = null;

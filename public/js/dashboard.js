@@ -194,9 +194,13 @@ async function criarClube() {
     if (visibilidade === 'privado') {
         senha = document.getElementById('senha-clube').value;
         if (!senha) {
-            alert('Clubes privados precisam de uma senha de acesso.');
-            return;
-        }
+    Swal.fire({
+        icon: 'warning',
+        title: 'Atenção',
+        text: 'Clubes privados precisam de uma senha de acesso.'
+    });
+    return;
+}
     }
     
     const categoriasSelecionadas = [];
@@ -204,15 +208,23 @@ async function criarClube() {
         categoriasSelecionadas.push(parseInt(checkbox.value));
     });
     
-    if (!nome || !descricao) {
-        alert('Por favor, preencha todos os campos obrigatórios.');
-        return;
-    }
+   if (!nome || !descricao) {
+    Swal.fire({
+        icon: 'warning',
+        title: 'Ops!',
+        text: 'Por favor, preencha todos os campos obrigatórios.'
+    });
+    return;
+}
     
-    if (categoriasSelecionadas.length === 0) {
-        alert('Por favor, selecione pelo menos uma categoria para o clube.');
-        return;
-    }
+   if (categoriasSelecionadas.length === 0) {
+    Swal.fire({
+        icon: 'warning',
+        title: 'Ops!',
+        text: 'Por favor, selecione pelo menos uma categoria para o clube.'
+    });
+    return;
+}
     
     try {
         const response = await fetch('/api/clubes', {
@@ -239,8 +251,15 @@ async function criarClube() {
         const data = await response.json();
         cancelarCriacaoClube();
         carregarMeusClubes();
-        alert('Clube criado com sucesso!');
-        
+
+        Swal.fire({
+    icon: 'success',
+    title: 'Sucesso!',
+    text: 'Clube criado com sucesso!',
+    timer: 3000,
+    showConfirmButton: false
+});
+
     } catch (error) {
         console.error('Erro ao criar clube:', error);
         alert(error.message || 'Erro ao criar clube. Tente novamente.');

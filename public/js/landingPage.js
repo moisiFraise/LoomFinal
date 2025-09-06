@@ -138,7 +138,17 @@ if (isIOS && !isStandalone) {
   installButton.style.display = 'inline-block';
   installButton.innerHTML = '<i class="fas fa-share"></i> Adicionar à Tela Inicial';
   installButton.addEventListener('click', () => {
-    alert('Para instalar no iOS:\n1. Toque no botão Compartilhar\n2. Role para baixo e toque em "Adicionar à Tela de Início"\n3. Toque em "Adicionar"');
+Swal.fire({
+    icon: 'info',
+    title: 'Como instalar no iOS',
+    html: `
+        <ol style="text-align: left; padding-left: 1.2em;">
+            <li>Toque no botão Compartilhar</li>
+            <li>Role para baixo e toque em "Adicionar à Tela de Início"</li>
+            <li>Toque em "Adicionar"</li>
+        </ol>
+    `
+});
   });
 }
   
