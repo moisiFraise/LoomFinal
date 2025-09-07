@@ -675,3 +675,67 @@ body {
     color: #555;
     font-style: italic;
 }
+
+/* Modal Confirmar Exclusão */
+#modal-confirmar-exclusao .modal-conteudo {
+    max-width: 400px;
+    width: 90%;
+    padding: 25px 20px;
+    text-align: center;
+    border: 2px solid var(--vermelho);
+}
+
+#modal-confirmar-exclusao h2 {
+    color: var(--vermelho);
+    margin-bottom: 15px;
+    font-size: 22px;
+}
+
+#modal-confirmar-exclusao p {
+    color: var(--paragrafo);
+    margin-bottom: 25px;
+    font-size: 16px;
+}
+
+/* Ações do modal em coluna */
+#modal-confirmar-exclusao .acoes-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Botão de exclusão - perigoso */
+#btn-confirmar-exclusao {
+    background: linear-gradient(45deg, var(--vermelho), var(--vinho));
+    color: var(--background);
+    border: none;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#btn-confirmar-exclusao:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(214, 48, 49, 0.5);
+}
+
+/* Botão de cancelar - seguro */
+#btn-cancelar-exclusao {
+    background-color: var(--paragrafo);
+    color: var(--background);
+    border: none;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#btn-cancelar-exclusao:hover {
+    transform: translateY(-2px);
+    background-color: var(--foreground);
+}
