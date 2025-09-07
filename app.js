@@ -803,6 +803,12 @@ app.post('/api/login', async (req, res) => {
     if (!usuario) {
       return res.status(401).json({ erro: 'Email ou senha incorretos.' });
     }
+
+    // 🚨 Novo: checar se usuário está inativo
+    if (usuario.estado === 'inativo') {
+      console.log('Login bloqueado: conta inativa');
+      return res.status(403).json({ erro: 'Sua conta foi punida por conduta inadequada.' });
+    }
     
     const senhaCorreta = await Usuario.verificarSenha(senha, usuario.senha, usuario.id);
     console.log('Senha correta:', senhaCorreta ? 'Sim' : 'Não');
@@ -820,7 +826,7 @@ app.post('/api/login', async (req, res) => {
       req.session.userId = usuario.id;
       req.session.userType = usuario.tipo;
       req.session.authenticated = true;
-      req.session.email = usuario.email; // Adicionar email também
+      req.session.email = usuario.email;
       
       console.log('Dados definidos na sessão:', {
         userId: req.session.userId,
@@ -850,7 +856,7 @@ app.post('/api/login', async (req, res) => {
             email: usuario.email,
             tipo: usuario.tipo
           },
-          sessionId: req.sessionID // Para debug
+          sessionId: req.sessionID
         });
       });
     });
