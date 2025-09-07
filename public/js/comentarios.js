@@ -164,48 +164,51 @@ class ComentariosManager {
     }
 
     renderizarComentario(comentario, currentUserId, idAtualizacao, containerId) {
-        const dataFormatada = new Date(comentario.data_comentario).toLocaleString('pt-BR');
-        const podeEditar = comentario.id_usuario === currentUserId;
-        const fotoDefault = '/images/default-profile.jpg';
-        
-        // Criar avatar igual ao das atualizações
-        const avatarHtml = comentario.foto_perfil ? 
-            `<img src="${comentario.foto_perfil}" alt="${comentario.nome_usuario}" onerror="this.parentElement.innerHTML='<div class=\\'usuario-avatar-placeholder\\'>${comentario.nome_usuario.charAt(0).toUpperCase()}</div>'">` :
-            `<div class="usuario-avatar-placeholder">${comentario.nome_usuario.charAt(0).toUpperCase()}</div>`;
-        
-        return `
-            <div class="comentario-item" id="comentario-${comentario.id}">
-                <div class="comentario-header">
-                    <div class="comentario-avatar" onclick="irParaPerfil(${comentario.id_usuario})" title="Ver perfil de ${comentario.nome_usuario}">
-                        ${avatarHtml}
-                    </div>
-                    <div class="comentario-info">
-                        <span class="comentario-autor" onclick="irParaPerfil(${comentario.id_usuario})" title="Ver perfil de ${comentario.nome_usuario}">${comentario.nome_usuario}</span>
-                        <span class="comentario-data">${dataFormatada}</span>
-                    </div>
-                    ${podeEditar ? `
-                        <div class="comentario-menu">
-                            <button class="btn-menu-comentario" onclick="this.nextElementSibling.classList.toggle('show')">
-                                <i class="fas fa-ellipsis-v"></i>
-                            </button>
-                            <div class="comentario-menu-dropdown">
+    const dataFormatada = new Date(comentario.data_comentario).toLocaleString('pt-BR');
+    const podeEditarOuExcluir = 
+        comentario.id_usuario === currentUserId || comentario.id_autor_atualizacao === currentUserId;
+
+    const avatarHtml = comentario.foto_perfil 
+        ? `<img src="${comentario.foto_perfil}" alt="${comentario.nome_usuario}" 
+                 onerror="this.parentElement.innerHTML='<div class=\\'usuario-avatar-placeholder\\'>${comentario.nome_usuario.charAt(0).toUpperCase()}</div>'">`
+        : `<div class="usuario-avatar-placeholder">${comentario.nome_usuario.charAt(0).toUpperCase()}</div>`;
+    
+    return `
+        <div class="comentario-item" id="comentario-${comentario.id}">
+            <div class="comentario-header">
+                <div class="comentario-avatar" onclick="irParaPerfil(${comentario.id_usuario})" title="Ver perfil de ${comentario.nome_usuario}">
+                    ${avatarHtml}
+                </div>
+                <div class="comentario-info">
+                    <span class="comentario-autor" onclick="irParaPerfil(${comentario.id_usuario})" title="Ver perfil de ${comentario.nome_usuario}">${comentario.nome_usuario}</span>
+                    <span class="comentario-data">${dataFormatada}</span>
+                </div>
+                ${podeEditarOuExcluir ? `
+                    <div class="comentario-menu">
+                        <button class="btn-menu-comentario" onclick="this.nextElementSibling.classList.toggle('show')">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <div class="comentario-menu-dropdown">
+                            ${comentario.id_usuario === currentUserId ? `
                                 <button onclick="comentariosManager.editarComentarioHandler(${comentario.id}, ${idAtualizacao}, '${containerId}', ${currentUserId})">
                                     <i class="fas fa-edit"></i> Editar
                                 </button>
-                                <button onclick="comentariosManager.excluirComentarioHandler(${comentario.id}, ${idAtualizacao}, '${containerId}', ${currentUserId})">
-                                    <i class="fas fa-trash"></i> Excluir
-                                </button>
-                            </div>
+                            ` : ''}
+                            <button onclick="comentariosManager.excluirComentarioHandler(${comentario.id}, ${idAtualizacao}, '${containerId}', ${currentUserId})">
+                                <i class="fas fa-trash"></i> Excluir
+                            </button>
                         </div>
-                    ` : ''}
-                </div>
-                <div class="comentario-conteudo" id="comentario-conteudo-${comentario.id}">
-                    ${comentario.conteudo}
-                </div>
-                ${comentario.gif_url ? `<div class="gif-container"><img src="${comentario.gif_url}" alt="GIF" loading="lazy"></div>` : ''}
+                    </div>
+                ` : ''}
             </div>
-        `;
-    }
+            <div class="comentario-conteudo" id="comentario-conteudo-${comentario.id}">
+                ${comentario.conteudo}
+            </div>
+            ${comentario.gif_url ? `<div class="gif-container"><img src="${comentario.gif_url}" alt="GIF" loading="lazy"></div>` : ''}
+        </div>
+    `;
+}
+
 
     async adicionarComentarioHandler(idAtualizacao, containerId, currentUserId) {
         try {
@@ -277,28 +280,46 @@ class ComentariosManager {
     });
 }
     }
+async excluirComentarioHandler(idComentario, idAtualizacao, containerId, currentUserId) {
+    try {
+        const result = await Swal.fire({
+            title: 'Tem certeza?',
+            text: 'Você não poderá reverter esta ação!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sim, excluir',
+            cancelButtonText: 'Cancelar'
+        });
 
-    async excluirComentarioHandler(idComentario, idAtualizacao, containerId, currentUserId) {
-        try {
-            if (!confirm('Tem certeza que deseja excluir este comentário?')) {
-                return;
-            }
+        if (!result.isConfirmed) {
+            return;
+        }
 
-            await this.excluirComentario(idComentario);
-            await this.carregarComentarios(idAtualizacao);
-            this.renderizarComentarios(idAtualizacao, containerId, currentUserId);
-            
-            // Atualizar contador na interface
-            this.atualizarContadorComentarios(idAtualizacao);
-            
-        } catch (error) {
-    Swal.fire({
-        icon: 'error',
-        title: 'Erro',
-        text: 'Erro ao excluir comentário: ' + error.message
-    });
-}
+        await this.excluirComentario(idComentario);
+        await this.carregarComentarios(idAtualizacao);
+        this.renderizarComentarios(idAtualizacao, containerId, currentUserId);
+
+        // Atualizar contador na interface
+        this.atualizarContadorComentarios(idAtualizacao);
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Excluído!',
+            text: 'O comentário foi removido com sucesso.',
+            timer: 2000,
+            showConfirmButton: false
+        });
+
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Erro',
+            text: 'Erro ao excluir comentário: ' + error.message
+        });
     }
+}
 
     async atualizarContadorComentarios(idAtualizacao) {
         try {

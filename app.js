@@ -3657,20 +3657,36 @@ app.put('/api/comentarios/:id', verificarAutenticacao, async (req, res) => {
 app.delete('/api/comentarios/:id', verificarAutenticacao, async (req, res) => {
   try {
     const { id } = req.params;
-    
-    // Verificar se o usuário pode excluir este comentário
-    const permissao = await Comentarios.verificarPermissao(id, req.session.userId);
-    
-    if (!permissao) {
+
+    // Buscar comentário com id_usuario e id_atualizacao
+    const comentario = await Comentarios.obterPorId(id);
+    if (!comentario) {
+      return res.status(404).json({ erro: 'Comentário não encontrado' });
+    }
+
+    // Buscar atualização para verificar quem é o autor
+    const [atualizacaoRows] = await pool.query(
+      'SELECT id_usuario FROM atualizacoes WHERE id = ?',
+      [comentario.id_atualizacao]
+    );
+
+    if (atualizacaoRows.length === 0) {
+      return res.status(404).json({ erro: 'Atualização não encontrada' });
+    }
+
+    const autorAtualizacao = atualizacaoRows[0].id_usuario;
+
+    // Verificar permissões: autor do comentário OU autor da atualização
+    if (comentario.id_usuario !== req.session.userId && autorAtualizacao !== req.session.userId) {
       return res.status(403).json({ erro: 'Você não tem permissão para excluir este comentário' });
     }
-    
+
     const sucesso = await Comentarios.excluir(id);
-    
+
     if (!sucesso) {
       return res.status(404).json({ erro: 'Comentário não encontrado' });
     }
-    
+
     res.json({ mensagem: 'Comentário excluído com sucesso' });
   } catch (error) {
     console.error('Erro ao excluir comentário:', error);

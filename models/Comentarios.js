@@ -69,58 +69,72 @@ class Comentarios {
             throw error;
         }
     }
-    
     static async listarPorAtualizacao(idAtualizacao) {
-        try {
-            // Primeiro, verificar se a coluna gif_url existe
-            const [columns] = await pool.query(
-                `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
-                 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'comentarios' AND COLUMN_NAME = 'gif_url'`
-            );
-            
-            const hasGifUrl = columns.length > 0;
-            
-            let query;
-            if (hasGifUrl) {
-                query = `SELECT c.*, u.nome as nome_usuario, u.foto_perfil
-                         FROM comentarios c
-                         JOIN usuarios u ON c.id_usuario = u.id
-                         WHERE c.id_atualizacao = ?
-                         ORDER BY c.data_comentario ASC`;
-            } else {
-                query = `SELECT c.id, c.id_atualizacao, c.id_usuario, c.conteudo, c.data_comentario,
-                                NULL as gif_url, u.nome as nome_usuario, u.foto_perfil
-                         FROM comentarios c
-                         JOIN usuarios u ON c.id_usuario = u.id
-                         WHERE c.id_atualizacao = ?
-                         ORDER BY c.data_comentario ASC`;
-            }
-            
-            const [rows] = await pool.query(query, [idAtualizacao]);
-            
-            return rows;
-        } catch (error) {
-            console.error('Erro ao listar comentários:', error);
-            throw error;
+    try {
+        // Verifica se a coluna gif_url existe
+        const [columns] = await pool.query(
+            `SELECT COLUMN_NAME 
+             FROM INFORMATION_SCHEMA.COLUMNS 
+             WHERE TABLE_SCHEMA = DATABASE() 
+               AND TABLE_NAME = 'comentarios' 
+               AND COLUMN_NAME = 'gif_url'`
+        );
+        
+        const hasGifUrl = columns.length > 0;
+        
+        let query;
+        if (hasGifUrl) {
+            query = `SELECT c.*, 
+                            u.nome AS nome_usuario, 
+                            u.foto_perfil,
+                            a.id_usuario AS id_autor_atualizacao
+                     FROM comentarios c
+                     JOIN usuarios u ON c.id_usuario = u.id
+                     JOIN atualizacoes a ON c.id_atualizacao = a.id
+                     WHERE c.id_atualizacao = ?
+                     ORDER BY c.data_comentario ASC`;
+        } else {
+            query = `SELECT c.id, c.id_atualizacao, c.id_usuario, c.conteudo, c.data_comentario,
+                            NULL as gif_url, 
+                            u.nome AS nome_usuario, 
+                            u.foto_perfil,
+                            a.id_usuario AS id_autor_atualizacao
+                     FROM comentarios c
+                     JOIN usuarios u ON c.id_usuario = u.id
+                     JOIN atualizacoes a ON c.id_atualizacao = a.id
+                     WHERE c.id_atualizacao = ?
+                     ORDER BY c.data_comentario ASC`;
         }
+        
+        const [rows] = await pool.query(query, [idAtualizacao]);
+        return rows;
+    } catch (error) {
+        console.error('Erro ao listar comentários:', error);
+        throw error;
     }
-    
+}
+
     static async obterPorId(id) {
-        try {
-            const [rows] = await pool.query(
-                `SELECT c.*, u.nome as nome_usuario, u.foto_perfil
-                 FROM comentarios c
-                 JOIN usuarios u ON c.id_usuario = u.id
-                 WHERE c.id = ?`,
-                [id]
-            );
-            
-            return rows.length > 0 ? rows[0] : null;
-        } catch (error) {
-            console.error('Erro ao obter comentário por ID:', error);
-            throw error;
-        }
+    try {
+        const [rows] = await pool.query(
+            `SELECT c.*, 
+                    u.nome as nome_usuario, 
+                    u.foto_perfil,
+                    a.id_usuario AS id_autor_atualizacao
+             FROM comentarios c
+             JOIN usuarios u ON c.id_usuario = u.id
+             JOIN atualizacoes a ON c.id_atualizacao = a.id
+             WHERE c.id = ?`,
+            [id]
+        );
+        
+        return rows.length > 0 ? rows[0] : null;
+    } catch (error) {
+        console.error('Erro ao obter comentário por ID:', error);
+        throw error;
     }
+}
+
     
     static async atualizar(id, conteudo, gifUrl = null) {
         try {
