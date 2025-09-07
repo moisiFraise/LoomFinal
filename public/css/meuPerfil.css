@@ -781,3 +781,10 @@ body {
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(214, 48, 49, 0.5);
 }
+
+.titulo-leitura {
+    margin-top: 4px;
+    font-size: 0.875rem;
+    color: var(--paragrafo);
+    font-weight: 500;
+}

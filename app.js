@@ -913,13 +913,15 @@ app.get('/meuPerfil', verificarAutenticacao, verificarRestricaoAdmin, async (req
     const clubesIds = clubesRows.map(c => c.id);
 
     const [publicacoes] = await pool.query(`
-      SELECT a.*, c.nome as nome_clube, c.visibilidade, 
-             (SELECT COUNT(*) FROM curtidas WHERE id_atualizacao = a.id) as curtidas
-      FROM atualizacoes a
-      JOIN clubes c ON a.id_clube = c.id
-      WHERE a.id_usuario = ?
-      ORDER BY a.data_postagem DESC
-    `, [req.session.userId]);
+  SELECT a.*, c.nome as nome_clube, c.visibilidade,
+         l.titulo as titulo_leitura,
+         (SELECT COUNT(*) FROM curtidas WHERE id_atualizacao = a.id) as curtidas
+  FROM atualizacoes a
+  JOIN clubes c ON a.id_clube = c.id
+  LEFT JOIN leituras l ON a.id_leitura = l.id
+  WHERE a.id_usuario = ?
+  ORDER BY a.data_postagem DESC
+`, [req.session.userId]);
 
     // (opcional) debug pequeno
     console.log('clubesIds (únicos):', clubesIds);

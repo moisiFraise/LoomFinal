@@ -107,13 +107,20 @@
                                 <img src="<%= pub.gif_url %>" alt="GIF" loading="lazy">
                             </div>
                         <% } %>
+                       
                         <div class="atualizacao-footer publicacao-footer">
-                            <div class="atualizacao-progresso progresso-leitura">
-                                <div class="progresso-barra-container barra-progresso">
-                                    <div class="progresso-barra progresso" style="width: <%= pub.porcentagem_leitura || 0 %>%;"></div>
-                                </div>
-                                <span class="progresso-texto porcentagem"><%= pub.porcentagem_leitura || 0 %>% concluído</span>
-                            </div>
+    <div class="atualizacao-progresso progresso-leitura">
+        <div class="progresso-barra-container barra-progresso">
+            <div class="progresso-barra progresso" style="width: <%= pub.porcentagem_leitura || 0 %>%;"></div>
+        </div>
+        <span class="progresso-texto porcentagem"><%= pub.porcentagem_leitura || 0 %>% concluído</span>
+    </div>
+
+    <% if (pub.titulo_leitura) { %>
+        <div class="nome-leitura">
+            <i class="fas fa-book-open"></i> <%= pub.titulo_leitura %>
+        </div>
+    <% } %>
                             <div class="atualizacao-interacoes acoes-publicacao">
                                 <button class="botao-curtir" data-id="<%= pub.id %>" onclick="alternarCurtida(<%= pub.id %>)">
                                     <i class="fas fa-heart"></i>
