@@ -889,7 +889,7 @@ app.get('/dashboard', verificarAutenticacao, verificarRestricaoAdmin, async (req
 });
 app.get('/meuPerfil', verificarAutenticacao, verificarRestricaoAdmin, async (req, res) => {
   try {
-    // Headers anti-cache extremamente agressivos para meuPerfil
+    // headers anti-cache...
     res.set({
       'Cache-Control': 'no-cache, no-store, must-revalidate, private, max-age=0, s-maxage=0',
       'Pragma': 'no-cache',
@@ -899,34 +899,20 @@ app.get('/meuPerfil', verificarAutenticacao, verificarRestricaoAdmin, async (req
       'Vary': 'Cookie, Authorization, User-Agent',
       'X-Accel-Expires': '0'
     });
-    
+
     const usuario = await Usuario.buscarPorId(req.session.userId);
-    
-    // Debug temporário para meuPerfil
-    console.log(`=== MEUPERFIL DEBUG ===`);
-    console.log(`SessionID: ${req.sessionID}`);
-    console.log(`UserId na sessão: ${req.session.userId}`);
-    console.log(`Usuário encontrado: ${usuario ? usuario.nome : 'null'} (${usuario ? usuario.email : 'null'})`);
-    console.log(`========================`);
-    
-    if (!usuario) {
-      return res.redirect('/autenticacao');
-    }
-      const [clubesCriados] = await pool.query(
-      'SELECT id FROM clubes WHERE id_criador = ?',
-      [req.session.userId]
-    );
-    
-    const [clubesParticipando] = await pool.query(
-      'SELECT id_clube FROM participacoes WHERE id_usuario = ?',
-      [req.session.userId]
-    );
-    
-    const clubesIds = [
-      ...clubesCriados.map(c => c.id),
-      ...clubesParticipando.map(c => c.id_clube)
-    ];
-      const [publicacoes] = await pool.query(`
+    if (!usuario) return res.redirect('/autenticacao');
+
+    // obter clubes (UNION para evitar duplicatas)
+    const [clubesRows] = await pool.query(`
+      SELECT id FROM clubes WHERE id_criador = ?
+      UNION
+      SELECT id_clube AS id FROM participacoes WHERE id_usuario = ?
+    `, [req.session.userId, req.session.userId]);
+
+    const clubesIds = clubesRows.map(c => c.id);
+
+    const [publicacoes] = await pool.query(`
       SELECT a.*, c.nome as nome_clube, c.visibilidade, 
              (SELECT COUNT(*) FROM curtidas WHERE id_atualizacao = a.id) as curtidas
       FROM atualizacoes a
@@ -934,7 +920,10 @@ app.get('/meuPerfil', verificarAutenticacao, verificarRestricaoAdmin, async (req
       WHERE a.id_usuario = ?
       ORDER BY a.data_postagem DESC
     `, [req.session.userId]);
-    
+
+    // (opcional) debug pequeno
+    console.log('clubesIds (únicos):', clubesIds);
+
     res.render('meuPerfil', { 
       titulo: 'Loom - Meu Perfil',
       userId: req.session.userId,
@@ -950,6 +939,7 @@ app.get('/meuPerfil', verificarAutenticacao, verificarRestricaoAdmin, async (req
     res.redirect('/dashboard');
   }
 });
+
 app.get('/perfil/:id', verificarAutenticacao, verificarRestricaoAdmin, async (req, res) => {
   try {
     const perfilId = req.params.id;
