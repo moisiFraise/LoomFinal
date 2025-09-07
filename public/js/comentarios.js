@@ -189,15 +189,10 @@ class ComentariosManager {
                             <i class="fas fa-ellipsis-v"></i>
                         </button>
                         <div class="comentario-menu-dropdown">
-                            ${comentario.id_usuario === currentUserId ? `
-                                <button onclick="comentariosManager.editarComentarioHandler(${comentario.id}, ${idAtualizacao}, '${containerId}', ${currentUserId})">
-                                    <i class="fas fa-edit"></i> Editar
-                                </button>
-                            ` : ''}
-                            <button onclick="comentariosManager.excluirComentarioHandler(${comentario.id}, ${idAtualizacao}, '${containerId}', ${currentUserId})">
-                                <i class="fas fa-trash"></i> Excluir
-                            </button>
-                        </div>
+    <button onclick="comentariosManager.excluirComentarioHandler(${comentario.id}, ${idAtualizacao}, '${containerId}', ${currentUserId})">
+        <i class="fas fa-trash"></i> Excluir
+    </button>
+</div>
                     </div>
                 ` : ''}
             </div>
