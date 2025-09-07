@@ -535,3 +535,20 @@
 .botao-perigo:active {
     transform: translateY(1px);
 }
+.membro-avatar, .membro-avatar-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ccc;
+    color: #fff;
+    font-weight: bold;
+    font-size: 14px;
+    overflow: hidden;
+}
+
+.membro-avatar-img {
+    object-fit: cover;
+}

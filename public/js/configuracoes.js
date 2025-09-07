@@ -316,7 +316,6 @@ async function carregarMembrosGerenciar() {
             '<p class="erro">Erro ao carregar membros do clube</p>';
     }
 }
-
 function renderizarMembrosGerenciar(membros, idCriador) {
     const container = document.getElementById('membros-gerenciar');
     
@@ -327,12 +326,16 @@ function renderizarMembrosGerenciar(membros, idCriador) {
     
     container.innerHTML = membros.map(membro => {
         const isCriador = membro.id === idCriador;
-        const iniciais = membro.nome.split(' ').map(n => n[0]).join('').toUpperCase();
-        
+
+        // Avatar: foto se existir, senão iniciais
+        const avatar = membro.foto_perfil
+            ? `<img src="${membro.foto_perfil}" alt="${membro.nome}" class="membro-avatar-img">`
+            : `<div class="membro-avatar">${membro.nome.split(' ').map(n => n[0]).join('').toUpperCase()}</div>`;
+
         return `
             <div class="membro-item">
                 <div class="membro-info">
-                    <div class="membro-avatar">${iniciais}</div>
+                    ${avatar}
                     <div class="membro-detalhes">
                         <h5>${membro.nome}</h5>
                         <p>${membro.email}</p>
