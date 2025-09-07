@@ -351,15 +351,12 @@ async function carregarSugestoes() {
                     ` : ''}
                     
                     ${sugestao.id_usuario === parseInt(userId) ? `
-                        <div class="sugestao-acoes">
-                            <button class="botao-pequeno botao-editar" onclick="editarSugestao(${sugestao.id})">
-                                <i class="fa fa-edit"></i> Editar
-                            </button>
-                            <button class="botao-pequeno botao-excluir" onclick="excluirSugestao(${sugestao.id})">
-                                <i class="fa fa-trash"></i> Excluir
-                            </button>
-                        </div>
-                    ` : ''}
+                    <div class="sugestao-acoes">
+                        <button class="botao-pequeno botao-excluir" onclick="excluirSugestao(${sugestao.id})">
+                            <i class="fa fa-trash"></i> Excluir
+                        </button>
+                    </div>
+                ` : ''}
                 </div>
             `).join('');
         } else {
