@@ -6,7 +6,7 @@
     background: var(--current-line);
     padding: 0.5rem 1rem;
     display: flex;
-    justify-content: space-between;
+    justify-content: space-between; /* mantém logo à esquerda e botão à direita */
     align-items: center;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     z-index: 1000;
@@ -60,12 +60,19 @@
     font-size: 1.1rem;
 }
 
+/* ====== MOBILE ====== */
 @media (max-width: 768px) {
+    /* Botão do menu visível e fixo no canto direito */
     .botao-menu {
         display: block !important;
         z-index: 1001;
+        position: absolute; /* só no mobile */
+        top: 50%;
+        right: 1rem;
+        transform: translateY(-50%);
     }
 
+    /* Links do menu deslizante */
     .links-navegacao {
         position: fixed;
         top: 0;
@@ -99,9 +106,10 @@
         font-size: 1.3rem;
         color: var(--foreground);
         cursor: pointer;
+        display: none;
     }
-}
-    
-.links-navegacao.ativo .fechar-menu {
-    display: block;
+
+    .links-navegacao.ativo .fechar-menu {
+        display: block;
+    }
 }

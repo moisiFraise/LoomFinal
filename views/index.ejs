@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,36 +13,73 @@
     
     <title>Loom: Clubes de Leitura</title>
     <style>
-        .manual-link {
-    position: fixed;
-    bottom: 15px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: inline-block;
-    padding: 12px 30px;
-    border-radius: 50px;
-    font-family: 'Poppins', sans-serif;
-    font-weight: 500;
-    text-decoration: none;
-    transition: all 0.3s ease;
-    cursor: pointer;
-    font-size: 16px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    background-color: transparent;
-    color: #fff;
-    border: 2px solid #fff;
-    z-index: 20;
-}
+        body {
+            background-image: linear-gradient(to right bottom, #6c5ce7, #a051d5, #c247c0, #d941a9, #e84393);
+            min-height: 100vh;
+            overflow: hidden; /* garante que nada "estoure" */
+        }
 
-.manual-link:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    transform: translateX(-50%) translateY(-3px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-}
+        /* container das estrelas */
+        .stars-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .manual-link {
+            position: fixed;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: inline-block;
+            padding: 10px 24px;
+            border-radius: 50px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-size: 14px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            background-color: transparent;
+            color: #fff;
+            border: 2px solid #fff;
+            z-index: 20;
+            white-space: nowrap;
+        }
+
+        .manual-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            transform: translateX(-50%) translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        @media screen and (max-width: 600px) {
+            .manual-link {
+                top: 10px;
+                font-size: 12px;
+                padding: 8px 18px;
+            }
+        }
     </style>
 </head>
   
 <body>
+    <!-- Fundo animado -->
+    <div class="stars-container" id="stars"></div>
+
+    <!-- Link para manual no topo -->
+    <a href="https://drive.google.com/file/d/1VGEmElho7LjfwLZunVaJcpu_WYuuIr0M/view?usp=drive_link" 
+       target="_blank" 
+       class="manual-link">
+       Manual de Uso
+    </a>
+
     <div class="content-container">
         <h1>Loom: Aplicação Web para Gerenciamento e Interação em Clubes de Leitura</h1>
         
@@ -53,12 +91,6 @@
         </div>
     </div>
 
-    <!-- Link para manual -->
-   <a href="https://drive.google.com/file/d/1VGEmElho7LjfwLZunVaJcpu_WYuuIr0M/view?usp=drive_link" 
-   target="_blank" 
-   class="manual-link">
-   Manual de Uso
-</a>
     <script src="/js/landingPage.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>

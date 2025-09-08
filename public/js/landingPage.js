@@ -1,24 +1,28 @@
 // Animação de estrelas
 function stars() {
-    let e = document.createElement("div");
-    e.setAttribute("class", "star");
-    document.body.appendChild(e);
-    e.style.left = Math.random() * +innerWidth + "px";
-  
-    let size = Math.random() * 12;
-    let duration = Math.random() * 3;
-  
-    e.style.fontSize = 12 + "px";
-    e.style.animationDuration = 2 + duration + "s";
-    setTimeout(function () {
-      document.body.removeChild(e);
-    }, 5000);
-  }
-  
-  setInterval(function () {
-    stars();
-  }, 50);
+  let e = document.createElement("div");
+  e.setAttribute("class", "star");
 
+  // adiciona as estrelas dentro do container correto
+  const starsContainer = document.getElementById("stars");
+  starsContainer.appendChild(e);
+
+  e.style.left = Math.random() * innerWidth + "px";
+
+  let size = Math.random() * 12;
+  let duration = Math.random() * 3;
+
+  e.style.fontSize = 12 + "px";
+  e.style.animationDuration = 2 + duration + "s";
+
+  setTimeout(function () {
+    starsContainer.removeChild(e);
+  }, 5000);
+}
+
+setInterval(function () {
+  stars();
+}, 50);
 // PWA - Instalação do App
 let deferredPrompt;
 const installButton = document.getElementById('installButton');
