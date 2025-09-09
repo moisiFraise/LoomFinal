@@ -7,7 +7,7 @@ const dbConfig = {
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'loom_db',
   waitForConnections: true,
-  connectionLimit: 5, // Limite muito baixo para evitar overflow
+  connectionLimit: 2, // Limite extremamente baixo
   queueLimit: 0,
   acquireTimeout: 60000, // Timeout para adquirir conexão
   timeout: 60000, // Timeout geral

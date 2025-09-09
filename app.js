@@ -164,6 +164,36 @@ async function verificarAutenticacao(req, res, next) {
 const userCache = new Map();
 const CACHE_DURATION = 30 * 60 * 1000; // 30 minutos (cache mais longo)
 
+// Circuit breaker para banco de dados
+let dbCircuitBreaker = {
+  failures: 0,
+  lastFailure: 0,
+  isOpen: false,
+  threshold: 10, // Após 10 falhas
+  timeout: 60000 // 1 minuto
+};
+
+function checkCircuitBreaker() {
+  if (dbCircuitBreaker.isOpen) {
+    if (Date.now() - dbCircuitBreaker.lastFailure > dbCircuitBreaker.timeout) {
+      dbCircuitBreaker.isOpen = false;
+      dbCircuitBreaker.failures = 0;
+      console.log('🔄 Circuit breaker fechado - tentando reconectar ao banco');
+    }
+    return false; // Banco indisponível
+  }
+  return true; // Banco disponível
+}
+
+function recordDbFailure() {
+  dbCircuitBreaker.failures++;
+  dbCircuitBreaker.lastFailure = Date.now();
+  if (dbCircuitBreaker.failures >= dbCircuitBreaker.threshold) {
+    dbCircuitBreaker.isOpen = true;
+    console.log('⚡ Circuit breaker ABERTO - banco temporariamente desativado por sobrecarga');
+  }
+}
+
 // Middleware específico para APIs que retorna JSON em vez de redirect
 // VERSÃO RADICAL: Confia apenas na sessão, sem consultas ao banco
 async function verificarAutenticacaoAPI(req, res, next) {
@@ -704,6 +734,12 @@ app.get('/api/clube/:clubeId/atualizacoes/:atualizacaoId/curtidas', verificarAut
     const { clubeId, atualizacaoId } = req.params;
     const userId = req.user.id;
 
+    // Verificar circuit breaker
+    if (!checkCircuitBreaker()) {
+      console.log('💔 Circuit breaker ativo - retornando curtidas padrão');
+      return res.json({ curtido: false, total: 0 });
+    }
+
     // Verifica se o usuário é membro do clube
     const [participacoes] = await pool.query(
       'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
@@ -723,8 +759,16 @@ app.get('/api/clube/:clubeId/atualizacoes/:atualizacaoId/curtidas', verificarAut
     res.json({ curtido, total });
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ erro: 'Erro ao buscar status da curtida' });
+    console.error('Erro ao buscar curtidas:', error);
+    
+    // Registrar falha no circuit breaker
+    if (error.code === 'ER_TOO_MANY_USER_CONNECTIONS' || error.code === 'ECONNREFUSED') {
+      recordDbFailure();
+    }
+    
+    // Fallback sempre
+    console.log('🔄 Fallback: Retornando curtidas padrão devido a erro');
+    return res.json({ curtido: false, total: 0 });
   }
 });
 
@@ -2384,18 +2428,25 @@ app.post('/api/curtidas/:id', verificarAutenticacaoAPI, async (req, res) => {
 });
 app.get('/api/curtidas/:id/count', verificarAutenticacaoAPI, async (req, res) => {
   try {
+    // Verificar circuit breaker
+    if (!checkCircuitBreaker()) {
+      console.log('💔 Circuit breaker ativo - retornando 0 curtidas');
+      return res.json({ total: 0 });
+    }
+    
     const total = await Curtidas.contarCurtidas(req.params.id);
     res.json({ total });
   } catch (error) {
     console.error('Erro ao contar curtidas:', error);
     
-    // Fallback: Retornar 0 em caso de erro de conexão
-    if (error.code === 'ER_TOO_MANY_USER_CONNECTIONS') {
-      console.log('Fallback: Retornando 0 curtidas devido a limite de conexões');
-      return res.json({ total: 0 });
+    // Registrar falha no circuit breaker
+    if (error.code === 'ER_TOO_MANY_USER_CONNECTIONS' || error.code === 'ECONNREFUSED') {
+      recordDbFailure();
     }
     
-    res.status(500).json({ erro: 'Erro ao buscar total de curtidas' });
+    // Fallback sempre: Retornar 0 em qualquer erro
+    console.log('🔄 Fallback: Retornando 0 curtidas devido a erro');
+    return res.json({ total: 0 });
   }
 });
 app.get('/clube/:clubeId/leitura/:idLeitura/atualizacoes', verificarAutenticacao, verificarRestricaoAdmin, async (req, res) => {
@@ -3729,19 +3780,26 @@ app.get('/api/comentarios/:idAtualizacao/count', verificarAutenticacaoAPI, async
       return res.status(400).json({ erro: 'ID da atualização inválido' });
     }
     
+    // Verificar circuit breaker
+    if (!checkCircuitBreaker()) {
+      console.log('💔 Circuit breaker ativo - retornando 0 comentários');
+      return res.json({ total: 0 });
+    }
+    
     const total = await Comentarios.contarPorAtualizacao(parseInt(idAtualizacao));
     
     res.json({ total });
   } catch (error) {
     console.error('Erro ao contar comentários:', error);
     
-    // Fallback: Retornar 0 em caso de erro de conexão
-    if (error.code === 'ER_TOO_MANY_USER_CONNECTIONS') {
-      console.log('Fallback: Retornando 0 comentários devido a limite de conexões');
-      return res.json({ total: 0 });
+    // Registrar falha no circuit breaker
+    if (error.code === 'ER_TOO_MANY_USER_CONNECTIONS' || error.code === 'ECONNREFUSED') {
+      recordDbFailure();
     }
     
-    res.status(500).json({ erro: 'Erro ao contar comentários' });
+    // Fallback sempre: Retornar 0 em qualquer erro
+    console.log('🔄 Fallback: Retornando 0 comentários devido a erro');
+    return res.json({ total: 0 });
   }
 });
 
