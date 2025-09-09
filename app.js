@@ -162,15 +162,23 @@ async function verificarAutenticacao(req, res, next) {
 
 // Middleware específico para APIs que retorna JSON em vez de redirect
 async function verificarAutenticacaoAPI(req, res, next) {
+  console.log('🔍 verificarAutenticacaoAPI - Verificando sessão:', {
+    hasSession: !!req.session,
+    userId: req.session?.userId,
+    url: req.url
+  });
+  
   if (!req.session.userId) {
+    console.log('❌ Não autenticado - sem userId na sessão');
     return res.status(401).json({ erro: 'Não autenticado' });
   }
   
   try {
     const usuario = await Usuario.buscarPorId(req.session.userId);
+    console.log('👤 Usuario encontrado:', usuario ? 'Sim' : 'Não');
     
     if (!usuario || usuario.estado === 'inativo') {
-      console.log('Usuário inválido ou inativo para API');
+      console.log('❌ Usuário inválido ou inativo para API');
       return res.status(401).json({ erro: 'Sessão inválida' });
     }
     
@@ -179,13 +187,14 @@ async function verificarAutenticacaoAPI(req, res, next) {
 
     // Verificar expiração da sessão
     if (req.session.cookie?.expires && new Date(req.session.cookie.expires) <= new Date()) {
-      console.log('Sessão expirada detectada para API');
+      console.log('❌ Sessão expirada detectada para API');
       return res.status(401).json({ erro: 'Sessão expirada' });
     }
     
+    console.log('✅ Autenticação API bem-sucedida para userId:', req.session.userId);
     next();
   } catch (error) {
-    console.error('Erro ao verificar autenticação da API:', error);
+    console.error('❌ Erro ao verificar autenticação da API:', error);
     return res.status(500).json({ erro: 'Erro de autenticação' });
   }
 }
@@ -3723,19 +3732,24 @@ app.delete('/api/comentarios/:id', verificarAutenticacaoAPI, async (req, res) =>
 });
 
 app.get('/api/comentarios/:idAtualizacao/count', verificarAutenticacaoAPI, async (req, res) => {
+  console.log('🔢 GET /api/comentarios/:idAtualizacao/count - Iniciando...');
   try {
     const { idAtualizacao } = req.params;
+    console.log('📝 idAtualizacao recebido:', idAtualizacao);
     
     // Validar se idAtualizacao é um número válido
     if (!idAtualizacao || isNaN(parseInt(idAtualizacao))) {
+      console.log('❌ ID inválido');
       return res.status(400).json({ erro: 'ID da atualização inválido' });
     }
     
     const total = await Comentarios.contarPorAtualizacao(parseInt(idAtualizacao));
+    console.log('✅ Total de comentários:', total);
     
     res.json({ total });
   } catch (error) {
-    console.error('Erro ao contar comentários:', error);
+    console.error('❌ Erro ao contar comentários:', error);
+    console.error('Stack:', error.stack);
     res.status(500).json({ erro: 'Erro ao contar comentários' });
   }
 });
