@@ -165,72 +165,20 @@ const userCache = new Map();
 const CACHE_DURATION = 30 * 60 * 1000; // 30 minutos (cache mais longo)
 
 // Middleware específico para APIs que retorna JSON em vez de redirect
+// VERSÃO RADICAL: Confia apenas na sessão, sem consultas ao banco
 async function verificarAutenticacaoAPI(req, res, next) {
   if (!req.session.userId) {
     return res.status(401).json({ erro: 'Não autenticado' });
   }
   
-  const userId = req.session.userId;
-  const now = Date.now();
-  
-  try {
-    // Verificar cache primeiro (sempre usar cache se disponível)
-    const cached = userCache.get(userId);
-    if (cached) {
-      // Extend cache timestamp em hits (cache inteligente)
-      cached.timestamp = now;
-      
-      if (cached.usuario.estado === 'inativo') {
-        return res.status(401).json({ erro: 'Sessão inválida' });
-      }
-      req.user = { id: cached.usuario.id };
-      return next();
-    }
-    
-    // Verificar expiração da sessão ANTES de consultar BD
-    if (req.session.cookie?.expires && new Date(req.session.cookie.expires) <= new Date()) {
-      return res.status(401).json({ erro: 'Sessão expirada' });
-    }
-    
-    // Buscar usuário apenas se absolutamente necessário
-    const usuario = await Usuario.buscarPorId(userId);
-    
-    if (!usuario || usuario.estado === 'inativo') {
-      userCache.delete(userId); // Remove do cache se inválido
-      return res.status(401).json({ erro: 'Sessão inválida' });
-    }
-    
-    // Atualizar cache com timestamp estendido
-    userCache.set(userId, {
-      usuario: usuario,
-      timestamp: now
-    });
-    
-    // Limpeza mais agressiva do cache
-    if (userCache.size > 50) { // Reduzir limite máximo
-      const sortedEntries = Array.from(userCache.entries())
-        .sort(([,a], [,b]) => b.timestamp - a.timestamp); // Mais recente primeiro
-      
-      // Manter apenas os 30 mais recentes
-      for (let i = 30; i < sortedEntries.length; i++) {
-        userCache.delete(sortedEntries[i][0]);
-      }
-    }
-    
-    req.user = { id: usuario.id };
-    next();
-  } catch (error) {
-    console.error('Erro ao verificar autenticação da API:', error);
-    
-    // Em caso de erro de BD, verificar se há dados na sessão para fallback
-    if (req.session.userId && req.session.userType) {
-      console.log('Usando fallback da sessão devido a erro de BD');
-      req.user = { id: req.session.userId };
-      return next();
-    }
-    
-    return res.status(500).json({ erro: 'Erro de autenticação' });
+  // Verificar expiração da sessão
+  if (req.session.cookie?.expires && new Date(req.session.cookie.expires) <= new Date()) {
+    return res.status(401).json({ erro: 'Sessão expirada' });
   }
+  
+  // Definir req.user baseado apenas na sessão (sem consulta ao banco)
+  req.user = { id: req.session.userId };
+  next();
 }
 
 // Middleware para verificar se admin está tentando acessar página restrita
@@ -2439,7 +2387,14 @@ app.get('/api/curtidas/:id/count', verificarAutenticacaoAPI, async (req, res) =>
     const total = await Curtidas.contarCurtidas(req.params.id);
     res.json({ total });
   } catch (error) {
-    console.error(error);
+    console.error('Erro ao contar curtidas:', error);
+    
+    // Fallback: Retornar 0 em caso de erro de conexão
+    if (error.code === 'ER_TOO_MANY_USER_CONNECTIONS') {
+      console.log('Fallback: Retornando 0 curtidas devido a limite de conexões');
+      return res.json({ total: 0 });
+    }
+    
     res.status(500).json({ erro: 'Erro ao buscar total de curtidas' });
   }
 });
@@ -3779,6 +3734,13 @@ app.get('/api/comentarios/:idAtualizacao/count', verificarAutenticacaoAPI, async
     res.json({ total });
   } catch (error) {
     console.error('Erro ao contar comentários:', error);
+    
+    // Fallback: Retornar 0 em caso de erro de conexão
+    if (error.code === 'ER_TOO_MANY_USER_CONNECTIONS') {
+      console.log('Fallback: Retornando 0 comentários devido a limite de conexões');
+      return res.json({ total: 0 });
+    }
+    
     res.status(500).json({ erro: 'Erro ao contar comentários' });
   }
 });
