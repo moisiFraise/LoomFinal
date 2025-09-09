@@ -648,3 +648,4 @@ async function carregarContadorComentarios(idAtualizacao) {
         console.error('Erro ao carregar contador de comentários:', error);
     }
 }
+/*aaaaa*/
