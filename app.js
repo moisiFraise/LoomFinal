@@ -162,7 +162,7 @@ async function verificarAutenticacao(req, res, next) {
 
 // Cache simples para usuários validados (evita consultas desnecessárias ao banco)
 const userCache = new Map();
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+const CACHE_DURATION = 30 * 60 * 1000; // 30 minutos (cache mais longo)
 
 // Middleware específico para APIs que retorna JSON em vez de redirect
 async function verificarAutenticacaoAPI(req, res, next) {
@@ -170,13 +170,16 @@ async function verificarAutenticacaoAPI(req, res, next) {
     return res.status(401).json({ erro: 'Não autenticado' });
   }
   
+  const userId = req.session.userId;
+  const now = Date.now();
+  
   try {
-    const userId = req.session.userId;
-    const now = Date.now();
-    
-    // Verificar cache primeiro
+    // Verificar cache primeiro (sempre usar cache se disponível)
     const cached = userCache.get(userId);
-    if (cached && (now - cached.timestamp) < CACHE_DURATION) {
+    if (cached) {
+      // Extend cache timestamp em hits (cache inteligente)
+      cached.timestamp = now;
+      
       if (cached.usuario.estado === 'inativo') {
         return res.status(401).json({ erro: 'Sessão inválida' });
       }
@@ -184,7 +187,12 @@ async function verificarAutenticacaoAPI(req, res, next) {
       return next();
     }
     
-    // Buscar usuário apenas se não estiver no cache ou cache expirou
+    // Verificar expiração da sessão ANTES de consultar BD
+    if (req.session.cookie?.expires && new Date(req.session.cookie.expires) <= new Date()) {
+      return res.status(401).json({ erro: 'Sessão expirada' });
+    }
+    
+    // Buscar usuário apenas se absolutamente necessário
     const usuario = await Usuario.buscarPorId(userId);
     
     if (!usuario || usuario.estado === 'inativo') {
@@ -192,30 +200,35 @@ async function verificarAutenticacaoAPI(req, res, next) {
       return res.status(401).json({ erro: 'Sessão inválida' });
     }
     
-    // Atualizar cache
+    // Atualizar cache com timestamp estendido
     userCache.set(userId, {
       usuario: usuario,
       timestamp: now
     });
     
-    // Limpar cache antigo periodicamente
-    if (userCache.size > 100) { // Máximo 100 usuários no cache
-      for (const [key, value] of userCache.entries()) {
-        if (now - value.timestamp > CACHE_DURATION) {
-          userCache.delete(key);
-        }
+    // Limpeza mais agressiva do cache
+    if (userCache.size > 50) { // Reduzir limite máximo
+      const sortedEntries = Array.from(userCache.entries())
+        .sort(([,a], [,b]) => b.timestamp - a.timestamp); // Mais recente primeiro
+      
+      // Manter apenas os 30 mais recentes
+      for (let i = 30; i < sortedEntries.length; i++) {
+        userCache.delete(sortedEntries[i][0]);
       }
-    }
-    
-    // Verificar expiração da sessão
-    if (req.session.cookie?.expires && new Date(req.session.cookie.expires) <= new Date()) {
-      return res.status(401).json({ erro: 'Sessão expirada' });
     }
     
     req.user = { id: usuario.id };
     next();
   } catch (error) {
     console.error('Erro ao verificar autenticação da API:', error);
+    
+    // Em caso de erro de BD, verificar se há dados na sessão para fallback
+    if (req.session.userId && req.session.userType) {
+      console.log('Usando fallback da sessão devido a erro de BD');
+      req.user = { id: req.session.userId };
+      return next();
+    }
+    
     return res.status(500).json({ erro: 'Erro de autenticação' });
   }
 }
