@@ -173,7 +173,7 @@ class Comentarios {
                 [idAtualizacao]
             );
             
-            return rows[0].total;
+            return rows[0]?.total || 0;
         } catch (error) {
             console.error('Erro ao contar comentários:', error);
             throw error;

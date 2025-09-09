@@ -160,6 +160,36 @@ async function verificarAutenticacao(req, res, next) {
   }
 }
 
+// Middleware específico para APIs que retorna JSON em vez de redirect
+async function verificarAutenticacaoAPI(req, res, next) {
+  if (!req.session.userId) {
+    return res.status(401).json({ erro: 'Não autenticado' });
+  }
+  
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    
+    if (!usuario || usuario.estado === 'inativo') {
+      console.log('Usuário inválido ou inativo para API');
+      return res.status(401).json({ erro: 'Sessão inválida' });
+    }
+    
+    // Definir req.user para as rotas subsequentes
+    req.user = { id: usuario.id };
+
+    // Verificar expiração da sessão
+    if (req.session.cookie?.expires && new Date(req.session.cookie.expires) <= new Date()) {
+      console.log('Sessão expirada detectada para API');
+      return res.status(401).json({ erro: 'Sessão expirada' });
+    }
+    
+    next();
+  } catch (error) {
+    console.error('Erro ao verificar autenticação da API:', error);
+    return res.status(500).json({ erro: 'Erro de autenticação' });
+  }
+}
+
 // Middleware para verificar se admin está tentando acessar página restrita
 async function verificarRestricaoAdmin(req, res, next) {
   try {
@@ -663,7 +693,7 @@ app.post('/api/setup-reset-senha', async (req, res) => {
 
 
 // Verificar curtida ao carregar a página
-app.get('/api/curtidas/:id/status', verificarAutenticacao, async (req, res) => {
+app.get('/api/curtidas/:id/status', verificarAutenticacaoAPI, async (req, res) => {
   try {
     const curtido = await Curtidas.verificarCurtida(req.params.id, req.user.id);
     const total = await Curtidas.contarCurtidas(req.params.id);
@@ -673,7 +703,7 @@ app.get('/api/curtidas/:id/status', verificarAutenticacao, async (req, res) => {
     res.status(500).json({ erro: 'Erro ao buscar status da curtida' });
   }
 });
-app.get('/api/clube/:clubeId/atualizacoes/:atualizacaoId/curtidas', verificarAutenticacao, async (req, res) => {
+app.get('/api/clube/:clubeId/atualizacoes/:atualizacaoId/curtidas', verificarAutenticacaoAPI, async (req, res) => {
   try {
     // Garantir que o middleware definiu o usuário
     if (!req.user || !req.user.id) {
@@ -2278,7 +2308,7 @@ app.post('/api/clube/:id/atualizacoes/:atualizacaoId/curtir', verificarAutentica
     res.status(500).json({ erro: 'Erro ao processar curtida' });
   }
 });
-app.get('/api/clube/:id/atualizacoes/:atualizacaoId/curtidas', verificarAutenticacao, async (req, res) => {
+app.get('/api/clube/:id/atualizacoes/:atualizacaoId/curtidas', verificarAutenticacaoAPI, async (req, res) => {
   try {
     const clubeId = req.params.id;
     const atualizacaoId = req.params.atualizacaoId;
@@ -2302,7 +2332,7 @@ app.get('/api/clube/:id/atualizacoes/:atualizacaoId/curtidas', verificarAutentic
   }
 });
 // Alternar curtida em uma atualização (perfil público ou genérico)
-app.post('/api/curtidas/:id', verificarAutenticacao, async (req, res) => {
+app.post('/api/curtidas/:id', verificarAutenticacaoAPI, async (req, res) => {
   try {
     const idAtualizacao = req.params.id;
     const idUsuario = req.session.userId || (req.user && req.user.id);
@@ -2361,7 +2391,7 @@ app.post('/api/curtidas/:id', verificarAutenticacao, async (req, res) => {
     res.status(500).json({ erro: 'Erro ao processar curtida' });
   }
 });
-app.get('/api/curtidas/:id/count', verificarAutenticacao, async (req, res) => {
+app.get('/api/curtidas/:id/count', verificarAutenticacaoAPI, async (req, res) => {
   try {
     const total = await Curtidas.contarCurtidas(req.params.id);
     res.json({ total });
@@ -3566,7 +3596,7 @@ app.post('/api/denuncias', verificarAutenticacao, async (req, res) => {
 });
 
 // Rotas de comentários
-app.post('/api/comentarios', verificarAutenticacao, async (req, res) => {
+app.post('/api/comentarios', verificarAutenticacaoAPI, async (req, res) => {
   try {
     console.log('POST /api/comentarios - Dados recebidos:', req.body);
     console.log('Usuário da sessão:', req.session.userId);
@@ -3610,7 +3640,7 @@ app.post('/api/comentarios', verificarAutenticacao, async (req, res) => {
   }
 });
 
-app.get('/api/comentarios/:idAtualizacao', verificarAutenticacao, async (req, res) => {
+app.get('/api/comentarios/:idAtualizacao', verificarAutenticacaoAPI, async (req, res) => {
   try {
     const { idAtualizacao } = req.params;
     
@@ -3623,7 +3653,7 @@ app.get('/api/comentarios/:idAtualizacao', verificarAutenticacao, async (req, re
   }
 });
 
-app.put('/api/comentarios/:id', verificarAutenticacao, async (req, res) => {
+app.put('/api/comentarios/:id', verificarAutenticacaoAPI, async (req, res) => {
   try {
     const { id } = req.params;
     const { conteudo, gifUrl } = req.body;
@@ -3652,7 +3682,7 @@ app.put('/api/comentarios/:id', verificarAutenticacao, async (req, res) => {
   }
 });
 
-app.delete('/api/comentarios/:id', verificarAutenticacao, async (req, res) => {
+app.delete('/api/comentarios/:id', verificarAutenticacaoAPI, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -3692,11 +3722,16 @@ app.delete('/api/comentarios/:id', verificarAutenticacao, async (req, res) => {
   }
 });
 
-app.get('/api/comentarios/:idAtualizacao/count', verificarAutenticacao, async (req, res) => {
+app.get('/api/comentarios/:idAtualizacao/count', verificarAutenticacaoAPI, async (req, res) => {
   try {
     const { idAtualizacao } = req.params;
     
-    const total = await Comentarios.contarPorAtualizacao(idAtualizacao);
+    // Validar se idAtualizacao é um número válido
+    if (!idAtualizacao || isNaN(parseInt(idAtualizacao))) {
+      return res.status(400).json({ erro: 'ID da atualização inválido' });
+    }
+    
+    const total = await Comentarios.contarPorAtualizacao(parseInt(idAtualizacao));
     
     res.json({ total });
   } catch (error) {
