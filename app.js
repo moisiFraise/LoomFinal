@@ -160,41 +160,62 @@ async function verificarAutenticacao(req, res, next) {
   }
 }
 
+// Cache simples para usuários validados (evita consultas desnecessárias ao banco)
+const userCache = new Map();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+
 // Middleware específico para APIs que retorna JSON em vez de redirect
 async function verificarAutenticacaoAPI(req, res, next) {
-  console.log('🔍 verificarAutenticacaoAPI - Verificando sessão:', {
-    hasSession: !!req.session,
-    userId: req.session?.userId,
-    url: req.url
-  });
-  
   if (!req.session.userId) {
-    console.log('❌ Não autenticado - sem userId na sessão');
     return res.status(401).json({ erro: 'Não autenticado' });
   }
   
   try {
-    const usuario = await Usuario.buscarPorId(req.session.userId);
-    console.log('👤 Usuario encontrado:', usuario ? 'Sim' : 'Não');
+    const userId = req.session.userId;
+    const now = Date.now();
+    
+    // Verificar cache primeiro
+    const cached = userCache.get(userId);
+    if (cached && (now - cached.timestamp) < CACHE_DURATION) {
+      if (cached.usuario.estado === 'inativo') {
+        return res.status(401).json({ erro: 'Sessão inválida' });
+      }
+      req.user = { id: cached.usuario.id };
+      return next();
+    }
+    
+    // Buscar usuário apenas se não estiver no cache ou cache expirou
+    const usuario = await Usuario.buscarPorId(userId);
     
     if (!usuario || usuario.estado === 'inativo') {
-      console.log('❌ Usuário inválido ou inativo para API');
+      userCache.delete(userId); // Remove do cache se inválido
       return res.status(401).json({ erro: 'Sessão inválida' });
     }
     
-    // Definir req.user para as rotas subsequentes
-    req.user = { id: usuario.id };
-
+    // Atualizar cache
+    userCache.set(userId, {
+      usuario: usuario,
+      timestamp: now
+    });
+    
+    // Limpar cache antigo periodicamente
+    if (userCache.size > 100) { // Máximo 100 usuários no cache
+      for (const [key, value] of userCache.entries()) {
+        if (now - value.timestamp > CACHE_DURATION) {
+          userCache.delete(key);
+        }
+      }
+    }
+    
     // Verificar expiração da sessão
     if (req.session.cookie?.expires && new Date(req.session.cookie.expires) <= new Date()) {
-      console.log('❌ Sessão expirada detectada para API');
       return res.status(401).json({ erro: 'Sessão expirada' });
     }
     
-    console.log('✅ Autenticação API bem-sucedida para userId:', req.session.userId);
+    req.user = { id: usuario.id };
     next();
   } catch (error) {
-    console.error('❌ Erro ao verificar autenticação da API:', error);
+    console.error('Erro ao verificar autenticação da API:', error);
     return res.status(500).json({ erro: 'Erro de autenticação' });
   }
 }
@@ -3732,24 +3753,19 @@ app.delete('/api/comentarios/:id', verificarAutenticacaoAPI, async (req, res) =>
 });
 
 app.get('/api/comentarios/:idAtualizacao/count', verificarAutenticacaoAPI, async (req, res) => {
-  console.log('🔢 GET /api/comentarios/:idAtualizacao/count - Iniciando...');
   try {
     const { idAtualizacao } = req.params;
-    console.log('📝 idAtualizacao recebido:', idAtualizacao);
     
     // Validar se idAtualizacao é um número válido
     if (!idAtualizacao || isNaN(parseInt(idAtualizacao))) {
-      console.log('❌ ID inválido');
       return res.status(400).json({ erro: 'ID da atualização inválido' });
     }
     
     const total = await Comentarios.contarPorAtualizacao(parseInt(idAtualizacao));
-    console.log('✅ Total de comentários:', total);
     
     res.json({ total });
   } catch (error) {
-    console.error('❌ Erro ao contar comentários:', error);
-    console.error('Stack:', error.stack);
+    console.error('Erro ao contar comentários:', error);
     res.status(500).json({ erro: 'Erro ao contar comentários' });
   }
 });

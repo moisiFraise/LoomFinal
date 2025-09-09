@@ -7,11 +7,18 @@ const dbConfig = {
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'loom_db',
   waitForConnections: true,
-  connectionLimit: 10,
+  connectionLimit: 25, // Aumentar limite de conexões
   queueLimit: 0,
-  connectTimeout: 60000, // Aumentar timeout
+  acquireTimeout: 60000, // Timeout para adquirir conexão
+  timeout: 60000, // Timeout geral
+  reconnect: true, // Reconectar automaticamente
   charset: 'utf8mb4',
-  collation: 'utf8mb4_unicode_ci'
+  collation: 'utf8mb4_unicode_ci',
+  // Configurações para otimizar o pool
+  idleTimeout: 300000, // 5 minutos para conexões ociosas
+  maxIdle: 10, // Máximo de conexões ociosas
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 0
 };
 console.log('Tentando conectar ao banco de dados com as configurações:', {
   host: dbConfig.host,
