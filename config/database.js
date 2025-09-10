@@ -7,18 +7,21 @@ const dbConfig = {
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'loom_db',
   waitForConnections: true,
-  connectionLimit: 2, // Limite extremamente baixo
+  connectionLimit: 5, // Pool compartilhado entre app e sessões
   queueLimit: 0,
   acquireTimeout: 60000, // Timeout para adquirir conexão
   timeout: 60000, // Timeout geral
   reconnect: true, // Reconectar automaticamente
   charset: 'utf8mb4',
   collation: 'utf8mb4_unicode_ci',
-  // Configurações para otimizar o pool
-  idleTimeout: 300000, // 5 minutos para conexões ociosas
-  maxIdle: 10, // Máximo de conexões ociosas
+  // Configurações para otimizar o pool e evitar vazamentos
+  idleTimeout: 60000, // 1 minuto para conexões ociosas (menor)
+  maxIdle: 2, // Máximo de conexões ociosas (reduzido)
   enableKeepAlive: true,
-  keepAliveInitialDelay: 0
+  keepAliveInitialDelay: 0,
+  // IMPORTANTES: Forçar liberação de conexões
+  releaseTimeout: 60000, // Timeout para liberar conexão
+  evictTimeout: 60000, // Timeout para expulsar conexões antigas
 };
 console.log('Tentando conectar ao banco de dados com as configurações:', {
   host: dbConfig.host,
@@ -46,5 +49,20 @@ const testConnection = async () => {
 };
 
 testConnection();
+
+// Monitorar pool de conexões para detectar vazamentos
+setInterval(() => {
+  const stats = {
+    totalConnections: pool.pool._allConnections.length,
+    freeConnections: pool.pool._freeConnections.length,
+    usedConnections: pool.pool._allConnections.length - pool.pool._freeConnections.length,
+    acquiringConnections: pool.pool._acquiringConnections.length
+  };
+  
+  // Log apenas se houver uso suspeito
+  if (stats.usedConnections > 3 || stats.totalConnections > 4) {
+    console.log('⚠️ Pool stats:', stats);
+  }
+}, 30000); // A cada 30 segundos
 
 module.exports = pool;

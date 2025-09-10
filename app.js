@@ -60,12 +60,8 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 
+// IMPORTANTE: Usar o mesmo pool do database.js para evitar múltiplas conexões
 const sessionStore = new MySQLStore({
-  host: process.env.DB_HOST,
-  port: 3306,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
   clearExpired: true,
   checkExpirationInterval: 900000, // 15 minutos
   expiration: 86400000, // 24 horas
@@ -78,7 +74,7 @@ const sessionStore = new MySQLStore({
       data: 'data'
     }
   }
-});
+}, pool); // ✅ USAR O POOL COMPARTILHADO
 
 // Testar conexão do store
 sessionStore.onReady(() => {
@@ -3816,9 +3812,37 @@ app.use((req, res) => {
   res.status(404).json({ erro: 'Rota não encontrada' });
 });
 
+// Cleanup de conexões a cada minuto para prevenir vazamentos
+setInterval(() => {
+  // Forçar limpeza de sessões expiradas
+  sessionStore.clearExpiredSessions((err) => {
+    if (err && err.code !== 'ER_TOO_MANY_USER_CONNECTIONS') {
+      console.error('Erro ao limpar sessões expiradas:', err);
+    }
+  });
+}, 60000); // A cada minuto
+
+// Graceful shutdown para fechar conexões adequadamente
+process.on('SIGTERM', () => {
+  console.log('🛑 Encerrando servidor...');
+  pool.end(() => {
+    console.log('✅ Pool de conexões fechado');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('🛑 Encerrando servidor...');
+  pool.end(() => {
+    console.log('✅ Pool de conexões fechado');
+    process.exit(0);
+  });
+});
+
 const server = app.listen(PORT, () => {
   console.log(`🚀 Loom Server running on http://localhost:${PORT}`);
   console.log(`📱 PWA available for installation!`);
+  console.log('📊 Connection leak prevention active');
 });
 
 server.on('error', (err) => {
