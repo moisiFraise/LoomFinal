@@ -53,7 +53,7 @@ body {
     background: linear-gradient(135deg, var(--principal) 0%, var(--roxo) 100%);
     padding: 40px 30px;
     text-align: center;
-    color: #e84393;
+    color: #6c5ce7;
 }
 
 .loom-logo {
@@ -73,7 +73,6 @@ body {
     height: 50px;
     border-radius: 12px;
     object-fit: cover;
-    background-color: var(--roxo);
     display: block;
 }
 
@@ -198,8 +197,14 @@ body {
 }
 
 .btn-principal {
-    background: linear-gradient(45deg, var(--roxo), var(--principal));
-    color: var(--foreground);
+    background: linear-gradient(45deg, var(--roxo), var(--rosa));
+    color: var(--current-line);
+    padding: 12px;
+    border: none;
+    border-radius: 15px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
 .btn-principal:hover {
@@ -244,7 +249,6 @@ body {
     height: 24px;
     border-radius: 6px;
     object-fit: cover;
-    background-color: var(--roxo);
 }
 
 .footer-logo[style*="display: none"] {
@@ -448,4 +452,166 @@ body {
 
 .swal2-confirm {
     border-radius: 8px !important;
+}
+/* ===========================
+   MODAL CLUBE PRIVADO
+=========================== */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(40, 42, 54, 0.8);
+    backdrop-filter: blur(5px);
+    z-index: 1000;
+}
+
+#modal-clube-privado {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1001;
+    width: 85%;
+    max-width: 450px;
+    max-height: 90vh;
+    overflow-y: auto;
+    display: none;
+    flex-direction: column;
+}
+
+.form-container {
+    max-width: 450px;
+    width: 100%;
+    padding: 20px;
+    background: var(--current-line);
+    border: 2px solid var(--roxo);
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(189, 147, 249, 0.3);
+    position: relative;
+    overflow-y: auto;
+    max-height: 90vh;
+    scrollbar-width: thin;
+    scrollbar-color: var(--roxo) var(--current-line);
+}
+
+.form-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.form-container::-webkit-scrollbar-track {
+    background: var(--current-line);
+    border-radius: 10px;
+}
+
+.form-container::-webkit-scrollbar-thumb {
+    background-color: var(--roxo);
+    border-radius: 10px;
+    border: 2px solid var(--current-line);
+}
+
+#form-clube-privado {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#confirmarClube, #cancelarClube {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+#confirmarClube {
+    background: linear-gradient(45deg, var(--roxo), var(--rosa));
+    color: var(--current-line);
+    padding: 12px;
+    border: none;
+    border-radius: 15px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#confirmarClube:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(189, 147, 249, 0.4);
+}
+
+
+#cancelarClube {
+    background: linear-gradient(45deg, var(--vermelho), var(--laranja));
+    color: var(--foreground);
+    padding: 8px;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#cancelarClube:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(248, 28, 28, 0.4);
+}
+
+.senha-input-container {
+    position: relative;
+    width: 100%;
+}
+
+.senha-input-container input {
+    width: 100%;
+    padding: 8px 12px;
+    padding-right: 40px;
+    border: 1px solid var(--roxo);
+    border-radius: 8px;
+    background-color: var(--background);
+    color: var(--foreground);
+    height: 38px;
+}
+
+.toggle-senha {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--comment);
+    cursor: pointer;
+    font-size: 16px;
+    transition: color 0.3s ease;
+}
+
+.toggle-senha:hover {
+    color: var(--roxo);
+}
+
+.senha-info {
+    font-size: 11px;
+    color: var(--comment);
+    margin-top: 5px;
+    font-style: italic;
+}
+
+.form-buttons {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* ===========================
+   RESPONSIVIDADE
+=========================== */
+@media (max-width: 768px) {
+    #modal-clube-privado, .form-container {
+        max-height: 85vh;
+        width: 90%;
+    }
+
+    .form-container {
+        padding: 15px;
+    }
 }

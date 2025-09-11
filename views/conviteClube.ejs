@@ -64,8 +64,6 @@
                         <i class="fas fa-sign-in-alt"></i> Entrar no Clube
                     </button>
                     
-
-                    
                     <a href="/dashboard" class="btn-secundario">
                         <i class="fas fa-home"></i> Ir para Dashboard
                     </a>
@@ -87,6 +85,38 @@
         </div>
     </div>
 
+    <!-- Modal Clube Privado -->
+    <div class="overlay" id="overlay-privado" style="display: none;"></div>
+    <div id="modal-clube-privado" style="display: none;">
+        <div class="form-container">
+            <h2>Clube Privado</h2>
+            <p>Digite a senha para entrar no clube:</p>
+
+            <form id="form-clube-privado">
+                <div class="senha-input-container">
+                    <input 
+                        type="password" 
+                        id="senhaClubePrivado" 
+                        placeholder="Senha do clube" 
+                        required>
+                    <button type="button" class="toggle-senha" onclick="toggleSenhaPrivada()">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <p class="senha-info">A senha é definida pelo criador do clube.</p>
+
+                <div class="form-buttons">
+                    <button type="submit" id="confirmarClube" class="btn-principal">
+                        <i class="fas fa-sign-in-alt"></i> Entrar
+                    </button>
+                    <button type="button" id="cancelarClube" onclick="fecharModalPrivado()">
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <% if (userId) { %>
     <script>
         const clubeId = <%= clube.id %>;
@@ -94,137 +124,91 @@
         const clubeNome = <%- JSON.stringify(clube.nome) %>;
         
         async function entrarNoClube() {
-            console.log('Função entrarNoClube chamada');
-            
-            // Verificar se SweetAlert2 está disponível
-            if (typeof Swal === 'undefined') {
-                alert('Sistema de alertas não carregado. Recarregue a página.');
+            if (clubeVisibilidade === 'privado') {
+                abrirModalPrivado();
                 return;
             }
+
+            // Clube público -> confirmação
+            const resultado = await Swal.fire({
+                title: 'Entrar no Clube',
+                text: `Deseja entrar no clube "${clubeNome}"?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sim, entrar!',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#6A5ACD'
+            });
             
-            // Desabilitar botão e mostrar loading
+            if (!resultado.isConfirmed) return;
+            
+            await entrarNoClubeComSenha(null);
+        }
+
+        async function entrarNoClubeComSenha(senha) {
             const btnEntrar = document.getElementById('btn-entrar-clube');
             const textoOriginal = btnEntrar.innerHTML;
             btnEntrar.disabled = true;
             btnEntrar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...';
-            
+
             try {
-                let senha = null;
-                
-                // Se clube é privado, pedir senha
-                if (clubeVisibilidade === 'privado') {
-                    const { value: senhaInput } = await Swal.fire({
-                        title: 'Clube Privado',
-                        text: 'Este clube é privado. Digite a senha para entrar:',
-                        input: 'password',
-                        inputPlaceholder: 'Digite a senha do clube',
-                        showCancelButton: true,
-                        confirmButtonText: 'Entrar',
-                        cancelButtonText: 'Cancelar',
-                        confirmButtonColor: '#6A5ACD',
-                        inputValidator: (value) => {
-                            if (!value) {
-                                return 'Você precisa digitar a senha!'
-                            }
-                        }
-                    });
-                    
-                    if (!senhaInput) {
-                        return; // Usuário cancelou
-                    }
-                    
-                    senha = senhaInput;
-                } else {
-                    // Clube público, confirmar entrada
-                    const resultado = await Swal.fire({
-                        title: 'Entrar no Clube',
-                        text: `Deseja entrar no clube "${clubeNome}"?`,
-                        icon: 'question',
-                        showCancelButton: true,
-                        confirmButtonText: 'Sim, entrar!',
-                        cancelButtonText: 'Cancelar',
-                        confirmButtonColor: '#6A5ACD'
-                    });
-                    
-                    if (!resultado.isConfirmed) {
-                        return; // Usuário cancelou
-                    }
-                }
-                
-                // Fazer requisição para entrar no clube
-                console.log('Enviando requisição para entrar no clube');
-                
                 const response = await fetch('/api/convite-clube/entrar', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                     body: JSON.stringify({ clubeId, senha })
                 });
-                
-                let data;
-                try {
-                    const text = await response.text();
-                    data = JSON.parse(text);
-                } catch (parseError) {
-                    console.error('Erro ao fazer parse do JSON:', parseError, 'Resposta:', text);
-                    throw new Error('Resposta inválida do servidor');
-                }
-                
+
+                const data = await response.json();
+
                 if (response.ok) {
-                    await Swal.fire({
-                        title: 'Sucesso!',
-                        text: data.mensagem,
-                        icon: 'success',
-                        confirmButtonText: 'Ir para o Clube',
-                        confirmButtonColor: '#6A5ACD'
-                    });
-                    
-                    // Redirecionar para o clube
                     window.location.href = `/clube/${clubeId}`;
                 } else {
-                    // Tratar caso especial de usuário já participante
                     if (data.jaParticipa) {
-                        await Swal.fire({
-                            title: 'Você já é membro!',
-                            text: data.erro,
-                            icon: 'info',
-                            confirmButtonText: 'Ir para o Clube',
-                            confirmButtonColor: '#6A5ACD'
-                        });
-                        window.location.href = `/clube/${clubeId}`;
-                        return;
+                        Swal.fire('Você já é membro!', data.erro, 'info')
+                            .then(() => window.location.href = `/clube/${clubeId}`);
+                    } else {
+                        Swal.fire('Erro', data.erro || 'Erro desconhecido', 'error');
                     }
-                    
-                    Swal.fire({
-                        title: 'Erro',
-                        text: data.erro || 'Erro desconhecido',
-                        icon: 'error',
-                        confirmButtonText: 'OK',
-                        confirmButtonColor: '#6A5ACD'
-                    });
                 }
             } catch (error) {
-                console.error('Erro ao entrar no clube:', error);
-                Swal.fire({
-                    title: 'Erro',
-                    text: 'Erro ao conectar com o servidor. Tente novamente.',
-                    icon: 'error',
-                    confirmButtonText: 'OK',
-                    confirmButtonColor: '#6A5ACD'
-                });
+                Swal.fire('Erro', 'Erro ao conectar com o servidor.', 'error');
             } finally {
-                // Restaurar botão
-                if (btnEntrar) {
-                    btnEntrar.disabled = false;
-                    btnEntrar.innerHTML = textoOriginal;
-                }
+                btnEntrar.disabled = false;
+                btnEntrar.innerHTML = textoOriginal;
             }
         }
-        
 
-        
+        // Modal privado
+        function abrirModalPrivado() {
+            document.getElementById("overlay-privado").style.display = "block";
+            document.getElementById("modal-clube-privado").style.display = "flex";
+        }
+
+        function fecharModalPrivado() {
+            document.getElementById("overlay-privado").style.display = "none";
+            document.getElementById("modal-clube-privado").style.display = "none";
+        }
+
+        function toggleSenhaPrivada() {
+            const input = document.getElementById("senhaClubePrivado");
+            const icon = document.querySelector(".toggle-senha i");
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.remove("fa-eye");
+                icon.classList.add("fa-eye-slash");
+            } else {
+                input.type = "password";
+                icon.classList.remove("fa-eye-slash");
+                icon.classList.add("fa-eye");
+            }
+        }
+
+        document.getElementById("form-clube-privado")?.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const senha = document.getElementById("senhaClubePrivado").value;
+            fecharModalPrivado();
+            await entrarNoClubeComSenha(senha);
+        });
     </script>
     <% } %>
 </body>
