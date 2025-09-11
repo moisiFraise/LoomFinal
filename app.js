@@ -1452,6 +1452,64 @@ app.post('/api/explorar/entrar-privado', verificarAutenticacao, async (req, res)
   }
 });
 
+// Rota para entrar no clube via convite
+app.post('/api/convite-clube/entrar', verificarAutenticacao, async (req, res) => {
+  try {
+    // Verificar se usuário é admin
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    if (!usuario) {
+      return res.status(401).json({ erro: 'Usuário não encontrado.' });
+    }
+    
+    if (usuario.tipo === 'admin') {
+      return res.status(403).json({ erro: 'Administradores não podem entrar em clubes.' });
+    }
+    
+    const { clubeId, senha } = req.body;
+    
+    if (!clubeId) {
+      return res.status(400).json({ erro: 'ID do clube é obrigatório.' });
+    }
+    
+    // Verificar se já participa
+    const jaParticipa = await Explorar.verificarParticipacao(req.session.userId, clubeId);
+    if (jaParticipa) {
+      return res.status(400).json({ erro: 'Você já é membro deste clube.' });
+    }
+    
+    // Buscar informações do clube
+    const [clubeRows] = await pool.query('SELECT * FROM clubes WHERE id = ?', [clubeId]);
+    if (clubeRows.length === 0) {
+      return res.status(404).json({ erro: 'Clube não encontrado.' });
+    }
+    
+    const clube = clubeRows[0];
+    
+    // Se clube é privado, verificar senha
+    if (clube.visibilidade === 'privado') {
+      if (!senha) {
+        return res.status(400).json({ erro: 'Senha é obrigatória para clubes privados.' });
+      }
+      
+      const senhaCorreta = await Clube.verificarSenha(clubeId, senha);
+      if (!senhaCorreta) {
+        return res.status(401).json({ erro: 'Senha incorreta para este clube.' });
+      }
+    }
+    
+    // Adicionar usuário ao clube
+    await Explorar.entrarNoClube(req.session.userId, clubeId);
+    
+    res.json({ 
+      mensagem: 'Você entrou no clube com sucesso!',
+      clubeId: clubeId
+    });
+  } catch (error) {
+    console.error('Erro ao entrar no clube via convite:', error);
+    res.status(500).json({ erro: 'Erro ao entrar no clube. Tente novamente.' });
+  }
+});
+
 app.get('/painelAdmin', verificarAutenticacao, async (req, res) => {
   try {
     const usuario = await Usuario.buscarPorId(req.session.userId);
@@ -1782,6 +1840,69 @@ app.get('/clube/:id/leitura/:leituraId/atualizacoes', verificarAutenticacao, ver
   } catch (error) {
     console.error('Erro ao carregar página de atualizações de leitura:', error);
     res.redirect('/dashboard');
+  }
+});
+
+/* Rota de convite para clube */
+app.get('/convite-clube/:id', async (req, res) => {
+  try {
+    const clubeId = req.params.id;
+    
+    // Buscar informações do clube
+    const [clubeRows] = await pool.query(`
+      SELECT c.*, 
+             u.nome as nome_criador,
+             (SELECT COUNT(*) FROM participacoes WHERE id_clube = c.id) as total_membros
+      FROM clubes c
+      JOIN usuarios u ON c.id_criador = u.id
+      WHERE c.id = ?
+    `, [clubeId]);
+    
+    if (clubeRows.length === 0) {
+      return res.status(404).render('erro', { 
+        titulo: 'Loom - Clube não encontrado',
+        mensagem: 'O clube que você está tentando acessar não existe ou foi removido.' 
+      });
+    }
+    
+    const clube = clubeRows[0];
+    
+    // Se o usuário já está logado
+    if (req.session.userId) {
+      // Verificar se já é membro
+      const [participacoes] = await pool.query(
+        'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
+        [req.session.userId, clubeId]
+      );
+      
+      if (participacoes.length > 0) {
+        // Se já é membro, redireciona para o clube
+        return res.redirect(`/clube/${clubeId}`);
+      }
+    }
+    
+    // Buscar categorias do clube
+    const [categoriasRows] = await pool.query(`
+      SELECT cat.nome
+      FROM categorias cat
+      JOIN clube_categorias cc ON cat.id = cc.id_categoria
+      WHERE cc.id_clube = ?
+    `, [clubeId]);
+    
+    clube.categorias = categoriasRows.map(cat => cat.nome);
+    
+    // Renderizar página de convite
+    res.render('conviteClube', { 
+      titulo: `Loom - Convite para ${clube.nome}`,
+      clube: clube,
+      userId: req.session.userId || null
+    });
+  } catch (error) {
+    console.error('Erro ao processar convite do clube:', error);
+    res.status(500).render('erro', { 
+      titulo: 'Loom - Erro',
+      mensagem: 'Ocorreu um erro ao processar o convite. Tente novamente.' 
+    });
   }
 });
 

@@ -1110,6 +1110,77 @@ function voltarParaTelaAnterior() {
     window.history.back();
 }
 
+// Funções de compartilhamento
+function compartilharClube() {
+    if (!clubeInfo) {
+        mostrarAlerta('Informações do clube não carregadas', 'erro');
+        return;
+    }
+    
+    const linkClube = `${window.location.origin}/convite-clube/${clubeId}`;
+    document.getElementById('link-clube').value = linkClube;
+    
+    const modal = document.getElementById('modal-compartilhamento');
+    const overlay = document.getElementById('overlay-compartilhamento');
+    
+    modal.style.display = 'block';
+    overlay.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+function fecharModalCompartilhamento() {
+    const modal = document.getElementById('modal-compartilhamento');
+    const overlay = document.getElementById('overlay-compartilhamento');
+    
+    modal.style.display = 'none';
+    overlay.style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+function copiarLinkClube() {
+    const linkInput = document.getElementById('link-clube');
+    linkInput.select();
+    document.execCommand('copy');
+    
+    mostrarAlerta('Link copiado para a área de transferência!', 'sucesso');
+}
+
+function compartilharWhatsApp() {
+    const linkClube = document.getElementById('link-clube').value;
+    const mensagem = `Olá! Venha participar do clube de leitura "${clubeInfo.nome}" no Loom! ${linkClube}`;
+    const urlWhatsApp = `https://wa.me/?text=${encodeURIComponent(mensagem)}`;
+    window.open(urlWhatsApp, '_blank');
+}
+
+function compartilharTwitter() {
+    const linkClube = document.getElementById('link-clube').value;
+    const mensagem = `Venha participar do clube de leitura "${clubeInfo.nome}" no Loom!`;
+    const urlTwitter = `https://twitter.com/intent/tweet?text=${encodeURIComponent(mensagem)}&url=${encodeURIComponent(linkClube)}`;
+    window.open(urlTwitter, '_blank');
+}
+
+function compartilharInstagram() {
+    const linkClube = document.getElementById('link-clube').value;
+    
+    // Instagram não permite compartilhamento direto, então copiamos o link
+    navigator.clipboard.writeText(linkClube).then(() => {
+        mostrarAlerta('Link copiado! Cole no Instagram Stories ou posts para compartilhar.', 'info');
+    }).catch(() => {
+        // Fallback para navegadores mais antigos
+        const linkInput = document.getElementById('link-clube');
+        linkInput.select();
+        document.execCommand('copy');
+        mostrarAlerta('Link copiado! Cole no Instagram Stories ou posts para compartilhar.', 'info');
+    });
+}
+
+function compartilharTelegram() {
+    const linkClube = document.getElementById('link-clube').value;
+    const mensagem = `Venha participar do clube de leitura "${clubeInfo.nome}" no Loom!`;
+    const urlTelegram = `https://t.me/share/url?url=${encodeURIComponent(linkClube)}&text=${encodeURIComponent(mensagem)}`;
+    window.open(urlTelegram, '_blank');
+}
+
 function irParaPerfil(idUsuario) {
     window.location.href = `/perfil/${idUsuario}`;
 }
@@ -1132,6 +1203,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target.id === 'overlay-sorteio') {
             fecharModalSorteio();
         }
+        if (e.target.id === 'overlay-compartilhamento') {
+            fecharModalCompartilhamento();
+        }
     });
     
     document.addEventListener('keydown', function(e) {
@@ -1139,6 +1213,7 @@ document.addEventListener('DOMContentLoaded', function() {
             fecharModalSelecaoLeitura();
             fecharModalNovaSugestao();
             fecharModalSorteio();
+            fecharModalCompartilhamento();
         }
     });
 });

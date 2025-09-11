@@ -26,6 +26,9 @@
         <div class="header-container">
             <h2 id="clube-titulo">Carregando...</h2>
             <div class="clube-acoes">
+                <button id="botao-compartilhar-clube" onclick="compartilharClube()" style="margin-right: 10px;">
+                    <i class="fa fa-share-alt"></i> Compartilhar Clube
+                </button>
                 <button id="botao-voltar" onclick="voltarParaTelaAnterior()">
                     <i class="fa fa-arrow-left"></i> Voltar
                 </button>
@@ -506,6 +509,53 @@
                         </div>
                     </div>
                 </div>
+                <!-- Modal de Compartilhamento -->
+                <div id="overlay-compartilhamento" class="overlay" style="display: none;"></div>
+                <div id="modal-compartilhamento" class="modal-compartilhamento" style="display: none;">
+                    <div class="compartilhamento-content">
+                        <h3><i class="fa fa-share-alt"></i> Compartilhar Clube</h3>
+                        <p>Compartilhe este clube com seus amigos através das suas redes sociais favoritas:</p>
+                        
+                        <div class="link-compartilhamento">
+                            <label for="link-clube">Link do clube:</label>
+                            <div class="input-copy-container">
+                                <input type="text" id="link-clube" readonly>
+                                <button type="button" class="botao-copiar" onclick="copiarLinkClube()">
+                                    <i class="fa fa-copy"></i> Copiar
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="redes-sociais">
+                            <h4>Compartilhar em:</h4>
+                            <div class="botoes-redes-sociais">
+                                <button type="button" class="botao-rede-social whatsapp" onclick="compartilharWhatsApp()">
+                                    <i class="fab fa-whatsapp"></i>
+                                    WhatsApp
+                                </button>
+                                <button type="button" class="botao-rede-social twitter" onclick="compartilharTwitter()">
+                                    <i class="fab fa-twitter"></i>
+                                    X (Twitter)
+                                </button>
+                                <button type="button" class="botao-rede-social instagram" onclick="compartilharInstagram()">
+                                    <i class="fab fa-instagram"></i>
+                                    Instagram
+                                </button>
+                                <button type="button" class="botao-rede-social telegram" onclick="compartilharTelegram()">
+                                    <i class="fab fa-telegram"></i>
+                                    Telegram
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="compartilhamento-acoes">
+                            <button type="button" class="botao-cancelar" onclick="fecharModalCompartilhamento()">
+                                <i class="fa fa-times"></i> Fechar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Modal de Nova Votação -->
                 <div id="overlay-votacao" class="overlay-votacao" style="display: none;"></div>
                 <div id="modal-nova-votacao" class="modal-votacao" style="display: none;">

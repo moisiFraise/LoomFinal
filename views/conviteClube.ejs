@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <%- include('partials/favicon') %>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/conviteClube.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <title><%= titulo %></title>
+</head>
+<body>
+    <div class="convite-container">
+        <div class="convite-card">
+            <div class="convite-header">
+                <div class="loom-logo">
+                    <img src="/assets/loom_logo.webp" alt="Loom" class="logo-img">
+                    <h1>Loom</h1>
+                </div>
+                <h2>Você foi convidado para um clube de leitura!</h2>
+            </div>
+            
+            <div class="clube-preview">
+                <div class="clube-info">
+                    <h3><%= clube.nome %></h3>
+                    <p class="clube-descricao"><%= clube.descricao || 'Sem descrição disponível' %></p>
+                    
+                    <div class="clube-detalhes">
+                        <div class="detalhe-item">
+                            <i class="fa fa-user"></i>
+                            <span>Criado por <%= clube.nome_criador %></span>
+                        </div>
+                        
+                        <div class="detalhe-item">
+                            <i class="fa fa-users"></i>
+                            <span><%= clube.total_membros %> <%= clube.total_membros === 1 ? 'membro' : 'membros' %></span>
+                        </div>
+                        
+                        <div class="detalhe-item">
+                            <i class="fa <%= clube.visibilidade === 'publico' ? 'fa-globe' : 'fa-lock' %>"></i>
+                            <span><%= clube.visibilidade === 'publico' ? 'Público' : 'Privado' %></span>
+                        </div>
+                        
+                        <div class="detalhe-item">
+                            <i class="fa fa-calendar"></i>
+                            <span>Criado em <%= new Date(clube.data_criacao).toLocaleDateString('pt-BR') %></span>
+                        </div>
+                    </div>
+                    
+                    <% if (clube.categorias && clube.categorias.length > 0) { %>
+                        <div class="clube-categorias">
+                            <% clube.categorias.forEach(categoria => { %>
+                                <span class="categoria-tag"><%= categoria %></span>
+                            <% }) %>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+            
+            <div class="convite-acoes">
+                <% if (userId) { %>
+                    <!-- Usuário logado -->
+                    <button id="btn-entrar-clube" class="btn-principal" onclick="entrarNoClube()">
+                        <i class="fa fa-sign-in"></i> Entrar no Clube
+                    </button>
+                    <a href="/dashboard" class="btn-secundario">
+                        <i class="fa fa-home"></i> Ir para Dashboard
+                    </a>
+                <% } else { %>
+                    <!-- Usuário não logado -->
+                    <p class="login-necessario">Para entrar no clube, você precisa ter uma conta no Loom.</p>
+                    <a href="/autenticacao" class="btn-principal">
+                        <i class="fa fa-user-plus"></i> Fazer Login ou Cadastrar
+                    </a>
+                <% } %>
+            </div>
+        </div>
+        
+        <div class="convite-footer">
+            <p>
+                <img src="/assets/loom_logo.webp" alt="Loom" class="footer-logo">
+                Compartilhe sua paixão pela leitura no <strong>Loom</strong>
+            </p>
+        </div>
+    </div>
+
+    <% if (userId) { %>
+    <script>
+        const clubeId = <%= clube.id %>;
+        const clubeVisibilidade = '<%= clube.visibilidade %>';
+        
+        async function entrarNoClube() {
+            try {
+                let senha = null;
+                
+                // Se clube é privado, pedir senha
+                if (clubeVisibilidade === 'privado') {
+                    const { value: senhaInput } = await Swal.fire({
+                        title: 'Clube Privado',
+                        text: 'Este clube é privado. Digite a senha para entrar:',
+                        input: 'password',
+                        inputPlaceholder: 'Digite a senha do clube',
+                        showCancelButton: true,
+                        confirmButtonText: 'Entrar',
+                        cancelButtonText: 'Cancelar',
+                        confirmButtonColor: '#6A5ACD',
+                        inputValidator: (value) => {
+                            if (!value) {
+                                return 'Você precisa digitar a senha!'
+                            }
+                        }
+                    });
+                    
+                    if (!senhaInput) {
+                        return; // Usuário cancelou
+                    }
+                    
+                    senha = senhaInput;
+                } else {
+                    // Clube público, confirmar entrada
+                    const resultado = await Swal.fire({
+                        title: 'Entrar no Clube',
+                        text: `Deseja entrar no clube "${<%= JSON.stringify(clube.nome) %>}"?`,
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Sim, entrar!',
+                        cancelButtonText: 'Cancelar',
+                        confirmButtonColor: '#6A5ACD'
+                    });
+                    
+                    if (!resultado.isConfirmed) {
+                        return; // Usuário cancelou
+                    }
+                }
+                
+                // Fazer requisição para entrar no clube
+                const response = await fetch('/api/convite-clube/entrar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ clubeId, senha })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    await Swal.fire({
+                        title: 'Sucesso!',
+                        text: data.mensagem,
+                        icon: 'success',
+                        confirmButtonText: 'Ir para o Clube',
+                        confirmButtonColor: '#6A5ACD'
+                    });
+                    
+                    // Redirecionar para o clube
+                    window.location.href = `/clube/${clubeId}`;
+                } else {
+                    Swal.fire({
+                        title: 'Erro',
+                        text: data.erro,
+                        icon: 'error',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#6A5ACD'
+                    });
+                }
+            } catch (error) {
+                console.error('Erro ao entrar no clube:', error);
+                Swal.fire({
+                    title: 'Erro',
+                    text: 'Erro ao conectar com o servidor. Tente novamente.',
+                    icon: 'error',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#6A5ACD'
+                });
+            }
+        }
+    </script>
+    <% } %>
+</body>
+</html>

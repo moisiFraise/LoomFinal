@@ -53,16 +53,22 @@ testConnection();
 
 // Monitorar pool de conexões para detectar vazamentos
 setInterval(() => {
-  const stats = {
-    totalConnections: pool.pool._allConnections.length,
-    freeConnections: pool.pool._freeConnections.length,
-    usedConnections: pool.pool._allConnections.length - pool.pool._freeConnections.length,
-    acquiringConnections: pool.pool._acquiringConnections.length
-  };
-  
-  // Log apenas se houver uso suspeito
-  if (stats.usedConnections > 3 || stats.totalConnections > 4) {
-    console.log('⚠️ Pool stats:', stats);
+  try {
+    const poolInfo = pool.pool || {};
+    const stats = {
+      totalConnections: poolInfo._allConnections?.length || 0,
+      freeConnections: poolInfo._freeConnections?.length || 0,
+      usedConnections: (poolInfo._allConnections?.length || 0) - (poolInfo._freeConnections?.length || 0),
+      acquiringConnections: poolInfo._acquiringConnections?.length || 0
+    };
+    
+    // Log apenas se houver uso suspeito
+    if (stats.usedConnections > 3 || stats.totalConnections > 4) {
+      console.log('⚠️ Pool stats:', stats);
+    }
+  } catch (error) {
+    // Ignorar erros de monitoramento para não quebrar a aplicação
+    console.log('Pool monitoring disabled due to mysql2 version differences');
   }
 }, 30000); // A cada 30 segundos
 

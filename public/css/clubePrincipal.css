@@ -59,6 +59,12 @@
         min-height: calc(100vh - 60px);
     }
 }
+.clube-acoes {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 .clube-acoes button {
     background-color: transparent;
     border: 1px solid var(--roxo);
@@ -72,6 +78,297 @@
 
 .clube-acoes button:hover {
     background-color: rgba(106, 90, 205, 0.1);
+}
+
+/* Modal de compartilhamento - Estilo igual ao criar clube */
+.modal-compartilhamento {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1001;
+    width: 85%; 
+    max-width: 450px;
+    max-height: 90vh; 
+    overflow-y: auto; 
+    display: flex;
+    flex-direction: column;
+}
+
+.compartilhamento-content {
+    max-width: 450px;
+    width: 100%; 
+    padding: 20px; 
+    background: var(--current-line);
+    border: 2px solid var(--roxo);
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(189, 147, 249, 0.3);
+    position: relative;
+    margin: 15px auto;
+    overflow-y: auto;
+    max-height: 90vh; 
+    scrollbar-width: thin; 
+    scrollbar-color: var(--roxo) var(--current-line);
+}
+
+.compartilhamento-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.compartilhamento-content::-webkit-scrollbar-track {
+    background: var(--current-line);
+    border-radius: 10px;
+}
+
+.compartilhamento-content::-webkit-scrollbar-thumb {
+    background-color: var(--roxo);
+    border-radius: 10px;
+    border: 2px solid var(--current-line);
+}
+
+.compartilhamento-content h3 {
+    color: var(--foreground);
+    margin: 0 0 15px 0;
+    font-size: 1.4em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+    justify-content: center;
+}
+
+.compartilhamento-content h3 i {
+    color: var(--roxo);
+}
+
+.compartilhamento-content p {
+    color: var(--paragrafo);
+    margin-bottom: 20px;
+    line-height: 1.5;
+    text-align: center;
+}
+
+.link-compartilhamento {
+    margin-bottom: 20px;
+}
+
+.link-compartilhamento label {
+    display: block;
+    color: var(--foreground);
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.input-copy-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.input-copy-container input {
+    flex: 1;
+    padding: 12px 15px;
+    border: 2px solid var(--roxo);
+    border-radius: 12px;
+    background-color: var(--background);
+    color: var(--foreground);
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.input-copy-container input:focus {
+    outline: none;
+    border-color: var(--roxo);
+    box-shadow: 0 0 10px rgba(189, 147, 249, 0.5);
+}
+
+.botao-copiar {
+    padding: 12px 20px;
+    background: linear-gradient(45deg, var(--roxo), var(--principal));
+    color: var(--foreground);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.botao-copiar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(189, 147, 249, 0.4);
+}
+
+.redes-sociais h4 {
+    color: var(--foreground);
+    margin: 20px 0 15px 0;
+    font-size: 1.1em;
+    text-align: center;
+}
+
+.botoes-redes-sociais {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.botao-rede-social {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 10px;
+    background-color: var(--current-line);
+    border: 2px solid var(--comment);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    text-align: center;
+    font-size: 14px;
+    height: 80px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.botao-rede-social i {
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+.botao-rede-social:hover {
+    transform: translateY(-2px);
+    border-color: var(--roxo);
+    box-shadow: 0 5px 15px rgba(189, 147, 249, 0.3);
+}
+
+.botao-rede-social.whatsapp {
+    color: #25D366;
+    border-color: #25D366;
+}
+
+.botao-rede-social.whatsapp:hover {
+    background-color: #25D366;
+    color: white;
+}
+
+.botao-rede-social.twitter {
+    color: #1DA1F2;
+    border-color: #1DA1F2;
+}
+
+.botao-rede-social.twitter:hover {
+    background-color: #1DA1F2;
+    color: white;
+}
+
+.botao-rede-social.instagram {
+    color: #E1306C;
+    border-color: #E1306C;
+}
+
+.botao-rede-social.instagram:hover {
+    background: linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);
+    color: white;
+    border-color: transparent;
+}
+
+.botao-rede-social.telegram {
+    color: #0088cc;
+    border-color: #0088cc;
+}
+
+.botao-rede-social.telegram:hover {
+    background-color: #0088cc;
+    color: white;
+}
+
+.compartilhamento-acoes {
+    text-align: center;
+    padding-top: 15px;
+    margin-top: auto;
+}
+
+.compartilhamento-acoes .botao-cancelar {
+    background: linear-gradient(45deg, var(--vermelho), var(--laranja));
+    color: var(--foreground);
+    padding: 12px 24px; 
+    border: none;
+    border-radius: 12px; 
+    font-size: 14px; 
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+
+.compartilhamento-acoes .botao-cancelar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(248, 28, 28, 0.4);
+}
+
+/* Responsividade igual ao criar clube */
+@media (max-width: 768px) {
+    .modal-compartilhamento, .compartilhamento-content {
+        max-height: 85vh;
+        width: 90%; 
+    }
+    
+    .compartilhamento-content {
+        padding: 15px;
+    }
+    
+    .botoes-redes-sociais {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .botao-rede-social {
+        flex-direction: row;
+        justify-content: flex-start;
+        height: auto;
+        padding: 12px 15px;
+    }
+    
+    .botao-rede-social i {
+        margin-right: 12px;
+        margin-bottom: 0;
+        font-size: 20px;
+    }
+    
+    .input-copy-container {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .input-copy-container input {
+        margin-bottom: 0;
+    }
+}
+
+@media (max-height: 600px) {
+    .modal-compartilhamento, .compartilhamento-content {
+        max-height: 95vh;
+    }
+}
+
+@media (max-width: 480px) {
+    .compartilhamento-content {
+        padding: 12px;
+        margin: 10px auto;
+    }
+    
+    .compartilhamento-content h3 {
+        font-size: 1.2em;
+    }
+    
+    .botao-rede-social {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+    
+    .botao-rede-social i {
+        font-size: 18px;
+        margin-right: 10px;
+    }
 }
 
 .clube-info-card {

@@ -1,0 +1,349 @@
+/* Reset básico */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, var(--background) 0%, var(--current-line) 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    color: var(--foreground);
+}
+
+.convite-container {
+    max-width: 600px;
+    width: 100%;
+}
+
+.convite-card {
+    background: var(--background);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.convite-header {
+    background: linear-gradient(135deg, var(--principal) 0%, var(--roxo) 100%);
+    padding: 40px 30px;
+    text-align: center;
+    color: white;
+}
+
+.loom-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.logo-img {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+}
+
+.loom-logo h1 {
+    font-size: 2em;
+    font-weight: 700;
+    margin: 0;
+}
+
+.convite-header h2 {
+    font-size: 1.3em;
+    font-weight: 600;
+    opacity: 0.95;
+    line-height: 1.4;
+}
+
+.clube-preview {
+    padding: 30px;
+}
+
+.clube-info h3 {
+    font-size: 1.8em;
+    font-weight: 700;
+    color: var(--foreground);
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.clube-descricao {
+    color: var(--paragrafo);
+    font-size: 1.1em;
+    line-height: 1.6;
+    text-align: center;
+    margin-bottom: 25px;
+    padding: 0 10px;
+}
+
+.clube-detalhes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.detalhe-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px;
+    background: var(--current-line);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.detalhe-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.detalhe-item i {
+    color: var(--principal);
+    width: 20px;
+    text-align: center;
+    font-size: 1.1em;
+}
+
+.detalhe-item span {
+    color: var(--foreground);
+    font-weight: 500;
+    font-size: 0.95em;
+}
+
+.clube-categorias {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.categoria-tag {
+    background: var(--principal);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.convite-acoes {
+    padding: 30px;
+    background: var(--current-line);
+    text-align: center;
+}
+
+.login-necessario {
+    color: var(--paragrafo);
+    margin-bottom: 20px;
+    font-size: 1.1em;
+    line-height: 1.5;
+}
+
+.btn-principal, .btn-secundario {
+    display: inline-block;
+    padding: 15px 30px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 1.1em;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    margin: 8px;
+    border: none;
+    cursor: pointer;
+    min-width: 180px;
+}
+
+.btn-principal {
+    background: linear-gradient(135deg, var(--principal) 0%, var(--roxo) 100%);
+    color: white;
+}
+
+.btn-principal:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(106, 90, 205, 0.3);
+}
+
+.btn-secundario {
+    background: transparent;
+    color: var(--principal);
+    border: 2px solid var(--principal);
+}
+
+.btn-secundario:hover {
+    background: var(--principal);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.convite-footer {
+    text-align: center;
+    padding: 20px;
+    color: var(--paragrafo);
+}
+
+.convite-footer p {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 1em;
+}
+
+.footer-logo {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+}
+
+.convite-footer strong {
+    color: var(--principal);
+    font-weight: 700;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .convite-container {
+        padding: 10px;
+    }
+    
+    .convite-header {
+        padding: 30px 20px;
+    }
+    
+    .loom-logo {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .loom-logo h1 {
+        font-size: 1.5em;
+    }
+    
+    .convite-header h2 {
+        font-size: 1.1em;
+    }
+    
+    .clube-preview {
+        padding: 20px;
+    }
+    
+    .clube-info h3 {
+        font-size: 1.5em;
+    }
+    
+    .clube-detalhes {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .detalhe-item {
+        padding: 12px;
+    }
+    
+    .convite-acoes {
+        padding: 20px;
+    }
+    
+    .btn-principal, .btn-secundario {
+        display: block;
+        width: 100%;
+        margin: 8px 0;
+        padding: 12px 20px;
+    }
+    
+    .convite-footer p {
+        flex-direction: column;
+        gap: 8px;
+        font-size: 0.9em;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 10px;
+    }
+    
+    .convite-card {
+        border-radius: 16px;
+    }
+    
+    .convite-header {
+        padding: 25px 15px;
+    }
+    
+    .clube-preview {
+        padding: 15px;
+    }
+    
+    .clube-info h3 {
+        font-size: 1.3em;
+    }
+    
+    .clube-descricao {
+        font-size: 1em;
+    }
+    
+    .detalhe-item {
+        padding: 10px;
+    }
+    
+    .detalhe-item span {
+        font-size: 0.9em;
+    }
+    
+    .categoria-tag {
+        font-size: 0.8em;
+        padding: 5px 10px;
+    }
+    
+    .convite-acoes {
+        padding: 15px;
+    }
+}
+
+/* Animações */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.convite-card {
+    animation: fadeInUp 0.6s ease;
+}
+
+.convite-footer {
+    animation: fadeInUp 0.6s ease 0.2s both;
+}
+
+/* Estados de loading */
+.btn-principal:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* Personalização SweetAlert2 */
+.swal2-popup {
+    border-radius: 16px !important;
+}
+
+.swal2-confirm {
+    border-radius: 8px !important;
+}

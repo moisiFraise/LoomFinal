@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <%- include('partials/favicon') %>
+    <link rel="stylesheet" href="/css/style.css">
+    <title><%= titulo %></title>
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--background) 0%, var(--current-line) 100%);
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .erro-container {
+            text-align: center;
+            padding: 40px;
+            background: var(--background);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 90%;
+        }
+        
+        .erro-icone {
+            font-size: 4em;
+            color: var(--principal);
+            margin-bottom: 20px;
+        }
+        
+        .erro-titulo {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: var(--foreground);
+            margin-bottom: 15px;
+        }
+        
+        .erro-mensagem {
+            color: var(--paragrafo);
+            font-size: 1.1em;
+            line-height: 1.5;
+            margin-bottom: 30px;
+        }
+        
+        .erro-acoes a {
+            display: inline-block;
+            padding: 12px 24px;
+            background: var(--principal);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        
+        .erro-acoes a:hover {
+            background: var(--roxo);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="erro-container">
+        <div class="erro-icone">
+            <i class="fa fa-exclamation-triangle"></i>
+        </div>
+        <h1 class="erro-titulo">Oops!</h1>
+        <p class="erro-mensagem">
+            <%= mensagem || 'Algo deu errado. Tente novamente mais tarde.' %>
+        </p>
+        <div class="erro-acoes">
+            <a href="/">
+                <i class="fa fa-home"></i> Voltar ao Início
+            </a>
+        </div>
+    </div>
+</body>
+</html>
