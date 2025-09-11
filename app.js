@@ -1455,6 +1455,9 @@ app.post('/api/explorar/entrar-privado', verificarAutenticacao, async (req, res)
 // Rota para entrar no clube via convite
 app.post('/api/convite-clube/entrar', verificarAutenticacao, async (req, res) => {
   try {
+    // Sempre retornar JSON para requests AJAX
+    res.setHeader('Content-Type', 'application/json');
+    
     // Verificar se usuário é admin
     const usuario = await Usuario.buscarPorId(req.session.userId);
     if (!usuario) {
@@ -1474,7 +1477,7 @@ app.post('/api/convite-clube/entrar', verificarAutenticacao, async (req, res) =>
     // Verificar se já participa
     const jaParticipa = await Explorar.verificarParticipacao(req.session.userId, clubeId);
     if (jaParticipa) {
-      return res.status(400).json({ erro: 'Você já é membro deste clube.' });
+      return res.status(400).json({ erro: 'Você já é membro deste clube.', jaParticipa: true, clubeId });
     }
     
     // Buscar informações do clube
@@ -1500,13 +1503,15 @@ app.post('/api/convite-clube/entrar', verificarAutenticacao, async (req, res) =>
     // Adicionar usuário ao clube
     await Explorar.entrarNoClube(req.session.userId, clubeId);
     
-    res.json({ 
+    return res.json({ 
       mensagem: 'Você entrou no clube com sucesso!',
-      clubeId: clubeId
+      clubeId: clubeId,
+      sucesso: true
     });
+      
   } catch (error) {
     console.error('Erro ao entrar no clube via convite:', error);
-    res.status(500).json({ erro: 'Erro ao entrar no clube. Tente novamente.' });
+    return res.status(500).json({ erro: 'Erro ao entrar no clube. Tente novamente.' });
   }
 });
 

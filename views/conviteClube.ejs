@@ -14,35 +14,35 @@
         <div class="convite-card">
             <div class="convite-header">
                 <div class="loom-logo">
-                    <img src="/assets/loom_logo.webp" alt="Loom" class="logo-img">
+                    <img src="/logo-192.png" alt="Loom" class="logo-img" onerror="this.src='/favicon-32x32.png'; this.style.width='32px'; this.style.height='32px'">
                     <h1>Loom</h1>
                 </div>
-                <h2>Você foi convidado para um clube de leitura!</h2>
+                <h2>Convite para Clube de Leitura</h2>
             </div>
             
             <div class="clube-preview">
                 <div class="clube-info">
                     <h3><%= clube.nome %></h3>
-                    <p class="clube-descricao"><%= clube.descricao || 'Sem descrição disponível' %></p>
+                    <p class="clube-descricao"><%= clube.descricao || 'Este clube não possui descrição.' %></p>
                     
                     <div class="clube-detalhes">
                         <div class="detalhe-item">
-                            <i class="fa fa-user"></i>
+                            <i class="fas fa-user"></i>
                             <span>Criado por <%= clube.nome_criador %></span>
                         </div>
                         
                         <div class="detalhe-item">
-                            <i class="fa fa-users"></i>
+                            <i class="fas fa-users"></i>
                             <span><%= clube.total_membros %> <%= clube.total_membros === 1 ? 'membro' : 'membros' %></span>
                         </div>
                         
                         <div class="detalhe-item">
-                            <i class="fa <%= clube.visibilidade === 'publico' ? 'fa-globe' : 'fa-lock' %>"></i>
+                            <i class="fas <%= clube.visibilidade === 'publico' ? 'fa-globe' : 'fa-lock' %>"></i>
                             <span><%= clube.visibilidade === 'publico' ? 'Público' : 'Privado' %></span>
                         </div>
                         
                         <div class="detalhe-item">
-                            <i class="fa fa-calendar"></i>
+                            <i class="fas fa-calendar"></i>
                             <span>Criado em <%= new Date(clube.data_criacao).toLocaleDateString('pt-BR') %></span>
                         </div>
                     </div>
@@ -61,16 +61,19 @@
                 <% if (userId) { %>
                     <!-- Usuário logado -->
                     <button id="btn-entrar-clube" class="btn-principal" onclick="entrarNoClube()">
-                        <i class="fa fa-sign-in"></i> Entrar no Clube
+                        <i class="fas fa-sign-in-alt"></i> Entrar no Clube
                     </button>
+                    
+
+                    
                     <a href="/dashboard" class="btn-secundario">
-                        <i class="fa fa-home"></i> Ir para Dashboard
+                        <i class="fas fa-home"></i> Ir para Dashboard
                     </a>
                 <% } else { %>
                     <!-- Usuário não logado -->
-                    <p class="login-necessario">Para entrar no clube, você precisa ter uma conta no Loom.</p>
+                    <p class="login-necessario">Para participar deste clube, você precisa estar logado.</p>
                     <a href="/autenticacao" class="btn-principal">
-                        <i class="fa fa-user-plus"></i> Fazer Login ou Cadastrar
+                        <i class="fas fa-sign-in-alt"></i> Entrar ou Criar Conta
                     </a>
                 <% } %>
             </div>
@@ -78,7 +81,7 @@
         
         <div class="convite-footer">
             <p>
-                <img src="/assets/loom_logo.webp" alt="Loom" class="footer-logo">
+                <img src="/logo-192.png" alt="Loom" class="footer-logo" onerror="this.src='/favicon-16x16.png'">
                 Compartilhe sua paixão pela leitura no <strong>Loom</strong>
             </p>
         </div>
@@ -88,8 +91,23 @@
     <script>
         const clubeId = <%= clube.id %>;
         const clubeVisibilidade = '<%= clube.visibilidade %>';
+        const clubeNome = <%- JSON.stringify(clube.nome) %>;
         
         async function entrarNoClube() {
+            console.log('Função entrarNoClube chamada');
+            
+            // Verificar se SweetAlert2 está disponível
+            if (typeof Swal === 'undefined') {
+                alert('Sistema de alertas não carregado. Recarregue a página.');
+                return;
+            }
+            
+            // Desabilitar botão e mostrar loading
+            const btnEntrar = document.getElementById('btn-entrar-clube');
+            const textoOriginal = btnEntrar.innerHTML;
+            btnEntrar.disabled = true;
+            btnEntrar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...';
+            
             try {
                 let senha = null;
                 
@@ -120,7 +138,7 @@
                     // Clube público, confirmar entrada
                     const resultado = await Swal.fire({
                         title: 'Entrar no Clube',
-                        text: `Deseja entrar no clube "${<%= JSON.stringify(clube.nome) %>}"?`,
+                        text: `Deseja entrar no clube "${clubeNome}"?`,
                         icon: 'question',
                         showCancelButton: true,
                         confirmButtonText: 'Sim, entrar!',
@@ -134,15 +152,25 @@
                 }
                 
                 // Fazer requisição para entrar no clube
+                console.log('Enviando requisição para entrar no clube');
+                
                 const response = await fetch('/api/convite-clube/entrar', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
                     },
                     body: JSON.stringify({ clubeId, senha })
                 });
                 
-                const data = await response.json();
+                let data;
+                try {
+                    const text = await response.text();
+                    data = JSON.parse(text);
+                } catch (parseError) {
+                    console.error('Erro ao fazer parse do JSON:', parseError, 'Resposta:', text);
+                    throw new Error('Resposta inválida do servidor');
+                }
                 
                 if (response.ok) {
                     await Swal.fire({
@@ -156,9 +184,22 @@
                     // Redirecionar para o clube
                     window.location.href = `/clube/${clubeId}`;
                 } else {
+                    // Tratar caso especial de usuário já participante
+                    if (data.jaParticipa) {
+                        await Swal.fire({
+                            title: 'Você já é membro!',
+                            text: data.erro,
+                            icon: 'info',
+                            confirmButtonText: 'Ir para o Clube',
+                            confirmButtonColor: '#6A5ACD'
+                        });
+                        window.location.href = `/clube/${clubeId}`;
+                        return;
+                    }
+                    
                     Swal.fire({
                         title: 'Erro',
-                        text: data.erro,
+                        text: data.erro || 'Erro desconhecido',
                         icon: 'error',
                         confirmButtonText: 'OK',
                         confirmButtonColor: '#6A5ACD'
@@ -173,8 +214,17 @@
                     confirmButtonText: 'OK',
                     confirmButtonColor: '#6A5ACD'
                 });
+            } finally {
+                // Restaurar botão
+                if (btnEntrar) {
+                    btnEntrar.disabled = false;
+                    btnEntrar.innerHTML = textoOriginal;
+                }
             }
         }
+        
+
+        
     </script>
     <% } %>
 </body>
