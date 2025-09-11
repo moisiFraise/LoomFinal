@@ -14,6 +14,7 @@ const dbConfig = {
   reconnect: true, // Reconectar automaticamente
   charset: 'utf8mb4',
   collation: 'utf8mb4_unicode_ci',
+  timezone: '-03:00', // Fuso horário do Brasil (UTC-3)
   // Configurações para otimizar o pool e evitar vazamentos
   idleTimeout: 60000, // 1 minuto para conexões ociosas (menor)
   maxIdle: 2, // Máximo de conexões ociosas (reduzido)

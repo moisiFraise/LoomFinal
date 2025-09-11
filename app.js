@@ -2,6 +2,9 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
 require('dotenv').config();
+
+// Definir timezone do Brasil
+process.env.TZ = 'America/Sao_Paulo';
 const session = require('express-session');
 const pool = require('./config/database');
 const MySQLStore = require('express-mysql-session')(session);

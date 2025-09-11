@@ -119,7 +119,7 @@ class Atualizacoes {
             
             const [result] = await pool.query(
                 `UPDATE atualizacoes 
-                 SET conteudo = ?, porcentagem_leitura = ?, gif_url = ?, data_postagem = NOW()
+                 SET conteudo = ?, porcentagem_leitura = ?, gif_url = ?, data_postagem = CONVERT_TZ(NOW(), '+00:00', '-03:00')
                  WHERE id = ?`,
                 [conteudo, porcentagemLeitura, gifUrl, id]
             );

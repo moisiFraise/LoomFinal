@@ -56,8 +56,13 @@ function renderizarAtualizacoes(atualizacoes) {
     
     container.innerHTML = atualizacoes.map(a => {
         const data = new Date(a.data_postagem);
-        const dataFormatada = data.toLocaleDateString('pt-BR') + ' às ' + 
-                             data.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+        const dataFormatada = data.toLocaleDateString('pt-BR', {
+            timeZone: 'America/Sao_Paulo'
+        }) + ' às ' + data.toLocaleTimeString('pt-BR', {
+            hour: '2-digit', 
+            minute:'2-digit',
+            timeZone: 'America/Sao_Paulo'
+        });
         const isAutor = a.id_usuario == userId;
         const usuarioSuspenso = a.estado_usuario === 'inativo';
         
@@ -648,4 +653,3 @@ async function carregarContadorComentarios(idAtualizacao) {
         console.error('Erro ao carregar contador de comentários:', error);
     }
 }
-/*aaaaa*/
