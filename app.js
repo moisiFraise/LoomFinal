@@ -2082,7 +2082,8 @@ app.get('/api/livros/buscar', verificarAutenticacao, async (req, res) => {
           return res.status(400).json({ erro: 'Termo de busca é obrigatório' });
       }
       
-      const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(termoBusca)}&maxResults=12`;
+      // Buscar especificamente no título para resultados mais precisos
+      const url = `https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(termoBusca)}&maxResults=12&orderBy=relevance`;
       
       const response = await fetch(url);
       if (!response.ok) {
