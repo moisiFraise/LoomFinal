@@ -1287,6 +1287,11 @@ app.delete('/api/perfil', verificarAutenticacao, async (req, res) => {
     );
     
     await pool.safeQuery(
+      'UPDATE mensagens_chat SET excluida = TRUE WHERE id_usuario = ?',
+      [req.session.userId]
+    );
+    
+    await pool.safeQuery(
       'DELETE FROM usuarios WHERE id = ?',
       [req.session.userId]
     );
