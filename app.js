@@ -94,11 +94,11 @@ app.use(session({
   store: sessionStore,
   resave: false,
   saveUninitialized: false,
-  rolling: true, // Renovar cookie a cada requisição
+  rolling: false, // Desativado para evitar writes no banco a cada request
   cookie: { 
-    secure: false, // true apenas em HTTPS
+    secure: false,
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000, // 24 horas
+    maxAge: 24 * 60 * 60 * 1000,
     sameSite: 'lax'
   }
 }));
@@ -119,10 +119,9 @@ async function verificarAutenticacao(req, res, next) {
   }
   
   try {
-    const usuario = await Usuario.buscarPorId(req.session.userId);
+    const usuario = await getCachedUser(req.session.userId);
     
     if (!usuario || usuario.estado === 'inativo') {
-      console.log('Usuário inválido ou inativo, forçando logout');
       req.session.destroy(() => {
         res.clearCookie('loom_session');
         return res.redirect('/autenticacao');
@@ -130,12 +129,9 @@ async function verificarAutenticacao(req, res, next) {
       return;
     }
     
-    // Definir req.user para as rotas subsequentes
-    req.user = { id: usuario.id };
+    req.user = { id: usuario.id, tipo: usuario.tipo };
 
-    // Verificar expiração da sessão
     if (req.session.cookie?.expires && new Date(req.session.cookie.expires) <= new Date()) {
-      console.log('Sessão expirada detectada, forçando logout');
       req.session.destroy(() => {
         res.clearCookie('loom_session');
         return res.redirect('/autenticacao');
@@ -143,13 +139,10 @@ async function verificarAutenticacao(req, res, next) {
       return;
     }
     
-    // Headers anti-cache
     res.set({
       'Cache-Control': 'no-cache, no-store, must-revalidate, private, max-age=0',
       'Pragma': 'no-cache',
-      'Expires': '0',
-      'Last-Modified': new Date().toISOString(),
-      'ETag': Date.now().toString()
+      'Expires': '0'
     });
     
     next();
@@ -159,9 +152,36 @@ async function verificarAutenticacao(req, res, next) {
   }
 }
 
-// Cache simples para usuários validados (evita consultas desnecessárias ao banco)
+// Cache simples para usuários validados
 const userCache = new Map();
-const CACHE_DURATION = 30 * 60 * 1000; // 30 minutos (cache mais longo)
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+
+// Função para obter usuário com cache
+async function getCachedUser(id) {
+  const cached = userCache.get(id);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.data;
+  }
+  
+  const usuario = await Usuario.buscarPorId(id);
+  if (usuario) {
+    userCache.set(id, { 
+      data: usuario, 
+      expiresAt: Date.now() + CACHE_DURATION 
+    });
+  }
+  return usuario;
+}
+
+// Limpar cache expirado periodicamente
+setInterval(() => {
+  const now = Date.now();
+  for (const [id, cache] of userCache.entries()) {
+    if (cache.expiresAt <= now) {
+      userCache.delete(id);
+    }
+  }
+}, 60000); // A cada minuto
 
 // Circuit breaker para banco de dados
 let dbCircuitBreaker = {
@@ -213,16 +233,11 @@ async function verificarAutenticacaoAPI(req, res, next) {
 // Middleware para verificar se admin está tentando acessar página restrita
 async function verificarRestricaoAdmin(req, res, next) {
   try {
-    const usuario = await Usuario.buscarPorId(req.session.userId);
-    
-    if (usuario && usuario.tipo === 'admin') {
-      console.log('Admin tentando acessar página restrita, redirecionando para painel admin');
+    if (req.user?.tipo === 'admin') {
       return res.redirect('/painelAdmin');
     }
-    
     next();
   } catch (error) {
-    console.error('Erro ao verificar restrição de admin:', error);
     next();
   }
 }
@@ -979,16 +994,20 @@ app.get('/meuPerfil', verificarAutenticacao, verificarRestricaoAdmin, async (req
     const [publicacoes] = await pool.safeQuery(`
   SELECT a.*, c.nome as nome_clube, c.visibilidade,
          l.titulo as titulo_leitura,
-         (SELECT COUNT(*) FROM curtidas WHERE id_atualizacao = a.id) as curtidas
+         COALESCE(cnt.curtidas, 0) as curtidas
   FROM atualizacoes a
   JOIN clubes c ON a.id_clube = c.id
   LEFT JOIN leituras l ON a.id_leitura = l.id
+  LEFT JOIN (
+    SELECT id_atualizacao, COUNT(*) as curtidas
+    FROM curtidas
+    GROUP BY id_atualizacao
+  ) cnt ON cnt.id_atualizacao = a.id
   WHERE a.id_usuario = ?
   ORDER BY a.data_postagem DESC
 `, [req.session.userId]);
 
-    // (opcional) debug pequeno
-    console.log('clubesIds (únicos):', clubesIds);
+
 
     res.render('meuPerfil', { 
       titulo: 'Loom - Meu Perfil',

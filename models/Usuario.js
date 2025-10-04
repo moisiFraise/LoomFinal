@@ -79,20 +79,17 @@ class Usuario {
   static async listarTodos() {
     try {
       const [rows] = await pool.safeQuery(`
-        SELECT u.* FROM usuarios u ORDER BY u.id
+        SELECT u.id, u.nome, u.email, u.estado, u.tipo, u.data_criacao,
+               COUNT(DISTINCT uc.clube_id) AS total_clubes
+        FROM usuarios u
+        LEFT JOIN (
+          SELECT id AS clube_id, id_criador AS usuario_id FROM clubes
+          UNION ALL
+          SELECT id_clube AS clube_id, id_usuario AS usuario_id FROM participacoes
+        ) uc ON uc.usuario_id = u.id
+        GROUP BY u.id, u.nome, u.email, u.estado, u.tipo, u.data_criacao
+        ORDER BY u.id
       `);
-      
-      for (let i = 0; i < rows.length; i++) {
-        const [result] = await pool.safeQuery(`
-          SELECT COUNT(DISTINCT clube_id) as total FROM (
-            SELECT id as clube_id FROM clubes WHERE id_criador = ?
-            UNION
-            SELECT id_clube as clube_id FROM participacoes WHERE id_usuario = ?
-          ) as combined_clubs
-        `, [rows[i].id, rows[i].id]);
-        
-        rows[i].total_clubes = result[0].total;
-      }
       
       return rows;
     } catch (error) {
