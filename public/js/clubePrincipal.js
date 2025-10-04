@@ -134,6 +134,9 @@ function mudarSecaoClube(secao) {
             case 'configuracoes-clube':
                 inicializarConfiguracoes();
                 break;
+            case 'chat':
+                inicializarChat();
+                break;
         }
     }
 }

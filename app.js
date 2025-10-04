@@ -36,6 +36,7 @@ const Encontros = require('./models/Encontros');
 const Denuncias = require('./models/Denuncias');
 const Votacao = require('./models/Votacao');
 const Comentarios = require('./models/Comentarios');
+const Chat = require('./models/Chat');
 
 
 
@@ -3944,6 +3945,111 @@ app.get('/api/comentarios/:idAtualizacao/count', verificarAutenticacaoAPI, async
     // Fallback sempre: Retornar 0 em qualquer erro
     console.log('🔄 Fallback: Retornando 0 comentários devido a erro');
     return res.json({ total: 0 });
+  }
+});
+
+// Rotas de Chat
+app.post('/api/chat/:clubeId/mensagens', verificarAutenticacaoAPI, async (req, res) => {
+  try {
+    const { clubeId } = req.params;
+    const { mensagem } = req.body;
+    
+    if (!mensagem || mensagem.trim().length === 0) {
+      return res.status(400).json({ erro: 'Mensagem não pode estar vazia' });
+    }
+    
+    const [participacao] = await pool.safeQuery(
+      'SELECT id FROM participacoes WHERE id_clube = ? AND id_usuario = ?',
+      [clubeId, req.session.userId]
+    );
+    
+    if (participacao.length === 0) {
+      return res.status(403).json({ erro: 'Você precisa ser membro do clube para enviar mensagens' });
+    }
+    
+    const novaMensagem = await Chat.criarMensagem(clubeId, req.session.userId, mensagem);
+    
+    res.status(201).json({
+      mensagem: 'Mensagem enviada com sucesso',
+      chat: novaMensagem
+    });
+  } catch (error) {
+    console.error('Erro ao enviar mensagem:', error);
+    res.status(500).json({ erro: 'Erro ao enviar mensagem' });
+  }
+});
+
+app.get('/api/chat/:clubeId/mensagens', verificarAutenticacaoAPI, async (req, res) => {
+  try {
+    const { clubeId } = req.params;
+    const { limite = 100, offset = 0 } = req.query;
+    
+    const [participacao] = await pool.safeQuery(
+      'SELECT id FROM participacoes WHERE id_clube = ? AND id_usuario = ?',
+      [clubeId, req.session.userId]
+    );
+    
+    if (participacao.length === 0) {
+      return res.status(403).json({ erro: 'Você precisa ser membro do clube para ver as mensagens' });
+    }
+    
+    const mensagens = await Chat.listarPorClube(clubeId, parseInt(limite), parseInt(offset));
+    
+    res.json(mensagens);
+  } catch (error) {
+    console.error('Erro ao listar mensagens:', error);
+    res.status(500).json({ erro: 'Erro ao listar mensagens' });
+  }
+});
+
+app.put('/api/chat/mensagens/:id', verificarAutenticacaoAPI, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { mensagem } = req.body;
+    
+    if (!mensagem || mensagem.trim().length === 0) {
+      return res.status(400).json({ erro: 'Mensagem não pode estar vazia' });
+    }
+    
+    const temPermissao = await Chat.verificarPermissao(id, req.session.userId);
+    
+    if (!temPermissao) {
+      return res.status(403).json({ erro: 'Você não tem permissão para editar esta mensagem' });
+    }
+    
+    const sucesso = await Chat.editarMensagem(id, mensagem);
+    
+    if (!sucesso) {
+      return res.status(404).json({ erro: 'Mensagem não encontrada' });
+    }
+    
+    res.json({ mensagem: 'Mensagem editada com sucesso' });
+  } catch (error) {
+    console.error('Erro ao editar mensagem:', error);
+    res.status(500).json({ erro: 'Erro ao editar mensagem' });
+  }
+});
+
+app.delete('/api/chat/mensagens/:id', verificarAutenticacaoAPI, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const temPermissao = await Chat.verificarPermissao(id, req.session.userId);
+    
+    if (!temPermissao) {
+      return res.status(403).json({ erro: 'Você não tem permissão para excluir esta mensagem' });
+    }
+    
+    const sucesso = await Chat.excluirMensagem(id);
+    
+    if (!sucesso) {
+      return res.status(404).json({ erro: 'Mensagem não encontrada' });
+    }
+    
+    res.json({ mensagem: 'Mensagem excluída com sucesso' });
+  } catch (error) {
+    console.error('Erro ao excluir mensagem:', error);
+    res.status(500).json({ erro: 'Erro ao excluir mensagem' });
   }
 });
 

@@ -25,6 +25,10 @@
             <i class="fa fa-chart-bar"></i>
             <span>Votação</span>
         </div>
+        <div class="menu-item" data-secao="chat" onclick="abrirChat()">
+            <i class="fa fa-comments"></i>
+            <span>Chat</span>
+        </div>
 
         <!-- Criador do clube -->
         <div id="opcoes-criador" class="menu-item-extra" data-secao="configuracoes-clube" style="display: none;">
@@ -120,5 +124,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+function abrirChat() {
+    if (typeof mudarSecaoClube === 'function') {
+        mudarSecaoClube('chat');
+    }
+}
 
 </script>

@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="/css/votacao.css">
     <link rel="stylesheet" href="/css/configuracoes.css">
     <link rel="stylesheet" href="/css/sair-clube.css">
+    <link rel="stylesheet" href="/css/chat.css">
     <title><%= titulo %></title>
 </head>
 <body>
@@ -342,6 +343,32 @@
                     <h3>Configurações do Clube</h3>
                     <div id="configuracoes-container">
                         <p>Configurações do clube em desenvolvimento...</p>
+                    </div>
+                </div>
+
+                <!-- Seção Chat -->
+                <div id="secao-chat" class="clube-secao" style="display: none;">
+                    <div class="chat-header-secao">
+                        <h3><i class="fa fa-comments"></i> Chat do Clube</h3>
+                        <p class="chat-descricao">Converse com os membros do clube em tempo real</p>
+                    </div>
+                    
+                    <div class="chat-container-inline">
+                        <div class="messages-container" id="messagesContainer">
+                            <div class="loading">Carregando mensagens...</div>
+                        </div>
+                        <div class="input-container">
+                            <input 
+                                type="text" 
+                                class="message-input" 
+                                id="messageInput" 
+                                placeholder="Digite sua mensagem..."
+                                maxlength="1000"
+                            >
+                            <button class="send-button" id="sendButton">
+                                <i class="fa fa-paper-plane"></i> Enviar
+                            </button>
+                        </div>
                     </div>
                 </div>
                 
@@ -799,6 +826,7 @@ Swal.fire({
     <script src="/js/votacao.js"></script>
     <script src="/js/configuracoes.js"></script>
     <script src="/js/sugestoes.js"></script>
+    <script src="/js/chat.js"></script>
     <%- include('partials/imports') %>
 </body>
 </html>
