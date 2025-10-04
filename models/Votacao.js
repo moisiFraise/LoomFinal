@@ -2,7 +2,7 @@ const pool = require('../config/database');
 
 class Votacao {
     static async criarVotacao(idClube, titulo, descricao, dataFim, sugestoes) {
-        const connection = await pool.getConnection();
+        const connection = await pool.safeTransaction();
         
         try {
             await connection.beginTransaction();
@@ -34,7 +34,7 @@ class Votacao {
     
     static async buscarVotacaoAtiva(idClube) {
         try {
-            const [votacoes] = await pool.query(
+            const [votacoes] = await pool.safeQuery(
                 'SELECT * FROM votacoes WHERE id_clube = ? AND encerrada = FALSE ORDER BY data_inicio DESC LIMIT 1',
                 [idClube]
             );
@@ -45,7 +45,7 @@ class Votacao {
             
             const votacao = votacoes[0];
             
-            const [opcoes] = await pool.query(`
+            const [opcoes] = await pool.safeQuery(`
                 SELECT 
                     ov.id as opcao_id,
                     ov.id_sugestao as sugestao_id,
@@ -64,7 +64,7 @@ class Votacao {
                 ORDER BY votos DESC, s.titulo
             `, [votacao.id]);
             
-            const [totalVotos] = await pool.query(
+            const [totalVotos] = await pool.safeQuery(
                 'SELECT COUNT(*) as total FROM votos WHERE id_votacao = ?',
                 [votacao.id]
             );
@@ -80,7 +80,7 @@ class Votacao {
     
     static async buscarVotacaoPorId(id) {
         try {
-            const [votacoes] = await pool.query(
+            const [votacoes] = await pool.safeQuery(
                 'SELECT * FROM votacoes WHERE id = ?',
                 [id]
             );
@@ -91,7 +91,7 @@ class Votacao {
             
             const votacao = votacoes[0];
             
-            const [opcoes] = await pool.query(`
+            const [opcoes] = await pool.safeQuery(`
                 SELECT 
                     ov.id as opcao_id,
                     ov.id_sugestao as sugestao_id,
@@ -110,7 +110,7 @@ class Votacao {
                 ORDER BY votos DESC, s.titulo
             `, [id]);
             
-            const [totalVotos] = await pool.query(
+            const [totalVotos] = await pool.safeQuery(
                 'SELECT COUNT(*) as total FROM votos WHERE id_votacao = ?',
                 [id]
             );
@@ -126,7 +126,7 @@ class Votacao {
     
     static async verificarVotoUsuario(idVotacao, idUsuario) {
         try {
-            const [votos] = await pool.query(
+            const [votos] = await pool.safeQuery(
                 'SELECT id_opcao FROM votos WHERE id_votacao = ? AND id_usuario = ?',
                 [idVotacao, idUsuario]
             );
@@ -138,7 +138,7 @@ class Votacao {
     }
     
     static async votar(idVotacao, idUsuario, idOpcao) {
-        const connection = await pool.getConnection();
+        const connection = await pool.safeTransaction();
         
         try {
             await connection.beginTransaction();
@@ -184,7 +184,7 @@ class Votacao {
     
     static async encerrarVotacao(idVotacao) {
         try {
-            await pool.query(
+            await pool.safeQuery(
                 'UPDATE votacoes SET encerrada = TRUE WHERE id = ?',
                 [idVotacao]
             );
@@ -197,7 +197,7 @@ class Votacao {
     
     static async buscarResultadoVotacao(idVotacao) {
         try {
-            const [votacao] = await pool.query(
+            const [votacao] = await pool.safeQuery(
                 'SELECT * FROM votacoes WHERE id = ?',
                 [idVotacao]
             );
@@ -206,7 +206,7 @@ class Votacao {
                 throw new Error('Votação não encontrada');
             }
             
-            const [opcoes] = await pool.query(`
+            const [opcoes] = await pool.safeQuery(`
                 SELECT 
                     ov.id as opcao_id,
                     ov.id_sugestao as sugestao_id,
@@ -225,7 +225,7 @@ class Votacao {
                 ORDER BY votos DESC, s.titulo
             `, [idVotacao]);
             
-            const [totalVotos] = await pool.query(
+            const [totalVotos] = await pool.safeQuery(
                 'SELECT COUNT(*) as total FROM votos WHERE id_votacao = ?',
                 [idVotacao]
             );
@@ -243,13 +243,13 @@ class Votacao {
     
     static async buscarHistoricoVotacoes(idClube) {
         try {
-            const [votacoes] = await pool.query(
+            const [votacoes] = await pool.safeQuery(
                 'SELECT * FROM votacoes WHERE id_clube = ? ORDER BY data_inicio DESC',
                 [idClube]
             );
             
             for (let votacao of votacoes) {
-                const [opcaoVencedora] = await pool.query(`
+                const [opcaoVencedora] = await pool.safeQuery(`
                     SELECT 
                         s.titulo,
                         s.autor,

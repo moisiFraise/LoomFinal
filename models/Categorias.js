@@ -3,7 +3,7 @@ const pool = require('../config/database');
 class Categorias {
   static async listarTodas() { //get all
     try {
-      const [rows] = await pool.query(
+      const [rows] = await pool.safeQuery(
         'SELECT * FROM categorias ORDER BY nome'
       );
       return rows;
@@ -15,7 +15,7 @@ class Categorias {
 
   static async buscarPorId(id) { //get por id
     try {
-      const [rows] = await pool.query(
+      const [rows] = await pool.safeQuery(
         'SELECT * FROM categorias WHERE id = ?',
         [id]
       );
@@ -28,7 +28,7 @@ class Categorias {
 
   static async criar(nome) { //criar categoria
     try {
-      const [result] = await pool.query(
+      const [result] = await pool.safeQuery(
         'INSERT INTO categorias (nome) VALUES (?)',
         [nome]
       );
@@ -41,7 +41,7 @@ class Categorias {
 
   static async atualizar(id, nome) { //update
     try {
-      await pool.query(
+      await pool.safeQuery(
         'UPDATE categorias SET nome = ? WHERE id = ?',
         [nome, id]
       );
@@ -54,7 +54,7 @@ class Categorias {
 
   static async excluir(id) { //delete
     try {
-      await pool.query(
+      await pool.safeQuery(
         'DELETE FROM categorias WHERE id = ?',
         [id]
       );
@@ -67,7 +67,7 @@ class Categorias {
 
   static async contarClubesPorCategoria() {
     try {
-      const [rows] = await pool.query(`
+      const [rows] = await pool.safeQuery(`
         SELECT c.id, c.nome, COUNT(cc.id_clube) as total_clubes
         FROM categorias c
         LEFT JOIN clube_categorias cc ON c.id = cc.id_categoria
@@ -83,7 +83,7 @@ class Categorias {
 
   static async listarClubesPorCategoria(categoriaId) {
     try {
-      const [rows] = await pool.query(`
+      const [rows] = await pool.safeQuery(`
         SELECT cl.id, cl.nome, cl.descricao
         FROM clubes cl
         JOIN clube_categorias cc ON cl.id = cc.id_clube

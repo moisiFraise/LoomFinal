@@ -3,7 +3,7 @@ const pool = require('../config/database');
 class Denuncias {
   static async criar(idDenunciante, idDenunciado, idAtualizacao, motivo, descricao) {
     try {
-      const [denunciaExistente] = await pool.query(
+      const [denunciaExistente] = await pool.safeQuery(
         'SELECT id FROM denuncias WHERE id_denunciante = ? AND id_atualizacao = ?',
         [idDenunciante, idAtualizacao]
       );
@@ -12,7 +12,7 @@ class Denuncias {
         throw new Error('Você já denunciou esta atualização');
       }
 
-      const [result] = await pool.query(
+      const [result] = await pool.safeQuery(
         `INSERT INTO denuncias (id_denunciante, id_denunciado, id_atualizacao, motivo, descricao) 
          VALUES (?, ?, ?, ?, ?)`,
         [idDenunciante, idDenunciado, idAtualizacao, motivo, descricao]
@@ -35,7 +35,7 @@ class Denuncias {
 
   static async listarTodas() {
     try {
-      const [denuncias] = await pool.query(`
+      const [denuncias] = await pool.safeQuery(`
         SELECT d.*, 
                denunciante.nome as nome_denunciante,
                denunciante.email as email_denunciante,
@@ -64,7 +64,7 @@ class Denuncias {
 
   static async buscarPorId(id) {
     try {
-      const [denuncias] = await pool.query(`
+      const [denuncias] = await pool.safeQuery(`
         SELECT d.*, 
                denunciante.nome as nome_denunciante,
                denunciante.email as email_denunciante,
@@ -94,7 +94,7 @@ class Denuncias {
 
   static async analisar(id, idAdmin, status, observacoes) {
     try {
-      await pool.query(
+      await pool.safeQuery(
         `UPDATE denuncias 
          SET status = ?, data_analise = NOW(), id_admin_analise = ?, observacoes_admin = ?
          WHERE id = ?`,
@@ -109,7 +109,7 @@ class Denuncias {
   }
 
   static async processarDenuncia(id, idAdmin, acao, observacoes) {
-    const connection = await pool.getConnection();
+    const connection = await pool.safeTransaction();
     
     try {
       await connection.beginTransaction();
@@ -161,7 +161,7 @@ class Denuncias {
 
   static async contarPorStatus() {
     try {
-      const [resultado] = await pool.query(`
+      const [resultado] = await pool.safeQuery(`
         SELECT 
           status,
           COUNT(*) as total

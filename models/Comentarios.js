@@ -39,14 +39,14 @@ class Comentarios {
             
             let result;
             try {
-                [result] = await pool.query(query, params);
+                [result] = await pool.safeQuery(query, params);
             } catch (error) {
                 if (error.code === 'ER_BAD_FIELD_ERROR' && query.includes('gif_url')) {
                     // Fallback: tentar sem gif_url se a coluna não existir
                     console.log('Coluna gif_url não existe, inserindo sem ela...');
                     query = `INSERT INTO comentarios (id_atualizacao, id_usuario, conteudo) VALUES (?, ?, ?)`;
                     params = [idAtualizacao, idUsuario, conteudo];
-                    [result] = await pool.query(query, params);
+                    [result] = await pool.safeQuery(query, params);
                 } else {
                     throw error;
                 }
@@ -72,7 +72,7 @@ class Comentarios {
     static async listarPorAtualizacao(idAtualizacao) {
     try {
         // Verifica se a coluna gif_url existe
-        const [columns] = await pool.query(
+        const [columns] = await pool.safeQuery(
             `SELECT COLUMN_NAME 
              FROM INFORMATION_SCHEMA.COLUMNS 
              WHERE TABLE_SCHEMA = DATABASE() 
@@ -106,7 +106,7 @@ class Comentarios {
                      ORDER BY c.data_comentario ASC`;
         }
         
-        const [rows] = await pool.query(query, [idAtualizacao]);
+        const [rows] = await pool.safeQuery(query, [idAtualizacao]);
         return rows;
     } catch (error) {
         console.error('Erro ao listar comentários:', error);
@@ -116,7 +116,7 @@ class Comentarios {
 
     static async obterPorId(id) {
     try {
-        const [rows] = await pool.query(
+        const [rows] = await pool.safeQuery(
             `SELECT c.*, 
                     u.nome as nome_usuario, 
                     u.foto_perfil,
@@ -138,7 +138,7 @@ class Comentarios {
     
     static async atualizar(id, conteudo, gifUrl = null) {
         try {
-            const [result] = await pool.query(
+            const [result] = await pool.safeQuery(
                 `UPDATE comentarios 
                  SET conteudo = ?, gif_url = ?, data_comentario = NOW()
                  WHERE id = ?`,
@@ -154,7 +154,7 @@ class Comentarios {
     
     static async excluir(id) {
         try {
-            const [result] = await pool.query(
+            const [result] = await pool.safeQuery(
                 'DELETE FROM comentarios WHERE id = ?',
                 [id]
             );
@@ -168,7 +168,7 @@ class Comentarios {
     
     static async contarPorAtualizacao(idAtualizacao) {
         try {
-            const [rows] = await pool.query(
+            const [rows] = await pool.safeQuery(
                 'SELECT COUNT(*) as total FROM comentarios WHERE id_atualizacao = ?',
                 [idAtualizacao]
             );
@@ -182,7 +182,7 @@ class Comentarios {
     
     static async verificarPermissao(idComentario, idUsuario) {
         try {
-            const [rows] = await pool.query(
+            const [rows] = await pool.safeQuery(
                 'SELECT id_usuario FROM comentarios WHERE id = ?',
                 [idComentario]
             );

@@ -19,7 +19,7 @@ class Encontros {
             tipo
         ];
         
-        const [result] = await pool.query(query, params);
+        const [result] = await pool.safeQuery(query, params);
         
         return { 
             id: result.insertId, 
@@ -40,7 +40,7 @@ class Encontros {
 
     static async listarPorClube(idClube) {
         try {
-            const [rows] = await pool.query(
+            const [rows] = await pool.safeQuery(
                 `SELECT * FROM encontros 
                 WHERE id_clube = ? 
                 ORDER BY data_encontro ASC, hora_inicio ASC`,
@@ -56,7 +56,7 @@ class Encontros {
 
     static async listarProximos(idClube) {
         try {
-            const [rows] = await pool.query(
+            const [rows] = await pool.safeQuery(
                 `SELECT * FROM encontros 
                 WHERE id_clube = ? AND data_encontro >= CURDATE() 
                 ORDER BY data_encontro ASC, hora_inicio ASC 
@@ -73,7 +73,7 @@ class Encontros {
 
     static async buscarPorId(id) {
         try {
-            const [rows] = await pool.query(
+            const [rows] = await pool.safeQuery(
                 'SELECT * FROM encontros WHERE id = ?',
                 [id]
             );
@@ -87,7 +87,7 @@ class Encontros {
 
     static async atualizar(id, titulo, descricao, dataEncontro, horaInicio, horaFim, local, link, tipo) {
         try {
-            await pool.query(
+            await pool.safeQuery(
                 `UPDATE encontros SET 
                 titulo = ?, descricao = ?, data_encontro = ?, 
                 hora_inicio = ?, hora_fim = ?, local = ?, 
@@ -105,7 +105,7 @@ class Encontros {
 
     static async excluir(id) {
         try {
-            await pool.query('DELETE FROM encontros WHERE id = ?', [id]);
+            await pool.safeQuery('DELETE FROM encontros WHERE id = ?', [id]);
             return true;
         } catch (error) {
             console.error('Erro ao excluir encontro:', error);
@@ -115,18 +115,18 @@ class Encontros {
 
     static async confirmarParticipacao(idEncontro, idUsuario, status) {
         try {
-            const [existente] = await pool.query(
+            const [existente] = await pool.safeQuery(
                 'SELECT * FROM participantes_encontro WHERE id_encontro = ? AND id_usuario = ?',
                 [idEncontro, idUsuario]
             );
             
             if (existente.length > 0) {
-                await pool.query(
+                await pool.safeQuery(
                     'UPDATE participantes_encontro SET status = ? WHERE id_encontro = ? AND id_usuario = ?',
                     [status, idEncontro, idUsuario]
                 );
             } else {
-                await pool.query(
+                await pool.safeQuery(
                     'INSERT INTO participantes_encontro (id_encontro, id_usuario, status) VALUES (?, ?, ?)',
                     [idEncontro, idUsuario, status]
                 );
@@ -140,7 +140,7 @@ class Encontros {
     }
     static async listarParticipantes(idEncontro) {
     try {
-        const [rows] = await pool.query(
+        const [rows] = await pool.safeQuery(
             `SELECT pe.*, u.nome, u.email 
             FROM participantes_encontro pe
             JOIN usuarios u ON pe.id_usuario = u.id
@@ -157,7 +157,7 @@ class Encontros {
 }
     static async verificarParticipacao(idEncontro, idUsuario) {
         try {
-            const [rows] = await pool.query(
+            const [rows] = await pool.safeQuery(
                 'SELECT * FROM participantes_encontro WHERE id_encontro = ? AND id_usuario = ?',
                 [idEncontro, idUsuario]
             );
@@ -170,13 +170,13 @@ class Encontros {
     }
     static async debug() {
   try {
-    const [result] = await pool.query('SELECT 1 as test');
+    const [result] = await pool.safeQuery('SELECT 1 as test');
     console.log('Conexão com o banco OK:', result);
     
-    const [columns] = await pool.query('SHOW COLUMNS FROM encontros');
+    const [columns] = await pool.safeQuery('SHOW COLUMNS FROM encontros');
     console.log('Estrutura da tabela encontros:', columns);
     
-    const [rows] = await pool.query('SELECT * FROM encontros LIMIT 5');
+    const [rows] = await pool.safeQuery('SELECT * FROM encontros LIMIT 5');
     console.log('Dados existentes na tabela encontros:', rows);
     
     return { success: true, message: 'Debug concluído com sucesso' };

@@ -3,11 +3,7 @@ const pool = require('../config/database');
 class Clube {
 static async criar(nome, descricao, idCriador, visibilidade, senha, categorias = [], modelo = 'online') {
   try {
-    const connection = await pool.getConnection();
-    
-    try {
-      await connection.beginTransaction();
-      
+    return await pool.safeTransaction(async (connection) => {
       const senhaAcesso = visibilidade === 'privado' ? senha : null;
       
       const [result] = await connection.query(
@@ -29,8 +25,6 @@ static async criar(nome, descricao, idCriador, visibilidade, senha, categorias =
         );
       }
       
-      await connection.commit();
-      
       return { 
         id: clubeId, 
         nome, 
@@ -40,12 +34,7 @@ static async criar(nome, descricao, idCriador, visibilidade, senha, categorias =
         modelo,
         categorias
       };
-    } catch (error) {
-      await connection.rollback();
-      throw error;
-    } finally {
-      connection.release();
-    }
+    });
   } catch (error) {
     console.error('Erro ao criar clube:', error);
     throw error;
@@ -53,7 +42,7 @@ static async criar(nome, descricao, idCriador, visibilidade, senha, categorias =
 }
   static async buscarPorCriador(idCriador) {
     try {
-      const [rows] = await pool.query(
+      const [rows] = await pool.safeQuery(
         'SELECT id, nome, descricao, visibilidade, data_criacao FROM clubes WHERE id_criador = ? ORDER BY data_criacao DESC',
         [idCriador]
       );
@@ -66,7 +55,7 @@ static async criar(nome, descricao, idCriador, visibilidade, senha, categorias =
   
   static async buscarParticipacoes(idUsuario) {
     try {
-      const [rows] = await pool.query(
+      const [rows] = await pool.safeQuery(
         `SELECT c.id, c.nome, c.descricao, c.visibilidade, c.data_criacao FROM clubes c
          INNER JOIN participacoes p ON c.id = p.id_clube
          WHERE p.id_usuario = ? AND c.id_criador != ?
@@ -82,7 +71,7 @@ static async criar(nome, descricao, idCriador, visibilidade, senha, categorias =
   
   static async verificarSenha(clubeId, senha) {
     try {
-      const [rows] = await pool.query(
+      const [rows] = await pool.safeQuery(
         'SELECT senha_acesso FROM clubes WHERE id = ?',
         [clubeId]
       );
@@ -106,7 +95,7 @@ static async criar(nome, descricao, idCriador, visibilidade, senha, categorias =
 
 static async listarTodos() { //get all clubes usado no painelAdmin
   try {
-    const [rows] = await pool.query(`
+    const [rows] = await pool.safeQuery(`
       SELECT c.id, c.nome, c.descricao, c.visibilidade, c.senha_acesso, 
              c.data_criacao, c.id_criador, c.modelo,
              u.nome as nome_criador,
@@ -124,25 +113,14 @@ static async listarTodos() { //get all clubes usado no painelAdmin
 
 static async atualizarVisibilidade(id, visibilidade, senha = null) {
   try {
-    const connection = await pool.getConnection();
-    
-    try {
-      await connection.beginTransaction();
-      
+    return await pool.safeTransaction(async (connection) => {
       await connection.query(
         'UPDATE clubes SET visibilidade = ?, senha_acesso = ? WHERE id = ?',
         [visibilidade, senha, id]
       );
       
-      await connection.commit();
-      
       return { id, visibilidade, senha_acesso: senha };
-    } catch (error) {
-      await connection.rollback();
-      throw error;
-    } finally {
-      connection.release();
-    }
+    });
   } catch (error) {
     console.error('Erro ao atualizar visibilidade do clube:', error);
     throw error;
@@ -151,7 +129,7 @@ static async atualizarVisibilidade(id, visibilidade, senha = null) {
 
 static async atualizarModelo(id, modelo) {
   try {
-    await pool.query(
+    await pool.safeQuery(
       'UPDATE clubes SET modelo = ? WHERE id = ?',
       [modelo, id]
     );

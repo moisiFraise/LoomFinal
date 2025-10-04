@@ -468,12 +468,12 @@ app.get('/api/debug/clube/:id/participacao', verificarAutenticacao, async (req, 
     const clubeId = req.params.id;
     const userId = req.session.userId;
     
-    const [participacoes] = await pool.query(
+    const [participacoes] = await pool.safeQuery(
       'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
       [userId, clubeId]
     );
     
-    const [clube] = await pool.query('SELECT * FROM clubes WHERE id = ?', [clubeId]);
+    const [clube] = await pool.safeQuery('SELECT * FROM clubes WHERE id = ?', [clubeId]);
     
     res.json({
       userId: userId,
@@ -493,14 +493,14 @@ app.get('/api/debug/clube/:id/participacao', verificarAutenticacao, async (req, 
 app.post('/api/debug/cleanup-participacoes', verificarAutenticacao, async (req, res) => {
   try {
     // Remover participações de clubes que não existem mais
-    const [resultado1] = await pool.query(`
+    const [resultado1] = await pool.safeQuery(`
       DELETE p FROM participacoes p 
       LEFT JOIN clubes c ON p.id_clube = c.id 
       WHERE c.id IS NULL
     `);
     
     // Remover participações de usuários que não existem mais
-    const [resultado2] = await pool.query(`
+    const [resultado2] = await pool.safeQuery(`
       DELETE p FROM participacoes p 
       LEFT JOIN usuarios u ON p.id_usuario = u.id 
       WHERE u.id IS NULL
@@ -520,7 +520,7 @@ app.post('/api/debug/cleanup-participacoes', verificarAutenticacao, async (req, 
 // Debug: investigar sessões no banco
 app.get('/api/debug/sessions', async (req, res) => {
   try {
-    const [sessions] = await pool.query('SELECT * FROM sessions ORDER BY expires DESC');
+    const [sessions] = await pool.safeQuery('SELECT * FROM sessions ORDER BY expires DESC');
     
     // Extrair dados das sessões
     const sessionsData = sessions.map(session => {
@@ -573,7 +573,7 @@ app.get('/api/debug/sessions', async (req, res) => {
 // Debug: limpar sessões expiradas
 app.post('/api/debug/cleanup-sessions', async (req, res) => {
   try {
-    const [resultado] = await pool.query('DELETE FROM sessions WHERE expires < NOW()');
+    const [resultado] = await pool.safeQuery('DELETE FROM sessions WHERE expires < NOW()');
     
     res.json({
       sessionsRemovidas: resultado.affectedRows,
@@ -592,7 +592,7 @@ app.post('/api/debug/cleanup-user-sessions/:userId', async (req, res) => {
     const currentSessionId = req.sessionID;
     
     // Buscar todas as sessões e filtrar as do usuário
-    const [sessions] = await pool.query('SELECT * FROM sessions');
+    const [sessions] = await pool.safeQuery('SELECT * FROM sessions');
     const userSessions = [];
     
     for (const session of sessions) {
@@ -608,7 +608,7 @@ app.post('/api/debug/cleanup-user-sessions/:userId', async (req, res) => {
     
     if (userSessions.length > 0) {
       const placeholders = userSessions.map(() => '?').join(',');
-      const [resultado] = await pool.query(
+      const [resultado] = await pool.safeQuery(
         `DELETE FROM sessions WHERE session_id IN (${placeholders})`,
         userSessions
       );
@@ -668,7 +668,7 @@ app.get('/api/config/giphy', (req, res) => {
 app.post('/api/emergency-cleanup', async (req, res) => {
   try {
     // Limpar todas as sessões expiradas
-    await pool.query('DELETE FROM sessions WHERE expires < NOW()');
+    await pool.safeQuery('DELETE FROM sessions WHERE expires < NOW()');
     res.json({ success: true, message: 'Sessões expiradas removidas' });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -680,14 +680,14 @@ app.post('/api/setup-reset-senha', async (req, res) => {
   try {
     // Adicionar colunas para reset de senha se não existirem
     try {
-      await pool.query(`
+      await pool.safeQuery(`
         ALTER TABLE usuarios 
         ADD COLUMN reset_token VARCHAR(255) NULL,
         ADD COLUMN reset_token_expira DATETIME NULL
       `);
       
       // Criar índice para melhor performance
-      await pool.query(`
+      await pool.safeQuery(`
         CREATE INDEX idx_reset_token ON usuarios(reset_token)
       `);
       
@@ -740,7 +740,7 @@ app.get('/api/clube/:clubeId/atualizacoes/:atualizacaoId/curtidas', verificarAut
     }
 
     // Verifica se o usuário é membro do clube
-    const [participacoes] = await pool.query(
+    const [participacoes] = await pool.safeQuery(
       'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
       [userId, clubeId]
     );
@@ -779,7 +779,7 @@ app.post('/api/clube/:id/sair', verificarAutenticacao, async (req, res) => {
     const userId = req.session.userId;
     
     // Verificar se o usuário é realmente membro do clube
-    const [participacoes] = await pool.query(
+    const [participacoes] = await pool.safeQuery(
       'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
       [userId, clubeId]
     );
@@ -789,7 +789,7 @@ app.post('/api/clube/:id/sair', verificarAutenticacao, async (req, res) => {
     }
     
     // Verificar se o usuário não é o criador do clube
-    const [clube] = await pool.query('SELECT id_criador FROM clubes WHERE id = ?', [clubeId]);
+    const [clube] = await pool.safeQuery('SELECT id_criador FROM clubes WHERE id = ?', [clubeId]);
     
     if (clube.length === 0) {
       return res.status(404).json({ erro: 'Clube não encontrado' });
@@ -800,7 +800,7 @@ app.post('/api/clube/:id/sair', verificarAutenticacao, async (req, res) => {
     }
     
     // Remover usuário do clube
-    await pool.query(
+    await pool.safeQuery(
       'DELETE FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
       [userId, clubeId]
     );
@@ -968,7 +968,7 @@ app.get('/meuPerfil', verificarAutenticacao, verificarRestricaoAdmin, async (req
     if (!usuario) return res.redirect('/autenticacao');
 
     // obter clubes (UNION para evitar duplicatas)
-    const [clubesRows] = await pool.query(`
+    const [clubesRows] = await pool.safeQuery(`
       SELECT id FROM clubes WHERE id_criador = ?
       UNION
       SELECT id_clube AS id FROM participacoes WHERE id_usuario = ?
@@ -976,7 +976,7 @@ app.get('/meuPerfil', verificarAutenticacao, verificarRestricaoAdmin, async (req
 
     const clubesIds = clubesRows.map(c => c.id);
 
-    const [publicacoes] = await pool.query(`
+    const [publicacoes] = await pool.safeQuery(`
   SELECT a.*, c.nome as nome_clube, c.visibilidade,
          l.titulo as titulo_leitura,
          (SELECT COUNT(*) FROM curtidas WHERE id_atualizacao = a.id) as curtidas
@@ -1022,13 +1022,13 @@ app.get('/perfil/:id', verificarAutenticacao, verificarRestricaoAdmin, async (re
     }
 
     // Buscar clubes criados pelo usuário
-    const [clubesCriados] = await pool.query(
+    const [clubesCriados] = await pool.safeQuery(
       'SELECT id, nome, descricao, modelo, visibilidade, (SELECT COUNT(*) FROM participacoes WHERE id_clube = clubes.id) as total_membros FROM clubes WHERE id_criador = ?',
       [perfilId]
     );
 
     // Buscar clubes que o usuário participa
-    const [clubesParticipando] = await pool.query(
+    const [clubesParticipando] = await pool.safeQuery(
       `SELECT c.id, c.nome, c.descricao, c.modelo, c.visibilidade,
               (SELECT COUNT(*) FROM participacoes WHERE id_clube = c.id) as total_membros
        FROM clubes c
@@ -1041,7 +1041,7 @@ app.get('/perfil/:id', verificarAutenticacao, verificarRestricaoAdmin, async (re
 
     // Marcar se o usuário logado é membro de cada clube
     for (let clube of clubes) {
-      const [membro] = await pool.query(
+      const [membro] = await pool.safeQuery(
         'SELECT 1 FROM participacoes WHERE id_clube = ? AND id_usuario = ? LIMIT 1',
         [clube.id, req.session.userId]
       );
@@ -1049,7 +1049,7 @@ app.get('/perfil/:id', verificarAutenticacao, verificarRestricaoAdmin, async (re
     }
 
     // Buscar publicações (atualizações) do usuário, incluindo a leitura associada
-    const [publicacoes] = await pool.query(`
+    const [publicacoes] = await pool.safeQuery(`
   SELECT a.*, c.nome AS nome_clube, c.visibilidade, l.titulo AS nome_leitura
   FROM atualizacoes a
   JOIN clubes c ON a.id_clube = c.id
@@ -1109,7 +1109,7 @@ app.put('/api/perfil', verificarAutenticacao, async (req, res) => {
     }
     
     if (email !== req.session.email) {
-      const [usuariosExistentes] = await pool.query(
+      const [usuariosExistentes] = await pool.safeQuery(
         'SELECT id FROM usuarios WHERE email = ? AND id != ?',
         [email, req.session.userId]
       );
@@ -1131,11 +1131,11 @@ app.put('/api/perfil', verificarAutenticacao, async (req, res) => {
     const valores = Object.values(dadosAtualizacao);
     valores.push(req.session.userId);
     
-    await pool.query(
+    await pool.safeQuery(
       `UPDATE usuarios SET ${campos} WHERE id = ?`,
       valores
     );
-        const [usuarioAtualizado] = await pool.query(
+        const [usuarioAtualizado] = await pool.safeQuery(
       'SELECT id, nome, email, biografia, foto_perfil FROM usuarios WHERE id = ?',
       [req.session.userId]
     );
@@ -1205,7 +1205,7 @@ app.post('/api/upload-foto-perfil', verificarAutenticacao, (req, res) => {
       .then(async (result) => {
         console.log('Atualizando banco de dados...');
         
-        await pool.query(
+        await pool.safeQuery(
           'UPDATE usuarios SET foto_perfil = ? WHERE id = ?',
           [result.secure_url, req.session.userId]
         );
@@ -1235,7 +1235,7 @@ app.post('/api/upload-foto-perfil', verificarAutenticacao, (req, res) => {
 });
 app.delete('/api/perfil', verificarAutenticacao, async (req, res) => {
   try {
-    const [clubesCriados] = await pool.query(
+    const [clubesCriados] = await pool.safeQuery(
       'SELECT id FROM clubes WHERE id_criador = ?',
       [req.session.userId]
     );
@@ -1246,27 +1246,27 @@ app.delete('/api/perfil', verificarAutenticacao, async (req, res) => {
       });
     }
     
-    await pool.query(
+    await pool.safeQuery(
       'DELETE FROM participacoes WHERE id_usuario = ?',
       [req.session.userId]
     );
     
-    await pool.query(
+    await pool.safeQuery(
       'DELETE FROM curtidas WHERE id_usuario = ?',
       [req.session.userId]
     );
     
-    await pool.query(
+    await pool.safeQuery(
       'DELETE FROM participantes_encontro WHERE id_usuario = ?',
       [req.session.userId]
     );
     
-    await pool.query(
+    await pool.safeQuery(
       'DELETE FROM atualizacoes WHERE id_usuario = ?',
       [req.session.userId]
     );
     
-    await pool.query(
+    await pool.safeQuery(
       'DELETE FROM usuarios WHERE id = ?',
       [req.session.userId]
     );
@@ -1481,7 +1481,7 @@ app.post('/api/convite-clube/entrar', verificarAutenticacao, async (req, res) =>
     }
     
     // Buscar informações do clube
-    const [clubeRows] = await pool.query('SELECT * FROM clubes WHERE id = ?', [clubeId]);
+    const [clubeRows] = await pool.safeQuery('SELECT * FROM clubes WHERE id = ?', [clubeId]);
     if (clubeRows.length === 0) {
       return res.status(404).json({ erro: 'Clube não encontrado.' });
     }
@@ -1813,7 +1813,7 @@ app.get('/clube/:id/leitura/:leituraId/atualizacoes', verificarAutenticacao, ver
     const leituraId = req.params.leituraId;
     const userId = req.session.userId;
     
-    const [participacoes] = await pool.query(
+    const [participacoes] = await pool.safeQuery(
       'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
       [userId, clubeId]
     );
@@ -1823,7 +1823,7 @@ app.get('/clube/:id/leitura/:leituraId/atualizacoes', verificarAutenticacao, ver
     }
     
     // Verificar se a leitura existe no clube
-    const [leituraRows] = await pool.query(
+    const [leituraRows] = await pool.safeQuery(
       'SELECT * FROM leituras WHERE id = ? AND id_clube = ?',
       [leituraId, clubeId]
     );
@@ -1854,7 +1854,7 @@ app.get('/convite-clube/:id', async (req, res) => {
     const clubeId = req.params.id;
     
     // Buscar informações do clube
-    const [clubeRows] = await pool.query(`
+    const [clubeRows] = await pool.safeQuery(`
       SELECT c.*, 
              u.nome as nome_criador,
              (SELECT COUNT(*) FROM participacoes WHERE id_clube = c.id) as total_membros
@@ -1875,7 +1875,7 @@ app.get('/convite-clube/:id', async (req, res) => {
     // Se o usuário já está logado
     if (req.session.userId) {
       // Verificar se já é membro
-      const [participacoes] = await pool.query(
+      const [participacoes] = await pool.safeQuery(
         'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
         [req.session.userId, clubeId]
       );
@@ -1887,7 +1887,7 @@ app.get('/convite-clube/:id', async (req, res) => {
     }
     
     // Buscar categorias do clube
-    const [categoriasRows] = await pool.query(`
+    const [categoriasRows] = await pool.safeQuery(`
       SELECT cat.nome
       FROM categorias cat
       JOIN clube_categorias cc ON cat.id = cc.id_categoria
@@ -1917,7 +1917,7 @@ app.get('/clube/:id', verificarAutenticacao, verificarRestricaoAdmin, async (req
     const clubeId = req.params.id;
     const userId = req.session.userId;
     
-    const [participacoes] = await pool.query(
+    const [participacoes] = await pool.safeQuery(
       'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
       [userId, clubeId]
     );
@@ -1944,7 +1944,7 @@ app.get('/api/clube/:id', verificarAutenticacao, async (req, res) => {
   try {
     const clubeId = req.params.id;
     
-    const [clubeRows] = await pool.query(`
+    const [clubeRows] = await pool.safeQuery(`
       SELECT c.*, 
              (SELECT COUNT(*) FROM participacoes WHERE id_clube = c.id) as total_membros
       FROM clubes c
@@ -1957,7 +1957,7 @@ app.get('/api/clube/:id', verificarAutenticacao, async (req, res) => {
     
     const clube = clubeRows[0];
     
-    const [categoriasRows] = await pool.query(`
+    const [categoriasRows] = await pool.safeQuery(`
       SELECT cat.nome
       FROM categorias cat
       JOIN clube_categorias cc ON cat.id = cc.id_categoria
@@ -1967,7 +1967,7 @@ app.get('/api/clube/:id', verificarAutenticacao, async (req, res) => {
     clube.categorias = categoriasRows.map(cat => cat.nome);
     
     try {
-      const [leituraRows] = await pool.query(`
+      const [leituraRows] = await pool.safeQuery(`
         SELECT * FROM leituras
         WHERE id_clube = ? AND status = 'atual'
         ORDER BY data_inicio DESC
@@ -1995,7 +1995,7 @@ app.get('/api/clube/:id/membros', verificarAutenticacao, async (req, res) => {
     const clubeId = req.params.id;
 
     // Verifica se o clube existe
-    const [clubeRows] = await pool.query(
+    const [clubeRows] = await pool.safeQuery(
       'SELECT id_criador FROM clubes WHERE id = ?', 
       [clubeId]
     );
@@ -2007,7 +2007,7 @@ app.get('/api/clube/:id/membros', verificarAutenticacao, async (req, res) => {
     const idCriador = clubeRows[0].id_criador;
 
     // Busca membros com informações adicionais
-    const [membrosRows] = await pool.query(`
+    const [membrosRows] = await pool.safeQuery(`
       SELECT u.id, u.nome, u.email, u.foto_perfil, p.data_entrada,
              (CASE WHEN u.id = ? THEN 1 ELSE 0 END) AS is_criador,
              u.estado
@@ -2032,7 +2032,7 @@ app.get('/api/clube/:id/permissoes', verificarAutenticacao, async (req, res) => 
     const clubeId = req.params.id;
     const userId = req.session.userId;
     
-    const [clubeRows] = await pool.query('SELECT * FROM clubes WHERE id = ?', [clubeId]);
+    const [clubeRows] = await pool.safeQuery('SELECT * FROM clubes WHERE id = ?', [clubeId]);
     
     if (clubeRows.length === 0) {
       return res.status(404).json({ erro: 'Clube não encontrado' });
@@ -2074,7 +2074,7 @@ app.get('/api/livros/buscar', verificarAutenticacao, async (req, res) => {
 app.get('/api/clube/:id/leituras', verificarAutenticacao, async (req, res) => {
   try {
       const clubeId = req.params.id;
-        const [participacoes] = await pool.query(
+        const [participacoes] = await pool.safeQuery(
           'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
           [req.session.userId, clubeId]
       );
@@ -2099,7 +2099,7 @@ app.post('/api/clube/:id/leituras', verificarAutenticacao, async (req, res) => {
       const clubeId = req.params.id;
       const { titulo, autor, paginas, imagemUrl, dataInicio, dataFim } = req.body;
       
-      const [clubeRows] = await pool.query(
+      const [clubeRows] = await pool.safeQuery(
           'SELECT id_criador FROM clubes WHERE id = ?',
           [clubeId]
       );
@@ -2136,7 +2136,7 @@ app.get('/api/clube/:id/atualizacoes', verificarAutenticacao, async (req, res) =
       const clubeId = req.params.id;
       const userId = req.session.userId;
       
-      const [participacoes] = await pool.query(
+      const [participacoes] = await pool.safeQuery(
           'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
           [userId, clubeId]
       );
@@ -2144,7 +2144,7 @@ app.get('/api/clube/:id/atualizacoes', verificarAutenticacao, async (req, res) =
       if (participacoes.length === 0) {
           return res.status(403).json({ erro: 'Você não é membro deste clube' });
       }
-      const [leituraRows] = await pool.query(
+      const [leituraRows] = await pool.safeQuery(
           'SELECT * FROM leituras WHERE id_clube = ? AND status = "atual" LIMIT 1',
           [clubeId]
       );
@@ -2173,7 +2173,7 @@ app.post('/api/clube/:id/atualizacoes', verificarAutenticacao, async (req, res) 
           return res.status(400).json({ erro: 'Comentário e página atual são obrigatórios' });
       }
       
-      const [participacoes] = await pool.query(
+      const [participacoes] = await pool.safeQuery(
           'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
           [req.session.userId, clubeId]
       );
@@ -2182,7 +2182,7 @@ app.post('/api/clube/:id/atualizacoes', verificarAutenticacao, async (req, res) 
           return res.status(403).json({ erro: 'Você não é membro deste clube' });
       }
       
-      const [leituraRows] = await pool.query(
+      const [leituraRows] = await pool.safeQuery(
           'SELECT * FROM leituras WHERE id_clube = ? AND status = "atual" LIMIT 1',
           [clubeId]
       );
@@ -2218,7 +2218,7 @@ app.post('/api/clube/:id/atualizacoes', verificarAutenticacao, async (req, res) 
           gifUrl || null
       );
       
-      const [usuarioRows] = await pool.query(
+      const [usuarioRows] = await pool.safeQuery(
           'SELECT nome FROM usuarios WHERE id = ?',
           [req.session.userId]
       );
@@ -2242,7 +2242,7 @@ app.get('/api/clube/:id/atualizacoes/:atualizacaoId', verificarAutenticacao, asy
     const clubeId = req.params.id;
     const atualizacaoId = req.params.atualizacaoId;
     
-    const [participacoes] = await pool.query(
+    const [participacoes] = await pool.safeQuery(
       'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
       [req.session.userId, clubeId]
     );
@@ -2251,7 +2251,7 @@ app.get('/api/clube/:id/atualizacoes/:atualizacaoId', verificarAutenticacao, asy
       return res.status(403).json({ erro: 'Você não é membro deste clube' });
     }
     
-    const [atualizacoes] = await pool.query(
+    const [atualizacoes] = await pool.safeQuery(
       'SELECT * FROM atualizacoes WHERE id = ? AND id_clube = ?',
       [atualizacaoId, clubeId]
     );
@@ -2280,7 +2280,7 @@ app.post('/api/clube/:id/atualizacoes/:atualizacaoId', verificarAutenticacao, as
       return res.status(400).json({ erro: 'Comentário e página atual são obrigatórios' });
     }
     
-    const [participacoes] = await pool.query(
+    const [participacoes] = await pool.safeQuery(
       'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
       [req.session.userId, clubeId]
     );
@@ -2289,7 +2289,7 @@ app.post('/api/clube/:id/atualizacoes/:atualizacaoId', verificarAutenticacao, as
       return res.status(403).json({ erro: 'Você não é membro deste clube' });
     }
     
-    const [atualizacoes] = await pool.query(
+    const [atualizacoes] = await pool.safeQuery(
       'SELECT * FROM atualizacoes WHERE id = ? AND id_clube = ?',
       [atualizacaoId, clubeId]
     );
@@ -2302,7 +2302,7 @@ app.post('/api/clube/:id/atualizacoes/:atualizacaoId', verificarAutenticacao, as
       return res.status(403).json({ erro: 'Você não tem permissão para editar esta atualização' });
     }
     
-    const [leituraRows] = await pool.query(
+    const [leituraRows] = await pool.safeQuery(
       'SELECT * FROM leituras WHERE id = ?',
       [atualizacoes[0].id_leitura]
     );
@@ -2314,12 +2314,12 @@ app.post('/api/clube/:id/atualizacoes/:atualizacaoId', verificarAutenticacao, as
     const leituraAtual = leituraRows[0];
     const porcentagemLeitura = Math.min(Math.round((paginaAtual / (leituraAtual.paginas || 100)) * 100), 100);
     
-    await pool.query(
+    await pool.safeQuery(
       'UPDATE atualizacoes SET conteudo = ?, porcentagem_leitura = ?, gif_url = ? WHERE id = ?',
       [conteudo, porcentagemLeitura, gifUrl || null, atualizacaoId]
     );
     
-    const [atualizacaoAtualizada] = await pool.query(
+    const [atualizacaoAtualizada] = await pool.safeQuery(
       'SELECT a.*, u.nome as nome_usuario, u.estado as estado_usuario FROM atualizacoes a JOIN usuarios u ON a.id_usuario = u.id WHERE a.id = ?',
       [atualizacaoId]
     );
@@ -2339,7 +2339,7 @@ app.delete('/api/clube/:id/atualizacoes/:atualizacaoId', verificarAutenticacao, 
     const clubeId = req.params.id;
     const atualizacaoId = req.params.atualizacaoId;
     
-    const [participacoes] = await pool.query(
+    const [participacoes] = await pool.safeQuery(
       'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
       [req.session.userId, clubeId]
     );
@@ -2348,7 +2348,7 @@ app.delete('/api/clube/:id/atualizacoes/:atualizacaoId', verificarAutenticacao, 
       return res.status(403).json({ erro: 'Você não é membro deste clube' });
     }
     
-    const [atualizacoes] = await pool.query(
+    const [atualizacoes] = await pool.safeQuery(
       'SELECT * FROM atualizacoes WHERE id = ? AND id_clube = ?',
       [atualizacaoId, clubeId]
     );
@@ -2356,13 +2356,13 @@ app.delete('/api/clube/:id/atualizacoes/:atualizacaoId', verificarAutenticacao, 
     if (atualizacoes.length === 0) {
       return res.status(404).json({ erro: 'Atualização não encontrada' });
     }
-    const [usuario] = await pool.query('SELECT tipo FROM usuarios WHERE id = ?', [req.session.userId]);
+    const [usuario] = await pool.safeQuery('SELECT tipo FROM usuarios WHERE id = ?', [req.session.userId]);
     const isAdmin = usuario.length > 0 && usuario[0].tipo === 'admin';
     
     if (atualizacoes[0].id_usuario !== req.session.userId && !isAdmin) {
       return res.status(403).json({ erro: 'Você não tem permissão para excluir esta atualização' });
     }    
-await pool.query('DELETE FROM atualizacoes WHERE id = ?', [atualizacaoId]);
+await pool.safeQuery('DELETE FROM atualizacoes WHERE id = ?', [atualizacaoId]);
     
     res.json({ mensagem: 'Atualização excluída com sucesso' });
   } catch (error) {
@@ -2376,7 +2376,7 @@ app.get('/api/clube/:id/atualizacoes/usuario/:userId/leitura/:leituraId', verifi
     const usuarioId = req.params.userId;
     const leituraId = req.params.leituraId;
     
-    const [participacoes] = await pool.query(
+    const [participacoes] = await pool.safeQuery(
       'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
       [req.session.userId, clubeId]
     );
@@ -2400,7 +2400,7 @@ app.get('/api/clube/:id/leitura/:leituraId', verificarAutenticacao, async (req, 
     const clubeId = req.params.id;
     const leituraId = req.params.leituraId;
     
-    const [participacoes] = await pool.query(
+    const [participacoes] = await pool.safeQuery(
       'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
       [req.session.userId, clubeId]
     );
@@ -2409,7 +2409,7 @@ app.get('/api/clube/:id/leitura/:leituraId', verificarAutenticacao, async (req, 
       return res.status(403).json({ erro: 'Você não é membro deste clube' });
     }
     
-    const [leituraRows] = await pool.query(
+    const [leituraRows] = await pool.safeQuery(
       'SELECT * FROM leituras WHERE id = ? AND id_clube = ?',
       [leituraId, clubeId]
     );
@@ -2430,7 +2430,7 @@ app.get('/api/clube/:id/leitura/:leituraId/atualizacoes', verificarAutenticacao,
     const clubeId = req.params.id;
     const leituraId = req.params.leituraId;
     
-    const [participacoes] = await pool.query(
+    const [participacoes] = await pool.safeQuery(
       'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
       [req.session.userId, clubeId]
     );
@@ -2452,7 +2452,7 @@ app.post('/api/clube/:id/atualizacoes/:atualizacaoId/curtir', verificarAutentica
     const clubeId = req.params.id;
     const atualizacaoId = req.params.atualizacaoId;
     
-    const [participacoes] = await pool.query(
+    const [participacoes] = await pool.safeQuery(
       'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
       [req.session.userId, clubeId]
     );
@@ -2473,7 +2473,7 @@ app.get('/api/clube/:id/atualizacoes/:atualizacaoId/curtidas', verificarAutentic
     const clubeId = req.params.id;
     const atualizacaoId = req.params.atualizacaoId;
     
-    const [participacoes] = await pool.query(
+    const [participacoes] = await pool.safeQuery(
       'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
       [req.session.userId, clubeId]
     );
@@ -2502,7 +2502,7 @@ app.post('/api/curtidas/:id', verificarAutenticacaoAPI, async (req, res) => {
     }
 
     // Buscar o clube da atualização
-    const [rows] = await pool.query(
+    const [rows] = await pool.safeQuery(
       'SELECT id_clube FROM atualizacoes WHERE id = ? LIMIT 1',
       [idAtualizacao]
     );
@@ -2514,7 +2514,7 @@ app.post('/api/curtidas/:id', verificarAutenticacaoAPI, async (req, res) => {
     const idClube = rows[0].id_clube;
 
     // Verificar se o usuário é membro do clube
-    const [membro] = await pool.query(
+    const [membro] = await pool.safeQuery(
       'SELECT 1 FROM participacoes WHERE id_usuario = ? AND id_clube = ? LIMIT 1',
       [idUsuario, idClube]
     );
@@ -2524,14 +2524,14 @@ app.post('/api/curtidas/:id', verificarAutenticacaoAPI, async (req, res) => {
     }
 
     // Verifica se já curtiu
-    const [jaCurtiu] = await pool.query(
+    const [jaCurtiu] = await pool.safeQuery(
       'SELECT 1 FROM curtidas WHERE id_usuario = ? AND id_atualizacao = ? LIMIT 1',
       [idUsuario, idAtualizacao]
     );
 
     if (jaCurtiu.length > 0) {
       // Remover curtida
-      await pool.query(
+      await pool.safeQuery(
         'DELETE FROM curtidas WHERE id_usuario = ? AND id_atualizacao = ?',
         [idUsuario, idAtualizacao]
       );
@@ -2539,7 +2539,7 @@ app.post('/api/curtidas/:id', verificarAutenticacaoAPI, async (req, res) => {
       return res.json({ sucesso: true, curtido: false, total });
     } else {
       // Adicionar curtida
-      await pool.query(
+      await pool.safeQuery(
         'INSERT INTO curtidas (id_usuario, id_atualizacao) VALUES (?, ?)',
         [idUsuario, idAtualizacao]
       );
@@ -2580,7 +2580,7 @@ app.get('/clube/:clubeId/leitura/:idLeitura/atualizacoes', verificarAutenticacao
         const { titulo } = req.query;
         const userId = req.session.userId;
         
-        const [participacoes] = await pool.query(
+        const [participacoes] = await pool.safeQuery(
             'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
             [userId, clubeId]
         );
@@ -2589,7 +2589,7 @@ app.get('/clube/:clubeId/leitura/:idLeitura/atualizacoes', verificarAutenticacao
             return res.redirect('/dashboard');
         }
         
-        const [leitura] = await pool.query(
+        const [leitura] = await pool.safeQuery(
             'SELECT * FROM leituras WHERE id = ? AND id_clube = ?',
             [idLeitura, clubeId]
         );
@@ -2619,7 +2619,7 @@ app.get('/api/clube/:clubeId/leitura/:idLeitura', verificarAutenticacao, async (
         const { clubeId, idLeitura } = req.params;
         const userId = req.session.userId;
         
-        const [participacoes] = await pool.query(
+        const [participacoes] = await pool.safeQuery(
             'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
             [userId, clubeId]
         );
@@ -2628,7 +2628,7 @@ app.get('/api/clube/:clubeId/leitura/:idLeitura', verificarAutenticacao, async (
             return res.status(403).json({ erro: 'Você não é membro deste clube' });
         }
         
-        const [leitura] = await pool.query(
+        const [leitura] = await pool.safeQuery(
             'SELECT * FROM leituras WHERE id = ? AND id_clube = ?',
             [idLeitura, clubeId]
         );
@@ -2649,7 +2649,7 @@ app.get('/api/clube/:clubeId/leitura/:idLeitura/atualizacoes', verificarAutentic
         const { clubeId, idLeitura } = req.params;
         const userId = req.session.userId;
         
-        const [participacoes] = await pool.query(
+        const [participacoes] = await pool.safeQuery(
             'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
             [userId, clubeId]
         );
@@ -2658,7 +2658,7 @@ app.get('/api/clube/:clubeId/leitura/:idLeitura/atualizacoes', verificarAutentic
             return res.status(403).json({ erro: 'Você não é membro deste clube' });
         }
         
-        const [leitura] = await pool.query(
+        const [leitura] = await pool.safeQuery(
             'SELECT * FROM leituras WHERE id = ? AND id_clube = ?',
             [idLeitura, clubeId]
         );
@@ -2681,7 +2681,7 @@ app.get('/api/clube/:id/encontros', verificarAutenticacao, async (req, res) => {
         const clubeId = req.params.id;
         const userId = req.session.userId;
         
-        const [participacoes] = await pool.query(
+        const [participacoes] = await pool.safeQuery(
             'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
             [userId, clubeId]
         );
@@ -2690,7 +2690,7 @@ app.get('/api/clube/:id/encontros', verificarAutenticacao, async (req, res) => {
             return res.status(403).json({ erro: 'Você não é membro deste clube' });
         }
         
-        const [clubeRows] = await pool.query(
+        const [clubeRows] = await pool.safeQuery(
             'SELECT id_criador FROM clubes WHERE id = ?',
             [clubeId]
         );
@@ -2708,7 +2708,7 @@ app.get('/api/clube/:id/encontros', verificarAutenticacao, async (req, res) => {
             encontro.participantes = participantes.filter(p => p.status === 'confirmado' || p.status === 'talvez');
         }
         
-        const [participacoesEncontros] = await pool.query(
+        const [participacoesEncontros] = await pool.safeQuery(
             'SELECT * FROM participantes_encontro WHERE id_usuario = ? AND id_encontro IN (?)',
             [userId, encontros.length > 0 ? encontros.map(e => e.id) : [0]]
         );
@@ -2729,7 +2729,7 @@ app.post('/api/clube/:id/encontros', verificarAutenticacao, async (req, res) => 
         const clubeId = req.params.id;
         const userId = req.session.userId;
         
-        const [clubeRows] = await pool.query(
+        const [clubeRows] = await pool.safeQuery(
             'SELECT id_criador, modelo FROM clubes WHERE id = ?',
             [clubeId]
         );
@@ -2806,7 +2806,7 @@ app.get('/api/clube/:id/encontros/:encontroId', verificarAutenticacao, async (re
         const encontroId = req.params.encontroId;
         const userId = req.session.userId;
         
-        const [participacoes] = await pool.query(
+        const [participacoes] = await pool.safeQuery(
             'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
             [userId, clubeId]
         );
@@ -2836,7 +2836,7 @@ app.put('/api/clube/:id/encontros/:encontroId', verificarAutenticacao, async (re
         const encontroId = req.params.encontroId;
         const userId = req.session.userId;
         
-        const [clubeRows] = await pool.query(
+        const [clubeRows] = await pool.safeQuery(
             'SELECT id_criador, modelo FROM clubes WHERE id = ?',
             [clubeId]
         );
@@ -2908,7 +2908,7 @@ app.delete('/api/clube/:id/encontros/:encontroId', verificarAutenticacao, async 
         const encontroId = req.params.encontroId;
         const userId = req.session.userId;
         
-        const [clubeRows] = await pool.query(
+        const [clubeRows] = await pool.safeQuery(
             'SELECT id_criador FROM clubes WHERE id = ?',
             [clubeId]
         );
@@ -2946,7 +2946,7 @@ app.post('/api/clube/:id/encontros/:encontroId/participacao', verificarAutentica
             return res.status(400).json({ erro: 'Status de participação inválido' });
         }
         
-        const [participacoes] = await pool.query(
+        const [participacoes] = await pool.safeQuery(
             'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
             [userId, clubeId]
         );
@@ -2984,7 +2984,7 @@ app.get('/api/clube/:id/encontros/:encontroId/participantes', verificarAutentica
         const encontroId = req.params.encontroId;
         const userId = req.session.userId;
         
-        const [participacoes] = await pool.query(
+        const [participacoes] = await pool.safeQuery(
             'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
             [userId, clubeId]
         );
@@ -3053,7 +3053,7 @@ app.get('/api/clube/:id/sugestoes', verificarAutenticacao, async (req, res) => {
     const clubeId = req.params.id;
     const userId = req.session.userId;
     
-    const [participacoes] = await pool.query(
+    const [participacoes] = await pool.safeQuery(
       'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
       [userId, clubeId]
     );
@@ -3063,7 +3063,7 @@ app.get('/api/clube/:id/sugestoes', verificarAutenticacao, async (req, res) => {
     }
     
     // Buscar sugestões do clube
-    const [sugestoes] = await pool.query(`
+    const [sugestoes] = await pool.safeQuery(`
       SELECT s.*, u.nome as nome_usuario, u.foto_perfil
       FROM sugestoes s
       JOIN usuarios u ON s.id_usuario = u.id
@@ -3092,7 +3092,7 @@ app.post('/api/clube/:id/sugestoes', verificarAutenticacao, async (req, res) => 
       return res.status(400).json({ erro: 'Título do livro é obrigatório' });
     }
     
-    const [participacoes] = await pool.query(
+    const [participacoes] = await pool.safeQuery(
       'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
       [userId, clubeId]
     );
@@ -3129,7 +3129,7 @@ app.delete('/api/clube/:id/sugestoes/:sugestaoId', verificarAutenticacao, async 
     const sugestaoId = req.params.sugestaoId;
     const userId = req.session.userId;
     
-    const [participacoes] = await pool.query(
+    const [participacoes] = await pool.safeQuery(
       'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
       [userId, clubeId]
     );
@@ -3138,7 +3138,7 @@ app.delete('/api/clube/:id/sugestoes/:sugestaoId', verificarAutenticacao, async 
       return res.status(403).json({ erro: 'Você não é membro deste clube' });
     }
     
-    const [sugestoes] = await pool.query(
+    const [sugestoes] = await pool.safeQuery(
       'SELECT * FROM sugestoes WHERE id = ? AND id_clube = ?',
       [sugestaoId, clubeId]
     );
@@ -3147,7 +3147,7 @@ app.delete('/api/clube/:id/sugestoes/:sugestaoId', verificarAutenticacao, async 
       return res.status(404).json({ erro: 'Sugestão não encontrada' });
     }
     
-    const [clubes] = await pool.query(
+    const [clubes] = await pool.safeQuery(
       'SELECT id_criador FROM clubes WHERE id = ?',
       [clubeId]
     );
@@ -3159,7 +3159,7 @@ app.delete('/api/clube/:id/sugestoes/:sugestaoId', verificarAutenticacao, async 
       return res.status(403).json({ erro: 'Você não tem permissão para excluir esta sugestão' });
     }
     
-    await pool.query('DELETE FROM sugestoes WHERE id = ?', [sugestaoId]);
+    await pool.safeQuery('DELETE FROM sugestoes WHERE id = ?', [sugestaoId]);
     
     res.json({ mensagem: 'Sugestão excluída com sucesso' });
   } catch (error) {
@@ -3173,7 +3173,7 @@ app.get('/api/clube/:id/votacao', verificarAutenticacao, async (req, res) => {
     const userId = req.session.userId;
     
     // Verificar se é membro do clube
-    const [participacoes] = await pool.query(
+    const [participacoes] = await pool.safeQuery(
       'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
       [userId, clubeId]
     );
@@ -3213,7 +3213,7 @@ app.post('/api/clube/:id/votacao', verificarAutenticacao, async (req, res) => {
     }
     
     // Verificar se é o criador do clube
-    const [clubeRows] = await pool.query(
+    const [clubeRows] = await pool.safeQuery(
       'SELECT id_criador FROM clubes WHERE id = ?',
       [clubeId]
     );
@@ -3251,7 +3251,7 @@ app.post('/api/clube/:id/votacao', verificarAutenticacao, async (req, res) => {
     
     // Verificar se todas as sugestões existem e pertencem ao clube
     const placeholders = sugestoes.map(() => '?').join(',');
-    const [sugestoesValidas] = await pool.query(
+    const [sugestoesValidas] = await pool.safeQuery(
       `SELECT id FROM sugestoes WHERE id IN (${placeholders}) AND id_clube = ?`,
       [...sugestoes, clubeId]
     );
@@ -3290,7 +3290,7 @@ app.post('/api/clube/:id/votacao/votar', verificarAutenticacao, async (req, res)
     }
     
     // Verificar se é membro do clube
-    const [participacoes] = await pool.query(
+    const [participacoes] = await pool.safeQuery(
       'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
       [userId, clubeId]
     );
@@ -3337,7 +3337,7 @@ app.get('/api/clube/:id/votacao/opcao/:opcaoId/votantes', verificarAutenticacao,
     const userId = req.session.userId;
     
     // Verificar se é membro do clube
-    const [participacoes] = await pool.query(
+    const [participacoes] = await pool.safeQuery(
       'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
       [userId, clubeId]
     );
@@ -3347,7 +3347,7 @@ app.get('/api/clube/:id/votacao/opcao/:opcaoId/votantes', verificarAutenticacao,
     }
     
     // Buscar votantes da opção
-    const [votantes] = await pool.query(
+    const [votantes] = await pool.safeQuery(
       `SELECT u.id, u.nome, u.foto_perfil, v.data_voto
        FROM votos v
        JOIN usuarios u ON v.id_usuario = u.id
@@ -3370,7 +3370,7 @@ app.post('/api/clube/:id/votacao/encerrar', verificarAutenticacao, async (req, r
     const userId = req.session.userId;
     
     // Verificar se é o criador do clube
-    const [clubeRows] = await pool.query(
+    const [clubeRows] = await pool.safeQuery(
       'SELECT id_criador FROM clubes WHERE id = ?',
       [clubeId]
     );
@@ -3406,7 +3406,7 @@ app.get('/api/clube/:id/votacao/:votacaoId/resultado', verificarAutenticacao, as
     const votacaoId = req.params.votacaoId;
     const userId = req.session.userId;
 
-    const [participacoes] = await pool.query(
+    const [participacoes] = await pool.safeQuery(
       'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
       [userId, clubeId]
     );
@@ -3415,7 +3415,7 @@ app.get('/api/clube/:id/votacao/:votacaoId/resultado', verificarAutenticacao, as
       return res.status(403).json({ erro: 'Você não é membro deste clube' });
     }
     
-    const [votacaoRows] = await pool.query(
+    const [votacaoRows] = await pool.safeQuery(
       'SELECT * FROM votacoes WHERE id = ? AND id_clube = ?',
       [votacaoId, clubeId]
     );
@@ -3456,7 +3456,7 @@ app.get('/api/clube/:id/votacoes/historico', verificarAutenticacao, async (req, 
     const clubeId = req.params.id;
     const userId = req.session.userId;
     
-    const [participacoes] = await pool.query(
+    const [participacoes] = await pool.safeQuery(
       'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
       [userId, clubeId]
     );
@@ -3478,7 +3478,7 @@ app.get('/api/clube/:id/configuracoes', verificarAutenticacao, async (req, res) 
     const clubeId = req.params.id;
     const userId = req.session.userId;
     
-    const [clubeRows] = await pool.query(
+    const [clubeRows] = await pool.safeQuery(
       'SELECT * FROM clubes WHERE id = ? AND id_criador = ?',
       [clubeId, userId]
     );
@@ -3489,14 +3489,14 @@ app.get('/api/clube/:id/configuracoes', verificarAutenticacao, async (req, res) 
     
     const clube = clubeRows[0];
     
-    const [categoriasClube] = await pool.query(`
+    const [categoriasClube] = await pool.safeQuery(`
       SELECT c.id, c.nome
       FROM categorias c
       JOIN clube_categorias cc ON c.id = cc.id_categoria
       WHERE cc.id_clube = ?
     `, [clubeId]);
     
-    const [todasCategorias] = await pool.query('SELECT id, nome FROM categorias ORDER BY nome');
+    const [todasCategorias] = await pool.safeQuery('SELECT id, nome FROM categorias ORDER BY nome');
     
     res.json({
       clube,
@@ -3514,7 +3514,7 @@ app.put('/api/clube/:id/configuracoes', verificarAutenticacao, async (req, res) 
     const userId = req.session.userId;
     const { nome, descricao, visibilidade, senha, modelo, cidade, estado } = req.body;
     
-    const [clubeRows] = await pool.query(
+    const [clubeRows] = await pool.safeQuery(
       'SELECT * FROM clubes WHERE id = ? AND id_criador = ?',
       [clubeId, userId]
     );
@@ -3538,14 +3538,14 @@ app.put('/api/clube/:id/configuracoes', verificarAutenticacao, async (req, res) 
     
     const senhaAcesso = visibilidade === 'privado' ? senha : null;
     
-    await pool.query(`
+    await pool.safeQuery(`
       UPDATE clubes 
       SET nome = ?, descricao = ?, visibilidade = ?, senha_acesso = ?, 
           modelo = ?, cidade = ?, estado = ?
       WHERE id = ?
     `, [nome, descricao || '', visibilidade, senhaAcesso, modelo, cidade || null, estado || null, clubeId]);
     
-    const [clubeAtualizado] = await pool.query('SELECT * FROM clubes WHERE id = ?', [clubeId]);
+    const [clubeAtualizado] = await pool.safeQuery('SELECT * FROM clubes WHERE id = ?', [clubeId]);
     
     res.json({
       mensagem: 'Configurações atualizadas com sucesso',
@@ -3563,7 +3563,7 @@ app.put('/api/clube/:id/categorias', verificarAutenticacao, async (req, res) => 
     const userId = req.session.userId;
     const { categorias } = req.body;
     
-    const [clubeRows] = await pool.query(
+    const [clubeRows] = await pool.safeQuery(
       'SELECT * FROM clubes WHERE id = ? AND id_criador = ?',
       [clubeId, userId]
     );
@@ -3572,20 +3572,20 @@ app.put('/api/clube/:id/categorias', verificarAutenticacao, async (req, res) => 
       return res.status(403).json({ erro: 'Apenas o criador do clube pode editar as categorias' });
     }
     
-    await pool.query('DELETE FROM clube_categorias WHERE id_clube = ?', [clubeId]);
+    await pool.safeQuery('DELETE FROM clube_categorias WHERE id_clube = ?', [clubeId]);
     
     if (categorias && categorias.length > 0) {
       const values = categorias.map(catId => [clubeId, catId]);
       const placeholders = values.map(() => '(?, ?)').join(', ');
       const flatValues = values.flat();
       
-      await pool.query(
+      await pool.safeQuery(
         `INSERT INTO clube_categorias (id_clube, id_categoria) VALUES ${placeholders}`,
         flatValues
       );
     }
     
-    const [categoriasAtualizadas] = await pool.query(`
+    const [categoriasAtualizadas] = await pool.safeQuery(`
       SELECT c.id, c.nome
       FROM categorias c
       JOIN clube_categorias cc ON c.id = cc.id_categoria
@@ -3606,7 +3606,7 @@ app.delete('/api/clube/:id', verificarAutenticacao, async (req, res) => {
     const clubeId = req.params.id;
     const userId = req.session.userId;
     
-    const [clubeRows] = await pool.query(
+    const [clubeRows] = await pool.safeQuery(
       'SELECT * FROM clubes WHERE id = ? AND id_criador = ?',
       [clubeId, userId]
     );
@@ -3615,7 +3615,7 @@ app.delete('/api/clube/:id', verificarAutenticacao, async (req, res) => {
       return res.status(403).json({ erro: 'Apenas o criador do clube pode excluí-lo' });
     }
     
-    const [result] = await pool.query('DELETE FROM clubes WHERE id = ?', [clubeId]);
+    const [result] = await pool.safeQuery('DELETE FROM clubes WHERE id = ?', [clubeId]);
     
     if (result.affectedRows === 0) {
       return res.status(404).json({ erro: 'Clube não encontrado' });
@@ -3633,7 +3633,7 @@ app.delete('/api/clube/:id/membros/:membroId', verificarAutenticacao, async (req
     const membroId = req.params.membroId;
     const userId = req.session.userId;
     
-    const [clubeRows] = await pool.query(
+    const [clubeRows] = await pool.safeQuery(
       'SELECT * FROM clubes WHERE id = ? AND id_criador = ?',
       [clubeId, userId]
     );
@@ -3646,7 +3646,7 @@ app.delete('/api/clube/:id/membros/:membroId', verificarAutenticacao, async (req
       return res.status(400).json({ erro: 'Você não pode se remover do próprio clube' });
     }
     
-    const [result] = await pool.query(
+    const [result] = await pool.safeQuery(
       'DELETE FROM participacoes WHERE id_clube = ? AND id_usuario = ?',
       [clubeId, membroId]
     );
@@ -3736,7 +3736,7 @@ app.post('/api/denuncias', verificarAutenticacao, async (req, res) => {
       return res.status(400).json({ erro: 'ID da atualização e motivo são obrigatórios' });
     }
     
-    const [atualizacoes] = await pool.query(
+    const [atualizacoes] = await pool.safeQuery(
       'SELECT id_usuario FROM atualizacoes WHERE id = ?',
       [idAtualizacao]
     );
@@ -3789,7 +3789,7 @@ app.post('/api/comentarios', verificarAutenticacaoAPI, async (req, res) => {
     
     // Verificar se a atualização existe
     console.log('Verificando se atualização existe:', idAtualizacao);
-    const [atualizacao] = await pool.query(
+    const [atualizacao] = await pool.safeQuery(
       'SELECT id FROM atualizacoes WHERE id = ?',
       [idAtualizacao]
     );
@@ -3867,7 +3867,7 @@ app.delete('/api/comentarios/:id', verificarAutenticacaoAPI, async (req, res) =>
     }
 
     // Buscar atualização para verificar quem é o autor
-    const [atualizacaoRows] = await pool.query(
+    const [atualizacaoRows] = await pool.safeQuery(
       'SELECT id_usuario FROM atualizacoes WHERE id = ?',
       [comentario.id_atualizacao]
     );

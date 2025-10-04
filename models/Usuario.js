@@ -7,7 +7,7 @@ class Usuario {
       // Hash da senha antes de armazenar
       const senhaHash = await bcrypt.hash(senha, 10);
       
-      const [result] = await pool.query(
+      const [result] = await pool.safeQuery(
         'INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)',
         [nome, email, senhaHash]  
       );
@@ -22,7 +22,7 @@ class Usuario {
   static async buscarPorEmail(email) {
     try {
       console.log('Buscando usuário por email:', email);
-      const [rows] = await pool.query(
+      const [rows] = await pool.safeQuery(
         'SELECT * FROM usuarios WHERE email = ?',
         [email]
       );
@@ -48,7 +48,7 @@ class Usuario {
           if (usuarioId) {
             try {
               const senhaHash = await bcrypt.hash(senha, 10);
-              await pool.query('UPDATE usuarios SET senha = ? WHERE id = ?', [senhaHash, usuarioId]);
+              await pool.safeQuery('UPDATE usuarios SET senha = ? WHERE id = ?', [senhaHash, usuarioId]);
               console.log(`Senha do usuário ${usuarioId} migrada para hash`);
             } catch (updateError) {
               console.error('Erro ao atualizar senha para hash:', updateError);
@@ -65,7 +65,7 @@ class Usuario {
   }
   static async buscarPorId(id) {
     try {
-      const [rows] = await pool.query(
+      const [rows] = await pool.safeQuery(
         'SELECT * FROM usuarios WHERE id = ?',
         [id]
       );
@@ -78,12 +78,12 @@ class Usuario {
   }
   static async listarTodos() {
     try {
-      const [rows] = await pool.query(`
+      const [rows] = await pool.safeQuery(`
         SELECT u.* FROM usuarios u ORDER BY u.id
       `);
       
       for (let i = 0; i < rows.length; i++) {
-        const [result] = await pool.query(`
+        const [result] = await pool.safeQuery(`
           SELECT COUNT(DISTINCT clube_id) as total FROM (
             SELECT id as clube_id FROM clubes WHERE id_criador = ?
             UNION
@@ -129,7 +129,7 @@ static async atualizar(id, dados) { //crUd
     
     valores.push(id);
     
-    const [result] = await pool.query(
+    const [result] = await pool.safeQuery(
       `UPDATE usuarios SET ${campos.join(', ')} WHERE id = ?`,
       valores
     );
@@ -148,12 +148,12 @@ static async atualizar(id, dados) { //crUd
   
   static async buscarClubes(userId) {
     try {
-      const [clubesCriados] = await pool.query(
+      const [clubesCriados] = await pool.safeQuery(
         'SELECT id, nome FROM clubes WHERE id_criador = ?',
         [userId]
       );
       
-      const [clubesParticipando] = await pool.query(`
+      const [clubesParticipando] = await pool.safeQuery(`
         SELECT c.id, c.nome 
         FROM clubes c
         JOIN participacoes p ON c.id = p.id_clube
@@ -173,7 +173,7 @@ static async atualizar(id, dados) { //crUd
   try {
     console.log('Atualizando foto no banco para usuário:', userId, 'URL:', fotoUrl);
     
-    const [result] = await pool.query(
+    const [result] = await pool.safeQuery(
       'UPDATE usuarios SET foto_perfil = ? WHERE id = ?',
       [fotoUrl, userId]
     );
@@ -184,7 +184,7 @@ static async atualizar(id, dados) { //crUd
       throw new Error('Usuário não encontrado');
     }
     
-    const [rows] = await pool.query(
+    const [rows] = await pool.safeQuery(
       'SELECT id, nome, email, foto_perfil FROM usuarios WHERE id = ?',
       [userId]
     );
@@ -200,7 +200,7 @@ static async atualizar(id, dados) { //crUd
   static async salvarTokenReset(email, token) {
     try {
       const agora = new Date();
-      const [result] = await pool.query(
+      const [result] = await pool.safeQuery(
         'UPDATE usuarios SET reset_token = ?, reset_token_expira = ? WHERE email = ?',
         [token, agora, email]
       );
@@ -214,7 +214,7 @@ static async atualizar(id, dados) { //crUd
 
   static async buscarPorTokenReset(token) {
     try {
-      const [rows] = await pool.query(
+      const [rows] = await pool.safeQuery(
         'SELECT * FROM usuarios WHERE reset_token = ?',
         [token]
       );
@@ -247,7 +247,7 @@ static async atualizar(id, dados) { //crUd
       const senhaHash = await bcrypt.hash(novaSenha, 10);
 
       // Atualizar senha e limpar token
-      const [result] = await pool.query(
+      const [result] = await pool.safeQuery(
         'UPDATE usuarios SET senha = ?, reset_token = NULL, reset_token_expira = NULL WHERE reset_token = ?',
         [senhaHash, token]
       );
@@ -261,7 +261,7 @@ static async atualizar(id, dados) { //crUd
 
   static async limparTokenReset(email) {
     try {
-      const [result] = await pool.query(
+      const [result] = await pool.safeQuery(
         'UPDATE usuarios SET reset_token = NULL, reset_token_expira = NULL WHERE email = ?',
         [email]
       );

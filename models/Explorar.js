@@ -3,7 +3,7 @@ const pool = require('../config/database');
 class Explorar {
 static async listarTodosClubes() {
   try {
-    const [rows] = await pool.query(`
+    const [rows] = await pool.safeQuery(`
       SELECT c.id, c.nome, c.descricao, c.visibilidade, c.modelo, c.data_criacao,
              u.nome as nome_criador,
              (SELECT COUNT(*) FROM participacoes WHERE id_clube = c.id) as total_membros
@@ -14,12 +14,12 @@ static async listarTodosClubes() {
     
     const clubesComLeituras = [];
     for (const clube of rows) {
-      const [leituras] = await pool.query(
+      const [leituras] = await pool.safeQuery(
         'SELECT titulo, autor FROM leituras WHERE id_clube = ? AND status = "atual" LIMIT 1',
         [clube.id]
       );
       
-      const [categorias] = await pool.query(`
+      const [categorias] = await pool.safeQuery(`
         SELECT cat.nome
         FROM categorias cat
         JOIN clube_categorias cc ON cat.id = cc.id_categoria
@@ -42,7 +42,7 @@ static async listarTodosClubes() {
 }
   static async verificarParticipacao(idUsuario, idClube) {
     try {
-      const [rows] = await pool.query(
+      const [rows] = await pool.safeQuery(
         'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
         [idUsuario, idClube]
       );
@@ -55,7 +55,7 @@ static async listarTodosClubes() {
 
   static async entrarNoClube(idUsuario, idClube) {
     try {
-      await pool.query(
+      await pool.safeQuery(
         'INSERT INTO participacoes (id_usuario, id_clube) VALUES (?, ?)',
         [idUsuario, idClube]
       );

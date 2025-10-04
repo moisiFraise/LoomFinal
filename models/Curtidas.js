@@ -4,21 +4,21 @@ class Curtidas {
     static async curtir(idAtualizacao, idUsuario) {
         try {
             // Verificar se já curtiu
-            const [existente] = await pool.query(
+            const [existente] = await pool.safeQuery(
                 'SELECT * FROM curtidas WHERE id_atualizacao = ? AND id_usuario = ?',
                 [idAtualizacao, idUsuario]
             );
             
             if (existente.length > 0) {
                 // Se já curtiu, remove a curtida (descurtir)
-                await pool.query(
+                await pool.safeQuery(
                     'DELETE FROM curtidas WHERE id_atualizacao = ? AND id_usuario = ?',
                     [idAtualizacao, idUsuario]
                 );
                 return { curtido: false, total: await this.contarCurtidas(idAtualizacao) };
             } else {
                 // Se não curtiu, adiciona a curtida
-                await pool.query(
+                await pool.safeQuery(
                     'INSERT INTO curtidas (id_atualizacao, id_usuario) VALUES (?, ?)',
                     [idAtualizacao, idUsuario]
                 );
@@ -32,7 +32,7 @@ class Curtidas {
     
     static async contarCurtidas(idAtualizacao) {
         try {
-            const [result] = await pool.query(
+            const [result] = await pool.safeQuery(
                 'SELECT COUNT(*) as total FROM curtidas WHERE id_atualizacao = ?',
                 [idAtualizacao]
             );
@@ -45,7 +45,7 @@ class Curtidas {
     
     static async verificarCurtida(idAtualizacao, idUsuario) {
         try {
-            const [rows] = await pool.query(
+            const [rows] = await pool.safeQuery(
                 'SELECT * FROM curtidas WHERE id_atualizacao = ? AND id_usuario = ?',
                 [idAtualizacao, idUsuario]
             );
@@ -58,7 +58,7 @@ class Curtidas {
     
     static async listarCurtidasPorAtualizacao(idAtualizacao) {
         try {
-            const [rows] = await pool.query(
+            const [rows] = await pool.safeQuery(
                 `SELECT c.*, u.nome as nome_usuario 
                  FROM curtidas c
                  JOIN usuarios u ON c.id_usuario = u.id
@@ -75,7 +75,7 @@ class Curtidas {
     
     static async listarTodasCurtidas() {
         try {
-            const [rows] = await pool.query(
+            const [rows] = await pool.safeQuery(
                 `SELECT c.*, 
                  u.nome as nome_usuario,
                  a.id_clube,
@@ -94,7 +94,7 @@ class Curtidas {
     
     static async listarCurtidasPorUsuario(idUsuario) {
         try {
-            const [rows] = await pool.query(
+            const [rows] = await pool.safeQuery(
                 `SELECT c.*, 
                  a.conteudo as conteudo_atualizacao,
                  a.id_clube,
@@ -115,7 +115,7 @@ class Curtidas {
     
     static async listarCurtidasPorClube(idClube) {
         try {
-            const [rows] = await pool.query(
+            const [rows] = await pool.safeQuery(
                 `SELECT c.*, 
                  u.nome as nome_usuario,
                  a.conteudo as conteudo_atualizacao

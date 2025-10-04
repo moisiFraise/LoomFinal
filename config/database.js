@@ -7,23 +7,19 @@ const dbConfig = {
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'loom_db',
   waitForConnections: true,
-  connectionLimit: 5, // Pool compartilhado entre app e sessões
+  connectionLimit: 50, // Pool maior compartilhado
   queueLimit: 0,
-  acquireTimeout: 60000, // Timeout para adquirir conexão
-  timeout: 60000, // Timeout geral
-  reconnect: true, // Reconectar automaticamente
+  acquireTimeout: 60000,
+  timeout: 60000,
   charset: 'utf8mb4',
   collation: 'utf8mb4_unicode_ci',
-  timezone: '-03:00', // Fuso horário do Brasil (UTC-3)
-  // Configurações para otimizar o pool e evitar vazamentos
-  idleTimeout: 60000, // 1 minuto para conexões ociosas (menor)
-  maxIdle: 2, // Máximo de conexões ociosas (reduzido)
+  timezone: '-03:00',
+  idleTimeout: 60000,
+  maxIdle: 10,
   enableKeepAlive: true,
-  keepAliveInitialDelay: 0,
-  // IMPORTANTES: Forçar liberação de conexões
-  releaseTimeout: 60000, // Timeout para liberar conexão
-  evictTimeout: 60000, // Timeout para expulsar conexões antigas
+  keepAliveInitialDelay: 0
 };
+
 console.log('Tentando conectar ao banco de dados com as configurações:', {
   host: dbConfig.host,
   user: dbConfig.user,
@@ -31,6 +27,56 @@ console.log('Tentando conectar ao banco de dados com as configurações:', {
 });
 
 const pool = mysql.createPool(dbConfig);
+
+// Wrapper para garantir que conexões sempre sejam liberadas
+async function executeQuery(query, params = []) {
+  let connection;
+  try {
+    connection = await pool.getConnection();
+    const [rows] = await connection.execute(query, params);
+    return [rows, connection];
+  } catch (error) {
+    if (connection) connection.release();
+    throw error;
+  } finally {
+    if (connection) connection.release();
+  }
+}
+
+// Wrapper para transações com auto-release
+async function executeTransaction(callback) {
+  let connection;
+  try {
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+    
+    const result = await callback(connection);
+    
+    await connection.commit();
+    return result;
+  } catch (error) {
+    if (connection) {
+      await connection.rollback();
+    }
+    throw error;
+  } finally {
+    if (connection) connection.release();
+  }
+}
+
+// Método simples que sempre retorna array no formato [rows]
+pool.safeQuery = async (query, params = []) => {
+  let connection;
+  try {
+    connection = await pool.getConnection();
+    const [rows] = await connection.execute(query, params);
+    return [rows];
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+pool.safeTransaction = executeTransaction;
 
 const testConnection = async () => {
   try {
@@ -51,7 +97,7 @@ const testConnection = async () => {
 
 testConnection();
 
-// Monitorar pool de conexões para detectar vazamentos
+// Monitorar pool de conexões
 setInterval(() => {
   try {
     const poolInfo = pool.pool || {};
@@ -62,14 +108,12 @@ setInterval(() => {
       acquiringConnections: poolInfo._acquiringConnections?.length || 0
     };
     
-    // Log apenas se houver uso suspeito
-    if (stats.usedConnections > 3 || stats.totalConnections > 4) {
-      console.log('⚠️ Pool stats:', stats);
+    if (stats.usedConnections > 10) {
+      console.log('📊 Pool stats:', stats);
     }
   } catch (error) {
-    // Ignorar erros de monitoramento para não quebrar a aplicação
-    console.log('Pool monitoring disabled due to mysql2 version differences');
+    // Ignorar erros de monitoramento
   }
-}, 30000); // A cada 30 segundos
+}, 30000);
 
 module.exports = pool;

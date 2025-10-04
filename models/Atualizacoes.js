@@ -3,7 +3,7 @@ const pool = require('../config/database');
 class Atualizacoes {
     static async criar(idClube, idLeitura, idUsuario, conteudo, paginaAtual, totalPaginas, gifUrl = null) {
         try {
-            const [ultimaAtualizacao] = await pool.query(
+            const [ultimaAtualizacao] = await pool.safeQuery(
                 `SELECT * FROM atualizacoes 
                  WHERE id_clube = ? AND id_leitura = ? AND id_usuario = ?
                  ORDER BY data_postagem DESC LIMIT 1`,
@@ -16,7 +16,7 @@ class Atualizacoes {
                 throw new Error('Você já completou esta leitura');
             }
             
-            const [result] = await pool.query(
+            const [result] = await pool.safeQuery(
                 `INSERT INTO atualizacoes (id_clube, id_leitura, id_usuario, conteudo, porcentagem_leitura, gif_url)
                  VALUES (?, ?, ?, ?, ?, ?)`,
                 [idClube, idLeitura, idUsuario, conteudo, porcentagemLeitura, gifUrl]
@@ -40,7 +40,7 @@ class Atualizacoes {
     
     static async listarPorClube(idClube, idLeitura) {
         try {
-            const [rows] = await pool.query(
+            const [rows] = await pool.safeQuery(
                 `SELECT a.*, u.nome as nome_usuario, u.foto_perfil, u.estado as estado_usuario,
                         CASE 
                             WHEN p.id_usuario IS NULL THEN 1 
@@ -62,7 +62,7 @@ class Atualizacoes {
     }
         static async listarPorLeitura(idClube, idLeitura) {
         try {
-            const [atualizacoes] = await pool.query(
+            const [atualizacoes] = await pool.safeQuery(
                 `SELECT a.*, u.nome as nome_usuario, u.foto_perfil, u.estado as estado_usuario
                  FROM atualizacoes a
                  JOIN usuarios u ON a.id_usuario = u.id
@@ -72,7 +72,7 @@ class Atualizacoes {
             );
             
             // Buscar estatísticas da leitura
-            const [estatisticas] = await pool.query(
+            const [estatisticas] = await pool.safeQuery(
                 `SELECT 
                     COUNT(DISTINCT a.id_usuario) as membros_participando,
                     AVG(a.porcentagem_leitura) as progresso_medio,
@@ -98,7 +98,7 @@ class Atualizacoes {
     
     static async obterPorId(id) {
         try {
-            const [rows] = await pool.query(
+            const [rows] = await pool.safeQuery(
                 `SELECT a.*, u.nome as nome_usuario, u.foto_perfil, u.estado as estado_usuario
                  FROM atualizacoes a
                  JOIN usuarios u ON a.id_usuario = u.id
@@ -117,7 +117,7 @@ class Atualizacoes {
         try {
             const porcentagemLeitura = Math.min(Math.round((paginaAtual / totalPaginas) * 100), 100);
             
-            const [result] = await pool.query(
+            const [result] = await pool.safeQuery(
                 `UPDATE atualizacoes 
                  SET conteudo = ?, porcentagem_leitura = ?, gif_url = ?, data_postagem = CONVERT_TZ(NOW(), '+00:00', '-03:00')
                  WHERE id = ?`,
@@ -133,7 +133,7 @@ class Atualizacoes {
     
     static async excluir(id) {
         try {
-            const [result] = await pool.query(
+            const [result] = await pool.safeQuery(
                 'DELETE FROM atualizacoes WHERE id = ?',
                 [id]
             );
@@ -147,7 +147,7 @@ class Atualizacoes {
     
     static async verificarUltimaAtualizacao(idUsuario, idLeitura) {
         try {
-            const [rows] = await pool.query(
+            const [rows] = await pool.safeQuery(
                 `SELECT * FROM atualizacoes
                  WHERE id_usuario = ? AND id_leitura = ?
                  ORDER BY data_postagem DESC LIMIT 1`,
@@ -163,7 +163,7 @@ class Atualizacoes {
     
     static async obterEstatisticasLeitura(idClube, idLeitura) {
         try {
-            const [stats] = await pool.query(
+            const [stats] = await pool.safeQuery(
                 `SELECT 
                     COUNT(DISTINCT a.id_usuario) as membros_participando,
                     AVG(CASE WHEN a.porcentagem_leitura > 0 THEN a.porcentagem_leitura ELSE NULL END) as progresso_medio,

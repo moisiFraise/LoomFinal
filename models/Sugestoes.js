@@ -3,12 +3,12 @@ const pool = require('../config/database');
 class Sugestoes {
     static async criar(idClube, idUsuario, titulo, autor = null, justificativa = null, imagemUrl = null, paginas = null) {
         try {
-            const [result] = await pool.query(
+            const [result] = await pool.safeQuery(
                 'INSERT INTO sugestoes (id_clube, id_usuario, titulo, autor, justificativa, imagemUrl, paginas) VALUES (?, ?, ?, ?, ?, ?, ?)',
                 [idClube, idUsuario, titulo, autor, justificativa, imagemUrl, paginas]
             );
             
-            const [novaSugestao] = await pool.query(
+            const [novaSugestao] = await pool.safeQuery(
                 'SELECT s.*, u.nome as nome_usuario FROM sugestoes s JOIN usuarios u ON s.id_usuario = u.id WHERE s.id = ?',
                 [result.insertId]
             );
@@ -22,7 +22,7 @@ class Sugestoes {
     
     static async listarPorClube(idClube) {
         try {
-            const [sugestoes] = await pool.query(`
+            const [sugestoes] = await pool.safeQuery(`
                 SELECT s.*, u.nome as nome_usuario, u.foto_perfil
                 FROM sugestoes s
                 JOIN usuarios u ON s.id_usuario = u.id
@@ -39,7 +39,7 @@ class Sugestoes {
     
     static async buscarPorId(id) {
         try {
-            const [sugestoes] = await pool.query(
+            const [sugestoes] = await pool.safeQuery(
                 'SELECT s.*, u.nome as nome_usuario FROM sugestoes s JOIN usuarios u ON s.id_usuario = u.id WHERE s.id = ?',
                 [id]
             );
@@ -53,7 +53,7 @@ class Sugestoes {
     
     static async excluir(id) {
         try {
-            await pool.query('DELETE FROM sugestoes WHERE id = ?', [id]);
+            await pool.safeQuery('DELETE FROM sugestoes WHERE id = ?', [id]);
             return true;
         } catch (error) {
             console.error('Erro ao excluir sugestão:', error);
@@ -63,7 +63,7 @@ class Sugestoes {
     
     static async atualizar(id, titulo, autor = null, justificativa = null, imagemUrl = null, paginas = null) {
         try {
-            await pool.query(
+            await pool.safeQuery(
                 'UPDATE sugestoes SET titulo = ?, autor = ?, justificativa = ?, imagemUrl = ?, paginas = ? WHERE id = ?',
                 [titulo, autor, justificativa, imagemUrl, paginas, id]
             );

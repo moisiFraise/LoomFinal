@@ -4,12 +4,12 @@ class Leituras {
   static async criar(idClube, titulo, autor, dataInicio, dataFim = null, paginas = null, imagemUrl = null) {
     try {
       // Marcar leitura atual como anterior
-      await pool.query(
+      await pool.safeQuery(
         'UPDATE leituras SET status = "anterior" WHERE id_clube = ? AND status = "atual"',
         [idClube]
       );
       
-      const [result] = await pool.query(
+      const [result] = await pool.safeQuery(
         'INSERT INTO leituras (id_clube, titulo, autor, status, data_inicio, data_fim, paginas, imagemUrl) VALUES (?, ?, ?, "atual", ?, ?, ?, ?)',
         [idClube, titulo, autor, dataInicio, dataFim, paginas, imagemUrl]
       );
@@ -34,7 +34,7 @@ class Leituras {
   static async criarDeSugestao(idClube, sugestaoId, dataInicio, dataFim = null) {
     try {
       // Buscar dados da sugestão
-      const [sugestaoRows] = await pool.query(
+      const [sugestaoRows] = await pool.safeQuery(
         'SELECT titulo, autor, paginas, imagemUrl FROM sugestoes WHERE id = ? AND id_clube = ?',
         [sugestaoId, idClube]
       );
@@ -65,7 +65,7 @@ class Leituras {
   
   static async buscarAtual(idClube) {
     try {
-      const [rows] = await pool.query(
+      const [rows] = await pool.safeQuery(
         'SELECT * FROM leituras WHERE id_clube = ? AND status = "atual" LIMIT 1',
         [idClube]
       );
@@ -79,7 +79,7 @@ class Leituras {
   
   static async buscarAnteriores(idClube) {
     try {
-      const [rows] = await pool.query(
+      const [rows] = await pool.safeQuery(
         'SELECT * FROM leituras WHERE id_clube = ? AND status = "anterior" ORDER BY data_inicio DESC',
         [idClube]
       );
@@ -95,7 +95,7 @@ class Leituras {
     try {
       const { titulo, autor, dataInicio, dataFim } = dados;
       
-      await pool.query(
+      await pool.safeQuery(
         'UPDATE leituras SET titulo = ?, autor = ?, data_inicio = ?, data_fim = ? WHERE id = ?',
         [titulo, autor, dataInicio, dataFim, id]
       );
@@ -109,7 +109,7 @@ class Leituras {
   
   static async finalizar(id, dataFim) {
     try {
-      await pool.query(
+      await pool.safeQuery(
         'UPDATE leituras SET status = "anterior", data_fim = ? WHERE id = ?',
         [dataFim, id]
       );
