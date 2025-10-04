@@ -3641,6 +3641,9 @@ app.delete('/api/clube/:id', verificarAutenticacao, async (req, res) => {
       return res.status(403).json({ erro: 'Apenas o criador do clube pode excluí-lo' });
     }
     
+    // Excluir mensagens do chat primeiro
+    await pool.safeQuery('DELETE FROM chat WHERE id_clube = ?', [clubeId]);
+    
     const [result] = await pool.safeQuery('DELETE FROM clubes WHERE id = ?', [clubeId]);
     
     if (result.affectedRows === 0) {
