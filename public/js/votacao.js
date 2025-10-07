@@ -250,12 +250,25 @@ async function encerrarVotacao() {
         const data = await response.json();
         
         if (response.ok) {
-            Swal.fire({
-                icon: 'success',
-                title: 'Sucesso!',
-                text: 'Votação encerrada com sucesso!'
-            });
             await carregarVotacao();
+            console.log('📊 Votação recarregada. votacaoAtiva:', votacaoAtiva);
+            
+            // Perguntar se quer adicionar como leitura
+            const resultLeitura = await Swal.fire({
+                icon: 'success',
+                title: 'Votação encerrada!',
+                text: 'Deseja selecionar o livro com maior número de votos como leitura atual?',
+                showCancelButton: true,
+                confirmButtonText: 'Sim, adicionar como leitura',
+                cancelButtonText: 'Não',
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#6c757d'
+            });
+            
+            if (resultLeitura.isConfirmed) {
+                console.log('👤 Usuário confirmou. Chamando selecionarVencedoraComoLeitura()');
+                selecionarVencedoraComoLeitura();
+            }
         } else {
             Swal.fire({
                 icon: 'error',
@@ -411,14 +424,23 @@ async function criarNovaVotacao() {
 }
 
 function selecionarVencedoraComoLeitura() {
+    console.log('🔍 votacaoAtiva:', votacaoAtiva);
+    
     if (!votacaoAtiva || !votacaoAtiva.opcoes || votacaoAtiva.opcoes.length === 0) {
-        mostrarAlerta('Nenhuma opção vencedora encontrada', 'erro');
+        console.error('❌ Votação ativa inválida ou sem opções');
+        Swal.fire({
+            icon: 'error',
+            title: 'Erro',
+            text: 'Nenhuma opção vencedora encontrada'
+        });
         return;
     }
     
     const vencedora = votacaoAtiva.opcoes[0];
+    console.log('🏆 Vencedora:', vencedora);
     
-    sugestaoSelecionada = {
+    // Usar window para garantir acesso às variáveis globais
+    window.sugestaoSelecionada = {
         id: vencedora.sugestao_id,
         titulo: vencedora.titulo,
         autor: vencedora.autor,
@@ -427,7 +449,9 @@ function selecionarVencedoraComoLeitura() {
         nome_usuario: vencedora.nome_usuario
     };
     
-    livroSelecionado = null;
+    window.livroSelecionado = null;
+    
+    console.log('✅ sugestaoSelecionada configurada:', window.sugestaoSelecionada);
     
     const container = document.getElementById('selected-book-container');
     const coverDiv = document.getElementById('selected-book-cover');
@@ -435,9 +459,17 @@ function selecionarVencedoraComoLeitura() {
     const authorElement = document.getElementById('selected-book-author');
     const pagesElement = document.getElementById('selected-book-pages');
     
+    console.log('📦 Elementos encontrados:', {
+        container: !!container,
+        coverDiv: !!coverDiv,
+        titleElement: !!titleElement,
+        authorElement: !!authorElement,
+        pagesElement: !!pagesElement
+    });
+    
     if (container && coverDiv && titleElement && authorElement && pagesElement) {
         coverDiv.innerHTML = vencedora.imagemUrl ? 
-            `<img src="${vencedora.imagemUrl}" alt="${vencedora.titulo}">` : 
+            `<img src="${vencedora.imagemUrl}" alt="${escapeHtml(vencedora.titulo)}">` : 
             `<div class="capa-placeholder"><i class="fa fa-book"></i></div>`;
         
         titleElement.textContent = vencedora.titulo;
@@ -446,15 +478,28 @@ function selecionarVencedoraComoLeitura() {
         
         container.style.display = 'flex';
         
-        abrirModalSelecaoLeitura();
+        console.log('✅ Abrindo modal com livro selecionado');
+        abrirModalSelecaoLeitura(true); // true = manter seleção
         
         setTimeout(() => {
-            configurarValidacoesDatas();
+            if (typeof configurarValidacoesDatas === 'function') {
+                configurarValidacoesDatas();
+            }
         }, 100);
         
-        mostrarAlerta('Livro vencedor selecionado! Configure as datas e confirme a leitura.', 'sucesso');
+        Swal.fire({
+            icon: 'success',
+            title: 'Livro Selecionado!',
+            text: 'Configure as datas e confirme a leitura.',
+            timer: 3000
+        });
     } else {
-        mostrarAlerta('Erro ao configurar livro selecionado. Tente usar a aba "Buscar Livros" no modal de seleção.', 'erro');
+        console.error('❌ Elementos do modal não encontrados');
+        Swal.fire({
+            icon: 'error',
+            title: 'Erro',
+            text: 'Erro ao configurar livro selecionado. Tente usar a aba "Buscar Livros" no modal de seleção.'
+        });
     }
 }
 

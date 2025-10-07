@@ -299,19 +299,21 @@ async function verificarPermissoesCriador() {
         console.error('Erro ao verificar permissões:', error);
     }
 }
-function abrirModalSelecaoLeitura() {
+function abrirModalSelecaoLeitura(manterSelecao = false) {
     const modal = document.getElementById('modal-selecao-leitura');
     const overlay = document.getElementById('overlay');
     
-    document.getElementById('form-selecao-leitura').reset();
-    document.getElementById('search-results').innerHTML = '';
-    document.getElementById('selected-book-container').style.display = 'none';
-    livroSelecionado = null;
-    sugestaoSelecionada = null;
-    resultadosBusca = [];
-    sugestoesSorteio = []; 
+    if (!manterSelecao) {
+        document.getElementById('form-selecao-leitura').reset();
+        document.getElementById('search-results').innerHTML = '';
+        document.getElementById('selected-book-container').style.display = 'none';
+        livroSelecionado = null;
+        sugestaoSelecionada = null;
+        resultadosBusca = [];
+        sugestoesSorteio = []; 
+    }
     
-    mudarTabSelecaoLeitura('buscar');
+    mudarTabSelecaoLeitura('buscar', manterSelecao);
     
     modal.style.display = 'block';
     overlay.style.display = 'block';
@@ -342,7 +344,7 @@ function fecharModalSelecaoLeitura() {
     if (tabBuscarBtn) tabBuscarBtn.classList.add('tab-ativo');
 }
 
-function mudarTabSelecaoLeitura(tab) {
+function mudarTabSelecaoLeitura(tab, manterSelecao = false) {
     document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('tab-ativo'));
     document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
     
@@ -358,10 +360,12 @@ function mudarTabSelecaoLeitura(tab) {
         carregarSugestoesParaSorteio();
     }
     
-    // Esconder container de livro selecionado ao trocar de aba
-    document.getElementById('selected-book-container').style.display = 'none';
-    livroSelecionado = null;
-    sugestaoSelecionada = null;
+    // Esconder container de livro selecionado ao trocar de aba (exceto se manterSelecao for true)
+    if (!manterSelecao) {
+        document.getElementById('selected-book-container').style.display = 'none';
+        livroSelecionado = null;
+        sugestaoSelecionada = null;
+    }
 }
 
 async function carregarSugestoesParaSorteio() {
@@ -862,6 +866,11 @@ function selecionarLivro(index) {
 
 async function salvarNovaLeitura() {
     console.log('Iniciando salvamento da nova leitura');
+    
+    // Sincronizar com variáveis window (caso tenham sido definidas por outro arquivo)
+    if (window.livroSelecionado !== undefined) livroSelecionado = window.livroSelecionado;
+    if (window.sugestaoSelecionada !== undefined) sugestaoSelecionada = window.sugestaoSelecionada;
+    
     console.log('Livro selecionado:', livroSelecionado);
     console.log('Sugestão selecionada:', sugestaoSelecionada);
     
