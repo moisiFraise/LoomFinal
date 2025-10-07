@@ -21,8 +21,6 @@ function configurarValidacoesDatas() {
     
     if (dataInicioInput) {
         const hoje = new Date().toISOString().split('T')[0];
-        dataInicioInput.min = hoje;
-        
         dataInicioInput.value = hoje;
         
         dataInicioInput.addEventListener('change', function() {
@@ -43,16 +41,7 @@ function validarDataInicio() {
     const dataInicioInput = document.getElementById('data-inicio');
     if (!dataInicioInput) return true;
     
-    const dataInicio = new Date(dataInicioInput.value);
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0); 
-    
-    if (dataInicio < hoje) {
-        mostrarAlerta('A data de início não pode ser anterior a hoje', 'erro');
-        dataInicioInput.value = new Date().toISOString().split('T')[0];
-        dataInicioInput.focus();
-        return false;
-    }
+    // Validação removida: permite selecionar qualquer data
     
     return true;
 }

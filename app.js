@@ -2766,9 +2766,11 @@ app.get('/api/clube/:id/encontros', verificarAutenticacao, async (req, res) => {
             encontro.participantes = participantes.filter(p => p.status === 'confirmado' || p.status === 'talvez');
         }
         
+        const encontroIds = encontros.length > 0 ? encontros.map(e => e.id) : [0];
+        const placeholders = encontroIds.map(() => '?').join(',');
         const [participacoesEncontros] = await pool.safeQuery(
-            'SELECT * FROM participantes_encontro WHERE id_usuario = ? AND id_encontro IN (?)',
-            [userId, encontros.length > 0 ? encontros.map(e => e.id) : [0]]
+            `SELECT * FROM participantes_encontro WHERE id_usuario = ? AND id_encontro IN (${placeholders})`,
+            [userId, ...encontroIds]
         );
         
         res.json({
