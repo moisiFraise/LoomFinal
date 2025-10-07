@@ -402,10 +402,10 @@
 #cancelarLeitura {
     background: linear-gradient(45deg, var(--vermelho), var(--laranja));
     color: var(--foreground);
-    padding: 8px; 
+    padding: 8px;
     border: none;
-    border-radius: 12px; 
-    font-size: 14px; 
+    border-radius: 12px;
+    font-size: 14px;
     cursor: pointer;
     transition: all 0.3s ease;
 }
@@ -432,10 +432,10 @@
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 1001;
-    width: 85%; 
-    max-width: 450px; 
+    width: 85%;
+    max-width: 450px;
     max-height: 80vh;
-    overflow-y: auto; 
+    overflow-y: auto;
     background-color: var(--current-line);
     border-radius: 12px;
     padding: 20px;
@@ -449,7 +449,8 @@
     gap: 10px;
 }
 
-#confirmarLeitura, #cancelarLeitura {
+#confirmarLeitura,
+#cancelarLeitura {
     margin-top: 5px;
     margin-bottom: 5px;
 }
@@ -467,7 +468,7 @@
     color: var(--text-primary);
 }
 
-#form-selecao-leitura > * {
+#form-selecao-leitura>* {
     margin-bottom: 8px;
 }
 
@@ -506,11 +507,10 @@
 }
 
 .search-results {
-    max-height: 300px;
+    max-height: 400px;
     overflow-y: auto;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
     margin-top: 15px;
 }
-

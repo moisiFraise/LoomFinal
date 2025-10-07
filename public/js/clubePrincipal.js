@@ -734,6 +734,14 @@ async function buscarLivros() {
         
         data.items.forEach((livro, index) => {
             const volumeInfo = livro.volumeInfo;
+            console.log(`Livro ${index}:`, {
+                titulo: volumeInfo.title,
+                autores: volumeInfo.authors,
+                paginas: volumeInfo.pageCount,
+                temCapa: !!volumeInfo.imageLinks?.thumbnail,
+                volumeInfo: volumeInfo
+            });
+            
             const titulo = volumeInfo.title || 'Título não disponível';
             const autores = volumeInfo.authors ? volumeInfo.authors.join(', ') : 'Autor não informado';
             const paginas = volumeInfo.pageCount || 'Não informado';
@@ -766,6 +774,10 @@ async function buscarLivros() {
                 </div>
                 <button class="botao-selecionar" type="button" onclick="selecionarLivro(${index})">Selecionar</button>
             `;
+            
+            console.log('HTML do item:', livroItem.innerHTML);
+            console.log('Classes do item:', livroItem.className);
+            
             resultsContainer.appendChild(livroItem);
         });
         

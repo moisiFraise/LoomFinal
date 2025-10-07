@@ -2078,22 +2078,36 @@ app.get('/api/clube/:id/permissoes', verificarAutenticacao, async (req, res) => 
 app.get('/api/livros/buscar', verificarAutenticacao, async (req, res) => {
   try {
       const termoBusca = req.query.q;
+      console.log('📚 Buscando livros - Termo:', termoBusca);
+      
       if (!termoBusca) {
+          console.log('❌ Termo de busca ausente');
           return res.status(400).json({ erro: 'Termo de busca é obrigatório' });
       }
       
       // Buscar especificamente no título para resultados mais precisos
       const url = `https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(termoBusca)}&maxResults=12&orderBy=relevance`;
+      console.log('🔍 URL da API:', url);
       
       const response = await fetch(url);
+      console.log('📡 Status da resposta:', response.status);
+      
       if (!response.ok) {
           throw new Error('Erro na API do Google Books');
       }
       
       const data = await response.json();
+      console.log('✅ Livros encontrados:', data.totalItems || 0);
+      console.log('📖 Primeiros resultados:', data.items?.slice(0, 2).map(item => ({
+          titulo: item.volumeInfo?.title,
+          autor: item.volumeInfo?.authors,
+          temCapa: !!item.volumeInfo?.imageLinks?.thumbnail
+      })));
+      
       res.json(data);
   } catch (error) {
-      console.error('Erro ao buscar livros:', error);
+      console.error('❌ Erro ao buscar livros:', error);
+      console.error('Stack:', error.stack);
       res.status(500).json({ erro: 'Erro ao buscar livros na API do Google' });
   }
 });
@@ -2125,19 +2139,34 @@ app.post('/api/clube/:id/leituras', verificarAutenticacao, async (req, res) => {
       const clubeId = req.params.id;
       const { titulo, autor, paginas, imagemUrl, dataInicio, dataFim } = req.body;
       
+      console.log('📖 Criando leitura - Dados recebidos:', {
+          clubeId, userId: req.session.userId, titulo, autor, paginas, imagemUrl, dataInicio, dataFim
+      });
+      
       const [clubeRows] = await pool.safeQuery(
           'SELECT id_criador FROM clubes WHERE id = ?',
           [clubeId]
       );
       
+      console.log('🔍 Verificando clube:', { clubeId, encontrado: clubeRows.length > 0 });
+      
       if (clubeRows.length === 0) {
+          console.log('❌ Clube não encontrado');
           return res.status(404).json({ erro: 'Clube não encontrado' });
       }
       
+      console.log('🔍 Verificando criador:', { 
+          criadorEsperado: clubeRows[0].id_criador, 
+          usuarioAtual: parseInt(req.session.userId),
+          isCriador: clubeRows[0].id_criador === parseInt(req.session.userId)
+      });
+      
       if (clubeRows[0].id_criador !== parseInt(req.session.userId)) {
+          console.log('❌ Usuário não é criador do clube');
           return res.status(403).json({ erro: 'Apenas o criador do clube pode adicionar leituras' });
       }
       
+      console.log('💾 Criando leitura no banco...');
       const novaLeitura = await Leituras.criar(
           clubeId, 
           titulo, 
@@ -2148,13 +2177,16 @@ app.post('/api/clube/:id/leituras', verificarAutenticacao, async (req, res) => {
           imagemUrl || null
       );
       
+      console.log('✅ Leitura criada com sucesso:', novaLeitura);
+      
       res.status(201).json({
           mensagem: 'Leitura adicionada com sucesso',
           leitura: novaLeitura
       });
   } catch (error) {
-      console.error('Erro ao adicionar leitura:', error);
-      res.status(500).json({ erro: 'Erro ao adicionar nova leitura' });
+      console.error('❌ Erro ao adicionar leitura:', error);
+      console.error('Stack:', error.stack);
+      res.status(500).json({ erro: 'Erro ao adicionar nova leitura: ' + error.message });
   }
 });
 app.get('/api/clube/:id/atualizacoes', verificarAutenticacao, async (req, res) => {
@@ -3110,11 +3142,12 @@ app.post('/api/clube/:id/sugestoes', verificarAutenticacao, async (req, res) => 
     const userId = req.session.userId;
     const { titulo, autor, justificativa, imagemUrl, paginas } = req.body;
     
-    console.log('Dados recebidos para sugestão:', {
-      titulo, autor, justificativa, imagemUrl, paginas
+    console.log('📚 Criando sugestão - Dados recebidos:', {
+      clubeId, userId, titulo, autor, justificativa, imagemUrl, paginas
     });
     
     if (!titulo) {
+      console.log('❌ Título obrigatório ausente');
       return res.status(400).json({ erro: 'Título do livro é obrigatório' });
     }
     
@@ -3123,11 +3156,15 @@ app.post('/api/clube/:id/sugestoes', verificarAutenticacao, async (req, res) => 
       [userId, clubeId]
     );
     
+    console.log('🔍 Verificando participação:', { userId, clubeId, participacoes: participacoes.length });
+    
     if (participacoes.length === 0) {
+      console.log('❌ Usuário não é membro do clube');
       return res.status(403).json({ erro: 'Você não é membro deste clube' });
     }
     
     const Sugestoes = require('./models/Sugestoes');
+    console.log('💾 Criando sugestão no banco...');
     const novaSugestao = await Sugestoes.criar(
       clubeId, 
       userId, 
@@ -3138,15 +3175,16 @@ app.post('/api/clube/:id/sugestoes', verificarAutenticacao, async (req, res) => 
       paginas || null
     );
     
-    console.log('Sugestão criada:', novaSugestao);
+    console.log('✅ Sugestão criada com sucesso:', novaSugestao);
     
     res.status(201).json({
       mensagem: 'Sugestão criada com sucesso',
       sugestao: novaSugestao
     });
   } catch (error) {
-    console.error('Erro ao criar sugestão:', error);
-    res.status(500).json({ erro: 'Erro ao criar sugestão' });
+    console.error('❌ Erro ao criar sugestão:', error);
+    console.error('Stack:', error.stack);
+    res.status(500).json({ erro: 'Erro ao criar sugestão: ' + error.message });
   }
 });
 app.delete('/api/clube/:id/sugestoes/:sugestaoId', verificarAutenticacao, async (req, res) => {
@@ -3232,7 +3270,10 @@ app.post('/api/clube/:id/votacao', verificarAutenticacao, async (req, res) => {
     const userId = req.session.userId;
     const { titulo, descricao, dataFim, sugestoes } = req.body;
     
+    console.log('📊 Criando votação - Dados recebidos:', { clubeId, userId, titulo, descricao, dataFim, sugestoes });
+    
     if (!titulo || !sugestoes || sugestoes.length < 2) {
+      console.log('❌ Validação falhou:', { titulo, sugestoes });
       return res.status(400).json({ 
         erro: 'Título e pelo menos 2 sugestões são obrigatórios' 
       });
@@ -3296,13 +3337,16 @@ app.post('/api/clube/:id/votacao', verificarAutenticacao, async (req, res) => {
       sugestoes
     );
     
+    console.log('✅ Votação criada com sucesso:', novaVotacao);
+    
     res.status(201).json({
       mensagem: 'Votação criada com sucesso',
       votacao: novaVotacao
     });
   } catch (error) {
-    console.error('Erro ao criar votação:', error);
-    res.status(500).json({ erro: 'Erro ao criar votação' });
+    console.error('❌ Erro ao criar votação:', error);
+    console.error('Stack:', error.stack);
+    res.status(500).json({ erro: 'Erro ao criar votação: ' + error.message });
   }
 });
 app.post('/api/clube/:id/votacao/votar', verificarAutenticacao, async (req, res) => {
