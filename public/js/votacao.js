@@ -218,12 +218,26 @@ async function votarOpcao(idOpcao) {
 
 async function encerrarVotacao() {
     if (!votacaoAtiva) {
-        mostrarAlerta('Nenhuma votação ativa encontrada', 'erro');
+        Swal.fire({
+            icon: 'error',
+            title: 'Erro',
+            text: 'Nenhuma votação ativa encontrada'
+        });
         return;
     }
     
-    const confirmacao = confirm('Tem certeza que deseja encerrar esta votação? Esta ação não pode ser desfeita.');
-    if (!confirmacao) return;
+    const result = await Swal.fire({
+        icon: 'warning',
+        title: 'Encerrar Votação?',
+        text: 'Tem certeza que deseja encerrar esta votação? Esta ação não pode ser desfeita.',
+        showCancelButton: true,
+        confirmButtonText: 'Sim, encerrar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6'
+    });
+    
+    if (!result.isConfirmed) return;
     
     try {
         const response = await fetch(`/api/clube/${clubeId}/votacao/encerrar`, {
@@ -236,14 +250,26 @@ async function encerrarVotacao() {
         const data = await response.json();
         
         if (response.ok) {
-            mostrarAlerta('Votação encerrada com sucesso!', 'sucesso');
+            Swal.fire({
+                icon: 'success',
+                title: 'Sucesso!',
+                text: 'Votação encerrada com sucesso!'
+            });
             await carregarVotacao();
         } else {
-            mostrarAlerta(data.erro || 'Erro ao encerrar votação', 'erro');
+            Swal.fire({
+                icon: 'error',
+                title: 'Erro',
+                text: data.erro || 'Erro ao encerrar votação'
+            });
         }
     } catch (error) {
         console.error('Erro ao encerrar votação:', error);
-        mostrarAlerta('Erro ao conectar com o servidor', 'erro');
+        Swal.fire({
+            icon: 'error',
+            title: 'Erro',
+            text: 'Erro ao conectar com o servidor'
+        });
     }
 }
 
