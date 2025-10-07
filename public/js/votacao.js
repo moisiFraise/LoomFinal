@@ -518,9 +518,20 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const dataFimInput = document.getElementById('data-fim-votacao');
     if (dataFimInput) {
-        const amanha = new Date();
-        amanha.setDate(amanha.getDate() + 1);
-        dataFimInput.min = amanha.toISOString().split('T')[0];
+        dataFimInput.addEventListener('change', function() {
+            const dataFim = new Date(dataFimInput.value);
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            
+            if (dataFim <= hoje) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Data inválida',
+                    text: 'A data de encerramento deve ser posterior a hoje'
+                });
+                dataFimInput.value = '';
+            }
+        });
     }
 });
 

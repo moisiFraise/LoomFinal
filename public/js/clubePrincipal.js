@@ -74,11 +74,20 @@ function atualizarDataFimMinima() {
     if (dataInicioInput.value) {
         const dataInicio = new Date(dataInicioInput.value);
         dataInicio.setDate(dataInicio.getDate() + 1); 
-        dataFimInput.min = dataInicio.toISOString().split('T')[0];
+        const minDate = dataInicio.toISOString().split('T')[0];
+        dataFimInput.min = minDate;
         
         if (dataFimInput.value && new Date(dataFimInput.value) <= new Date(dataInicioInput.value)) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Atenção',
+                text: 'A data de término deve ser posterior à data de início',
+                timer: 2000
+            });
             dataFimInput.value = '';
         }
+    } else {
+        dataFimInput.min = '';
     }
 }
 function mudarSecaoClube(secao) {
