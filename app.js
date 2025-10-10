@@ -2086,11 +2086,11 @@ app.get('/api/livros/buscar', verificarAutenticacao, async (req, res) => {
           return res.status(400).json({ erro: 'Termo de busca é obrigatório' });
       }
       
-      // Usar Open Library API (sem limites de quota)
-      const url = `https://openlibrary.org/search.json?title=${encodeURIComponent(termoBusca)}&limit=12`;
+      const apiKey = process.env.GOOGLE_BOOKS_API_KEY || '';
+      const url = `https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(termoBusca)}&maxResults=12&orderBy=relevance${apiKey ? `&key=${apiKey}` : ''}`;
       console.log('🔍 URL da API:', url);
       
-      const openLibraryData = await new Promise((resolve, reject) => {
+      const data = await new Promise((resolve, reject) => {
           https.get(url, (response) => {
               let data = '';
               
@@ -2109,25 +2109,6 @@ app.get('/api/livros/buscar', verificarAutenticacao, async (req, res) => {
               reject(error);
           });
       });
-      
-      // Converter formato Open Library para Google Books
-      const data = {
-          totalItems: openLibraryData.numFound || 0,
-          items: (openLibraryData.docs || []).map(doc => ({
-              volumeInfo: {
-                  title: doc.title,
-                  authors: doc.author_name || [],
-                  pageCount: doc.number_of_pages_median || doc.num_pages_median || (doc.isbn ? 200 : null),
-                  imageLinks: doc.cover_i ? {
-                      thumbnail: `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`
-                  } : (doc.isbn && doc.isbn[0] ? {
-                      thumbnail: `https://covers.openlibrary.org/b/isbn/${doc.isbn[0]}-L.jpg`
-                  } : null),
-                  description: doc.first_sentence?.[0] || null,
-                  publishedDate: doc.first_publish_year || null
-              }
-          }))
-      };
       
       console.log('✅ Livros encontrados:', data.totalItems || 0);
       
