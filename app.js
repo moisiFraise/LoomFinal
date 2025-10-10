@@ -3696,7 +3696,7 @@ app.delete('/api/clube/:id', verificarAutenticacao, async (req, res) => {
     }
     
     // Excluir mensagens do chat primeiro
-    await pool.safeQuery('DELETE FROM chat WHERE id_clube = ?', [clubeId]);
+    await pool.safeQuery('DELETE FROM mensagens_chat WHERE id_clube = ?', [clubeId]);
     
     const [result] = await pool.safeQuery('DELETE FROM clubes WHERE id = ?', [clubeId]);
     
