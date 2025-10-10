@@ -2117,10 +2117,12 @@ app.get('/api/livros/buscar', verificarAutenticacao, async (req, res) => {
               volumeInfo: {
                   title: doc.title,
                   authors: doc.author_name || [],
-                  pageCount: doc.number_of_pages_median || null,
+                  pageCount: doc.number_of_pages_median || doc.num_pages_median || (doc.isbn ? 200 : null),
                   imageLinks: doc.cover_i ? {
-                      thumbnail: `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`
-                  } : null,
+                      thumbnail: `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`
+                  } : (doc.isbn && doc.isbn[0] ? {
+                      thumbnail: `https://covers.openlibrary.org/b/isbn/${doc.isbn[0]}-L.jpg`
+                  } : null),
                   description: doc.first_sentence?.[0] || null,
                   publishedDate: doc.first_publish_year || null
               }
