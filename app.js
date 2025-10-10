@@ -1,7 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
-const fetch = require('node-fetch');
+const https = require('https');
 require('dotenv').config();
 
 // Definir timezone do Brasil
@@ -2090,14 +2090,26 @@ app.get('/api/livros/buscar', verificarAutenticacao, async (req, res) => {
       const url = `https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(termoBusca)}&maxResults=12&orderBy=relevance`;
       console.log('🔍 URL da API:', url);
       
-      const response = await fetch(url);
-      console.log('📡 Status da resposta:', response.status);
+      const data = await new Promise((resolve, reject) => {
+          https.get(url, (response) => {
+              let data = '';
+              
+              response.on('data', (chunk) => {
+                  data += chunk;
+              });
+              
+              response.on('end', () => {
+                  try {
+                      resolve(JSON.parse(data));
+                  } catch (error) {
+                      reject(error);
+                  }
+              });
+          }).on('error', (error) => {
+              reject(error);
+          });
+      });
       
-      if (!response.ok) {
-          throw new Error('Erro na API do Google Books');
-      }
-      
-      const data = await response.json();
       console.log('✅ Livros encontrados:', data.totalItems || 0);
       console.log('📖 Primeiros resultados:', data.items?.slice(0, 2).map(item => ({
           titulo: item.volumeInfo?.title,
