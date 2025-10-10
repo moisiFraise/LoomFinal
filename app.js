@@ -2086,11 +2086,11 @@ app.get('/api/livros/buscar', verificarAutenticacao, async (req, res) => {
           return res.status(400).json({ erro: 'Termo de busca é obrigatório' });
       }
       
-      // Buscar especificamente no título para resultados mais precisos
-      const url = `https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(termoBusca)}&maxResults=12&orderBy=relevance`;
+      // Usar Open Library API (sem limites de quota)
+      const url = `https://openlibrary.org/search.json?title=${encodeURIComponent(termoBusca)}&limit=12`;
       console.log('🔍 URL da API:', url);
       
-      const data = await new Promise((resolve, reject) => {
+      const openLibraryData = await new Promise((resolve, reject) => {
           https.get(url, (response) => {
               let data = '';
               
@@ -2110,12 +2110,24 @@ app.get('/api/livros/buscar', verificarAutenticacao, async (req, res) => {
           });
       });
       
+      // Converter formato Open Library para Google Books
+      const data = {
+          totalItems: openLibraryData.numFound || 0,
+          items: (openLibraryData.docs || []).map(doc => ({
+              volumeInfo: {
+                  title: doc.title,
+                  authors: doc.author_name || [],
+                  pageCount: doc.number_of_pages_median || null,
+                  imageLinks: doc.cover_i ? {
+                      thumbnail: `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`
+                  } : null,
+                  description: doc.first_sentence?.[0] || null,
+                  publishedDate: doc.first_publish_year || null
+              }
+          }))
+      };
+      
       console.log('✅ Livros encontrados:', data.totalItems || 0);
-      console.log('📖 Primeiros resultados:', data.items?.slice(0, 2).map(item => ({
-          titulo: item.volumeInfo?.title,
-          autor: item.volumeInfo?.authors,
-          temCapa: !!item.volumeInfo?.imageLinks?.thumbnail
-      })));
       
       res.json(data);
   } catch (error) {
