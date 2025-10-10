@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
+const fetch = require('node-fetch');
 require('dotenv').config();
 
 // Definir timezone do Brasil
