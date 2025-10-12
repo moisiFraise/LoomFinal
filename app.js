@@ -175,6 +175,11 @@ async function getCachedUser(id) {
   return usuario;
 }
 
+// Função para limpar cache de usuário específico
+function clearUserCache(userId) {
+  userCache.delete(userId);
+}
+
 // Limpar cache expirado periodicamente
 setInterval(() => {
   const now = Date.now();
@@ -222,14 +227,27 @@ async function verificarAutenticacaoAPI(req, res, next) {
     return res.status(401).json({ erro: 'Não autenticado' });
   }
   
-  // Verificar expiração da sessão
-  if (req.session.cookie?.expires && new Date(req.session.cookie.expires) <= new Date()) {
-    return res.status(401).json({ erro: 'Sessão expirada' });
+  try {
+    const usuario = await getCachedUser(req.session.userId);
+    
+    if (!usuario || usuario.estado === 'inativo') {
+      req.session.destroy(() => {
+        res.clearCookie('loom_session');
+      });
+      return res.status(401).json({ erro: 'Usuário suspenso', suspenso: true });
+    }
+    
+    // Verificar expiração da sessão
+    if (req.session.cookie?.expires && new Date(req.session.cookie.expires) <= new Date()) {
+      return res.status(401).json({ erro: 'Sessão expirada' });
+    }
+    
+    req.user = { id: usuario.id, tipo: usuario.tipo };
+    next();
+  } catch (error) {
+    console.error('Erro ao verificar autenticação:', error);
+    return res.status(500).json({ erro: 'Erro ao verificar autenticação' });
   }
-  
-  // Definir req.user baseado apenas na sessão (sem consulta ao banco)
-  req.user = { id: req.session.userId };
-  next();
 }
 
 // Middleware para verificar se admin está tentando acessar página restrita
@@ -3774,7 +3792,13 @@ app.get('/api/admin/denuncias/:id', verificarAutenticacao, async (req, res) => {
       return res.status(404).json({ erro: 'Denúncia não encontrada' });
     }
     
-    res.json(denuncia);
+    // Buscar histórico de ações
+    const historico = await Denuncias.buscarHistorico(id);
+    
+    res.json({
+      ...denuncia,
+      historico
+    });
   } catch (error) {
     console.error('Erro ao buscar denúncia:', error);
     res.status(500).json({ erro: 'Erro ao buscar denúncia' });
@@ -3795,11 +3819,20 @@ app.post('/api/admin/denuncias/:id/processar', verificarAutenticacao, async (req
     }
     
     let denunciaAtualizada;
+    let usuarioSuspensoId = null;
     
     if (acao === 'rejeitar') {
       denunciaAtualizada = await Denuncias.analisar(id, req.session.userId, 'rejeitada', observacoes);
     } else {
+      // Buscar denúncia antes de processar para obter ID do usuário
+      const denunciaAntes = await Denuncias.buscarPorId(id);
       denunciaAtualizada = await Denuncias.processarDenuncia(id, req.session.userId, acao, observacoes);
+      
+      // Se suspendeu usuário, limpar cache
+      if (acao === 'suspender_usuario' && denunciaAntes) {
+        usuarioSuspensoId = denunciaAntes.id_denunciado;
+        clearUserCache(usuarioSuspensoId);
+      }
     }
     
     res.json({

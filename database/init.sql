@@ -151,6 +151,20 @@ CREATE TABLE IF NOT EXISTS denuncias (
   FOREIGN KEY (id_admin_analise) REFERENCES usuarios(id) ON DELETE SET NULL
 );
 
+-- Tabela de histórico de denúncias
+CREATE TABLE IF NOT EXISTS historico_denuncias (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  id_denuncia INT NOT NULL,
+  id_admin INT NOT NULL,
+  acao VARCHAR(100) NOT NULL,
+  status_anterior VARCHAR(50),
+  status_novo VARCHAR(50),
+  observacoes TEXT,
+  data_acao DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (id_denuncia) REFERENCES denuncias(id) ON DELETE CASCADE,
+  FOREIGN KEY (id_admin) REFERENCES usuarios(id) ON DELETE CASCADE
+);
+
 -- Tabela de sugestões de leitura
 CREATE TABLE IF NOT EXISTS sugestoes (
   id INT AUTO_INCREMENT PRIMARY KEY,

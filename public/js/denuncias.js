@@ -186,6 +186,40 @@ function mostrarModalDetalhes(denuncia) {
         'analisada': 'Analisada',
         'rejeitada': 'Rejeitada'
     };
+
+    const acaoTexto = {
+        'análise': 'Análise realizada',
+        'suspender_usuario': 'Usuário suspenso e removido do clube',
+        'remover_atualizacao': 'Comentário removido',
+        'rejeitar': 'Denúncia rejeitada'
+    };
+    
+    // Renderizar histórico
+    const historicoHTML = denuncia.historico && denuncia.historico.length > 0 ? `
+        <div class="detalhe-grupo">
+            <h4>Histórico de Ações</h4>
+            <div class="historico-lista">
+                ${denuncia.historico.map(h => {
+                    const dataAcao = new Date(h.data_acao);
+                    const dataAcaoFormatada = dataAcao.toLocaleDateString('pt-BR') + ' às ' + 
+                                            dataAcao.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+                    return `
+                        <div class="historico-item">
+                            <div class="historico-header">
+                                <span class="historico-acao">${acaoTexto[h.acao] || h.acao}</span>
+                                <span class="historico-data">${dataAcaoFormatada}</span>
+                            </div>
+                            <div class="historico-info">
+                                <p><strong>Admin:</strong> ${h.nome_admin}</p>
+                                ${h.status_anterior && h.status_novo ? 
+                                    `<p><strong>Status:</strong> ${statusTexto[h.status_anterior]} → ${statusTexto[h.status_novo]}</p>` : ''}
+                                ${h.observacoes ? `<p><strong>Observações:</strong> ${h.observacoes}</p>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        </div>` : '';
     
     const modalHTML = `
         <div id="overlay-detalhes" class="overlay" onclick="fecharModalDetalhes()"></div>
@@ -237,6 +271,8 @@ function mostrarModalDetalhes(denuncia) {
                         <p>${denuncia.observacoes_admin}</p>
                         <small>Analisado por: ${denuncia.nome_admin_analise}</small>
                     </div>` : ''}
+
+                ${historicoHTML}
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn-cancelar" onclick="fecharModalDetalhes()">Fechar</button>

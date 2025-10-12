@@ -93,32 +93,63 @@ class Denuncias {
   }
 
   static async analisar(id, idAdmin, status, observacoes) {
-    try {
-      await pool.safeQuery(
+    return await pool.safeTransaction(async (connection) => {
+      // Buscar status anterior
+      const [denunciaAtual] = await connection.query(
+        'SELECT status FROM denuncias WHERE id = ?',
+        [id]
+      );
+      const statusAnterior = denunciaAtual[0]?.status || 'pendente';
+
+      // Atualizar denúncia
+      await connection.query(
         `UPDATE denuncias 
          SET status = ?, data_analise = NOW(), id_admin_analise = ?, observacoes_admin = ?
          WHERE id = ?`,
         [status, idAdmin, observacoes, id]
       );
 
+      // Registrar no histórico
+      try {
+        const [resultHistorico] = await connection.query(
+          `INSERT INTO historico_denuncias 
+           (id_denuncia, id_admin, acao, status_anterior, status_novo, observacoes)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [id, idAdmin, 'análise', statusAnterior, status, observacoes]
+        );
+        console.log('✅ Histórico registrado - ID:', resultHistorico.insertId, 'Denúncia:', id, 'Ação: análise');
+      } catch (error) {
+        console.error('❌ Erro ao registrar histórico:', error.message);
+        throw error;
+      }
+
       return await this.buscarPorId(id);
-    } catch (error) {
-      console.error('Erro ao analisar denúncia:', error);
-      throw error;
-    }
+    });
   }
 
   static async processarDenuncia(id, idAdmin, acao, observacoes) {
-    const connection = await pool.safeTransaction();
-    
-    try {
-      await connection.beginTransaction();
+    return await pool.safeTransaction(async (connection) => {
+      // Buscar denúncia DENTRO da transação
+      const [denuncias] = await connection.query(`
+        SELECT d.*, 
+               denunciado.id as id_denunciado,
+               a.id_clube as id_clube,
+               d.id_atualizacao
+        FROM denuncias d
+        JOIN usuarios denunciado ON d.id_denunciado = denunciado.id
+        JOIN atualizacoes a ON d.id_atualizacao = a.id
+        WHERE d.id = ?
+      `, [id]);
 
-      const denuncia = await this.buscarPorId(id);
+      const denuncia = denuncias[0];
       if (!denuncia) {
         throw new Error('Denúncia não encontrada');
       }
 
+      // Buscar status anterior
+      const statusAnterior = denuncia.status;
+
+      // Atualizar denúncia
       await connection.query(
         `UPDATE denuncias 
          SET status = 'analisada', data_analise = NOW(), id_admin_analise = ?, observacoes_admin = ?
@@ -126,6 +157,22 @@ class Denuncias {
         [idAdmin, observacoes, id]
       );
 
+      // Registrar no histórico
+      try {
+        const [resultHistorico] = await connection.query(
+          `INSERT INTO historico_denuncias 
+           (id_denuncia, id_admin, acao, status_anterior, status_novo, observacoes)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [id, idAdmin, acao, statusAnterior, 'analisada', observacoes]
+        );
+        console.log('✅ Histórico registrado - ID:', resultHistorico.insertId, 'Denúncia:', id, 'Ação:', acao);
+      } catch (error) {
+        console.error('❌ Erro ao registrar histórico:', error.message);
+        console.error('❌ Stack:', error.stack);
+        throw error;
+      }
+
+      // Executar ações específicas
       if (acao === 'suspender_usuario') {
         await connection.query(
           'UPDATE usuarios SET estado = "inativo" WHERE id = ?',
@@ -148,15 +195,30 @@ class Denuncias {
         );
       }
 
-      await connection.commit();
-      return await this.buscarPorId(id);
-    } catch (error) {
-      await connection.rollback();
-      console.error('Erro ao processar denúncia:', error);
-      throw error;
-    } finally {
-      connection.release();
-    }
+      // Buscar denúncia atualizada DENTRO da transação
+      const [denunciasAtualizadas] = await connection.query(`
+        SELECT d.*, 
+               denunciante.nome as nome_denunciante,
+               denunciante.email as email_denunciante,
+               denunciado.nome as nome_denunciado,
+               denunciado.email as email_denunciado,
+               denunciado.estado as estado_denunciado,
+               a.conteudo as conteudo_atualizacao,
+               a.data_postagem as data_atualizacao,
+               a.id_clube as id_clube,
+               c.nome as nome_clube,
+               admin.nome as nome_admin_analise
+        FROM denuncias d
+        JOIN usuarios denunciante ON d.id_denunciante = denunciante.id
+        JOIN usuarios denunciado ON d.id_denunciado = denunciado.id
+        JOIN atualizacoes a ON d.id_atualizacao = a.id
+        JOIN clubes c ON a.id_clube = c.id
+        LEFT JOIN usuarios admin ON d.id_admin_analise = admin.id
+        WHERE d.id = ?
+      `, [id]);
+
+      return denunciasAtualizadas[0] || null;
+    });
   }
 
   static async contarPorStatus() {
@@ -182,6 +244,25 @@ class Denuncias {
       return contadores;
     } catch (error) {
       console.error('Erro ao contar denúncias:', error);
+      throw error;
+    }
+  }
+
+  static async buscarHistorico(idDenuncia) {
+    try {
+      const [historico] = await pool.safeQuery(`
+        SELECT h.*, 
+               u.nome as nome_admin,
+               u.email as email_admin
+        FROM historico_denuncias h
+        JOIN usuarios u ON h.id_admin = u.id
+        WHERE h.id_denuncia = ?
+        ORDER BY h.data_acao DESC
+      `, [idDenuncia]);
+
+      return historico;
+    } catch (error) {
+      console.error('Erro ao buscar histórico:', error);
       throw error;
     }
   }
