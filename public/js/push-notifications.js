@@ -32,7 +32,7 @@ async function initializePushNotifications() {
     console.log('✅ Service Worker registrado');
 
     await navigator.serviceWorker.ready;
-    console.log('✅ Service Worker pronto');
+    console.log('✅ Service Worker pronto e ATIVO');
 
     const subscription = await swRegistration.pushManager.getSubscription();
     isSubscribed = !(subscription === null);
@@ -79,17 +79,30 @@ async function subscribeUser() {
       return false;
     }
     
+    console.log('📡 Buscando VAPID Public Key...');
     const response = await fetch('/api/push/vapid-public-key');
+    
+    if (!response.ok) {
+      console.error('❌ Erro ao buscar VAPID key. Status:', response.status);
+      const errorText = await response.text();
+      console.error('❌ Resposta:', errorText);
+      return false;
+    }
+    
     const { publicKey } = await response.json();
-    console.log('✅ VAPID Public Key obtida');
+    console.log('✅ VAPID Public Key obtida:', publicKey ? 'OK' : 'VAZIA');
 
     const applicationServerKey = urlBase64ToUint8Array(publicKey);
+    console.log('🔑 Criando subscription no Push Manager...');
+    
     const subscription = await swRegistration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: applicationServerKey
     });
     console.log('✅ Push Manager subscription criada');
+    console.log('📍 Endpoint:', subscription.endpoint);
 
+    console.log('💾 Salvando subscription no servidor...');
     const subscribeResponse = await fetch('/api/push/subscribe', {
       method: 'POST',
       headers: {
@@ -97,6 +110,13 @@ async function subscribeUser() {
       },
       body: JSON.stringify(subscription)
     });
+
+    if (!subscribeResponse.ok) {
+      console.error('❌ Erro ao salvar subscription. Status:', subscribeResponse.status);
+      const errorText = await subscribeResponse.text();
+      console.error('❌ Resposta:', errorText);
+      return false;
+    }
 
     const result = await subscribeResponse.json();
     console.log('📡 Resposta do servidor:', result);
@@ -111,6 +131,9 @@ async function subscribeUser() {
     }
   } catch (error) {
     console.error('❌ Erro ao inscrever em push notifications:', error);
+    console.error('❌ Tipo de erro:', error.name);
+    console.error('❌ Mensagem:', error.message);
+    console.error('❌ Stack:', error.stack);
     return false;
   }
 }

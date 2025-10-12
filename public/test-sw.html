@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Service Worker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        h2 { color: #666; margin-top: 0; }
+        .status { 
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Teste de Service Worker - Loom</h1>
+
+    <div class="card">
+        <h2>1. Verificação de Suporte</h2>
+        <div id="support-status"></div>
+    </div>
+
+    <div class="card">
+        <h2>2. Status do Service Worker</h2>
+        <div id="sw-status"></div>
+        <button onclick="registrarSW()">Registrar Service Worker</button>
+        <button onclick="desregistrarTodos()">Desregistrar Todos</button>
+        <button onclick="verificarStatus()">Verificar Status</button>
+    </div>
+
+    <div class="card">
+        <h2>3. Teste de Notificação Local</h2>
+        <div id="notif-status"></div>
+        <button onclick="testarNotificacaoLocal()">Testar Notificação</button>
+        <button onclick="solicitarPermissao()">Solicitar Permissão</button>
+    </div>
+
+    <div class="card">
+        <h2>4. Teste de Push Subscription</h2>
+        <div id="push-status"></div>
+        <button onclick="testarSubscription()">Criar Subscription</button>
+    </div>
+
+    <div class="card">
+        <h2>5. Logs</h2>
+        <pre id="logs"></pre>
+        <button onclick="limparLogs()">Limpar Logs</button>
+    </div>
+
+    <script>
+        let swReg = null;
+
+        function log(msg, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logsEl = document.getElementById('logs');
+            logsEl.textContent += `[${timestamp}] ${msg}\n`;
+            logsEl.scrollTop = logsEl.scrollHeight;
+            console.log(msg);
+        }
+
+        function limparLogs() {
+            document.getElementById('logs').textContent = '';
+        }
+
+        // 1. Verificar Suporte
+        function verificarSuporte() {
+            const supportEl = document.getElementById('support-status');
+            const checks = [];
+
+            if ('serviceWorker' in navigator) {
+                checks.push('<div class="success">✅ Service Worker suportado</div>');
+                log('✅ Service Worker suportado');
+            } else {
+                checks.push('<div class="error">❌ Service Worker NÃO suportado</div>');
+                log('❌ Service Worker NÃO suportado');
+            }
+
+            if ('PushManager' in window) {
+                checks.push('<div class="success">✅ Push Manager suportado</div>');
+                log('✅ Push Manager suportado');
+            } else {
+                checks.push('<div class="error">❌ Push Manager NÃO suportado</div>');
+                log('❌ Push Manager NÃO suportado');
+            }
+
+            if ('Notification' in window) {
+                checks.push('<div class="success">✅ Notifications suportado</div>');
+                checks.push(`<div class="info">Permissão atual: ${Notification.permission}</div>`);
+                log(`✅ Notifications suportado. Permissão: ${Notification.permission}`);
+            } else {
+                checks.push('<div class="error">❌ Notifications NÃO suportado</div>');
+                log('❌ Notifications NÃO suportado');
+            }
+
+            supportEl.innerHTML = checks.join('');
+        }
+
+        // 2. Registrar SW
+        async function registrarSW() {
+            const statusEl = document.getElementById('sw-status');
+            
+            if (!('serviceWorker' in navigator)) {
+                statusEl.innerHTML = '<div class="error">❌ Service Worker não suportado neste navegador</div>';
+                return;
+            }
+
+            try {
+                log('🔄 Tentando registrar /sw-simple.js (versão sem cache)...');
+                statusEl.innerHTML = '<div class="info">⏳ Registrando...</div>';
+                
+                swReg = await navigator.serviceWorker.register('/sw-simple.js');
+                
+                log(`✅ Service Worker registrado! Scope: ${swReg.scope}`);
+                
+                // Aguardar ativação
+                await navigator.serviceWorker.ready;
+                log('✅ Service Worker está pronto (ready) e ATIVO!');
+                
+                statusEl.innerHTML = `
+                    <div class="success">✅ Service Worker registrado e ATIVO!</div>
+                    <div class="info">Scope: <code>${swReg.scope}</code></div>
+                    <div class="info">Usando: <code>sw-simple.js</code> (sem cache)</div>
+                `;
+                
+                verificarStatus();
+            } catch (err) {
+                log(`❌ Erro ao registrar: ${err.message}`);
+                log(`❌ Stack: ${err.stack}`);
+                statusEl.innerHTML = `
+                    <div class="error">❌ Erro ao registrar Service Worker</div>
+                    <div class="error">Tipo: ${err.name}</div>
+                    <div class="error">Mensagem: ${err.message}</div>
+                `;
+            }
+        }
+
+        // Verificar Status
+        async function verificarStatus() {
+            const statusEl = document.getElementById('sw-status');
+            
+            try {
+                const regs = await navigator.serviceWorker.getRegistrations();
+                
+                if (regs.length === 0) {
+                    statusEl.innerHTML = '<div class="info">ℹ️ Nenhum Service Worker registrado</div>';
+                    log('ℹ️ Nenhum Service Worker registrado');
+                    return;
+                }
+
+                let html = `<div class="success">Encontrados ${regs.length} Service Worker(s):</div>`;
+                regs.forEach((reg, i) => {
+                    html += `
+                        <div class="info">
+                            SW ${i + 1}: <code>${reg.scope}</code><br>
+                            State: <code>${reg.installing ? 'installing' : reg.waiting ? 'waiting' : reg.active ? 'active' : 'unknown'}</code>
+                        </div>
+                    `;
+                    log(`SW ${i + 1}: ${reg.scope} (${reg.active ? 'active' : 'não ativo'})`);
+                });
+                
+                statusEl.innerHTML = html;
+                swReg = regs[0];
+            } catch (err) {
+                log(`❌ Erro ao verificar: ${err.message}`);
+            }
+        }
+
+        // Desregistrar Todos
+        async function desregistrarTodos() {
+            try {
+                const regs = await navigator.serviceWorker.getRegistrations();
+                
+                for (const reg of regs) {
+                    await reg.unregister();
+                    log(`✅ Desregistrado: ${reg.scope}`);
+                }
+                
+                document.getElementById('sw-status').innerHTML = '<div class="success">✅ Todos os Service Workers foram desregistrados</div>';
+                swReg = null;
+            } catch (err) {
+                log(`❌ Erro ao desregistrar: ${err.message}`);
+            }
+        }
+
+        // 3. Solicitar Permissão
+        async function solicitarPermissao() {
+            const notifEl = document.getElementById('notif-status');
+            
+            if (!('Notification' in window)) {
+                notifEl.innerHTML = '<div class="error">❌ Notifications não suportado</div>';
+                return;
+            }
+
+            if (Notification.permission === 'granted') {
+                notifEl.innerHTML = '<div class="success">✅ Permissão já concedida</div>';
+                log('✅ Permissão de notificação já concedida');
+                return;
+            }
+
+            try {
+                const permission = await Notification.requestPermission();
+                log(`Permissão de notificação: ${permission}`);
+                
+                if (permission === 'granted') {
+                    notifEl.innerHTML = '<div class="success">✅ Permissão concedida!</div>';
+                } else {
+                    notifEl.innerHTML = '<div class="error">❌ Permissão negada</div>';
+                }
+            } catch (err) {
+                log(`❌ Erro ao solicitar permissão: ${err.message}`);
+                notifEl.innerHTML = `<div class="error">❌ Erro: ${err.message}</div>`;
+            }
+        }
+
+        // Testar Notificação Local
+        async function testarNotificacaoLocal() {
+            const notifEl = document.getElementById('notif-status');
+
+            if (!swReg) {
+                notifEl.innerHTML = '<div class="error">❌ Registre o Service Worker primeiro</div>';
+                return;
+            }
+
+            if (Notification.permission !== 'granted') {
+                notifEl.innerHTML = '<div class="error">❌ Conceda permissão de notificação primeiro</div>';
+                return;
+            }
+
+            try {
+                log('📢 Enviando notificação de teste...');
+                await swReg.showNotification('🧪 Teste Loom', {
+                    body: 'Se você vê isso, as notificações estão funcionando!',
+                    icon: '/logo-192.png',
+                    badge: '/favicon-32x32.png',
+                    vibrate: [200, 100, 200]
+                });
+                
+                log('✅ Notificação enviada com sucesso!');
+                notifEl.innerHTML = '<div class="success">✅ Notificação enviada! Verifique se apareceu.</div>';
+            } catch (err) {
+                log(`❌ Erro ao enviar notificação: ${err.message}`);
+                notifEl.innerHTML = `<div class="error">❌ Erro: ${err.message}</div>`;
+            }
+        }
+
+        // 4. Testar Subscription
+        async function testarSubscription() {
+            const pushEl = document.getElementById('push-status');
+
+            if (!swReg) {
+                pushEl.innerHTML = '<div class="error">❌ Registre o Service Worker primeiro</div>';
+                return;
+            }
+
+            if (Notification.permission !== 'granted') {
+                pushEl.innerHTML = '<div class="error">❌ Conceda permissão de notificação primeiro</div>';
+                return;
+            }
+
+            try {
+                log('🔄 Buscando VAPID key...');
+                const response = await fetch('/api/push/vapid-public-key');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const { publicKey } = await response.json();
+                log(`✅ VAPID key obtida: ${publicKey.substring(0, 20)}...`);
+
+                // Converter VAPID key
+                const applicationServerKey = urlBase64ToUint8Array(publicKey);
+                
+                log('🔄 Criando subscription...');
+                const subscription = await swReg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: applicationServerKey
+                });
+
+                log('✅ Subscription criada!');
+                log(`Endpoint: ${subscription.endpoint}`);
+
+                // Salvar no servidor
+                log('🔄 Salvando no servidor...');
+                const saveResponse = await fetch('/api/push/subscribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(subscription)
+                });
+
+                const result = await saveResponse.json();
+                log(`Resposta do servidor: ${JSON.stringify(result)}`);
+
+                if (result.success) {
+                    pushEl.innerHTML = `
+                        <div class="success">✅ Push Subscription criada e salva com sucesso!</div>
+                        <div class="info">Endpoint: <code>${subscription.endpoint.substring(0, 50)}...</code></div>
+                    `;
+                } else {
+                    pushEl.innerHTML = `<div class="error">❌ Erro ao salvar: ${result.error}</div>`;
+                }
+            } catch (err) {
+                log(`❌ Erro: ${err.message}`);
+                pushEl.innerHTML = `<div class="error">❌ Erro: ${err.message}</div>`;
+            }
+        }
+
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
+        }
+
+        // Inicializar
+        window.addEventListener('load', () => {
+            log('🚀 Página carregada. Verificando suporte...');
+            verificarSuporte();
+            verificarStatus();
+        });
+    </script>
+</body>
+</html>
