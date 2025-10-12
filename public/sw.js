@@ -54,22 +54,54 @@ self.addEventListener('notificationclick', event => {
   event.notification.close();
 
   const urlToOpen = event.notification.data?.url || '/feed';
+  console.log('SW: URL para abrir:', urlToOpen);
 
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true })
-      .then(clientList => {
-        // Tenta focar em uma janela já aberta
-        for (let client of clientList) {
-          if (client.url.includes(urlToOpen) && 'focus' in client) {
-            return client.focus();
-          }
+    clients.matchAll({ 
+      type: 'window', 
+      includeUncontrolled: true 
+    }).then(clientList => {
+      console.log('SW: Clientes encontrados:', clientList.length);
+      
+      // Construir URL completa
+      const urlObj = new URL(urlToOpen, self.location.origin);
+      const targetUrl = urlObj.href;
+      console.log('SW: URL completa:', targetUrl);
+      
+      // Procurar cliente com URL exata ou similar
+      for (let client of clientList) {
+        const clientUrl = new URL(client.url);
+        const targetPath = urlObj.pathname;
+        
+        console.log('SW: Comparando', clientUrl.pathname, 'com', targetPath);
+        
+        // Se encontrar cliente na mesma URL, focar nele
+        if (clientUrl.pathname === targetPath && 'focus' in client) {
+          console.log('SW: Focando cliente existente');
+          return client.focus();
         }
-        // Se não encontrou, abre nova janela
-        if (clients.openWindow) {
-          return clients.openWindow(urlToOpen);
+      }
+      
+      // Se não encontrou, procurar qualquer cliente aberto e navegar
+      if (clientList.length > 0) {
+        const client = clientList[0];
+        console.log('SW: Navegando cliente existente para:', targetUrl);
+        if ('navigate' in client) {
+          return client.navigate(targetUrl).then(client => client.focus());
+        } else if ('focus' in client) {
+          // Fallback: focar e tentar abrir
+          client.focus();
+          return clients.openWindow(targetUrl);
         }
-      })
-      .catch(err => console.error('SW: Erro ao processar clique:', err))
+      }
+      
+      // Se não há clientes, abrir nova janela/aba
+      console.log('SW: Abrindo nova janela:', targetUrl);
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+    })
+    .catch(err => console.error('SW: Erro ao processar clique:', err))
   );
 });
 
