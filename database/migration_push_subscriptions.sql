@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS inscricoes_push (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  id_usuario INT NOT NULL,
+  dados_inscricao TEXT NOT NULL,
+  ativo TINYINT(1) DEFAULT 1,
+  criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE CASCADE,
+  INDEX idx_usuario_ativo (id_usuario, ativo)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

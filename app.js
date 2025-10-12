@@ -206,9 +206,9 @@ function checkCircuitBreaker() {
       dbCircuitBreaker.failures = 0;
       console.log('🔄 Circuit breaker fechado - tentando reconectar ao banco');
     }
-    return false; // Banco indisponível
+    return false;
   }
-  return true; // Banco disponível
+  return true;
 }
 
 function recordDbFailure() {
@@ -219,6 +219,9 @@ function recordDbFailure() {
     console.log('⚡ Circuit breaker ABERTO - banco temporariamente desativado por sobrecarga');
   }
 }
+
+const pushRoutes = require('./services/pushRoutes');
+app.use('/api/push', pushRoutes);
 
 // Middleware específico para APIs que retorna JSON em vez de redirect
 // VERSÃO RADICAL: Confia apenas na sessão, sem consultas ao banco
@@ -2175,21 +2178,26 @@ app.post('/api/clube/:id/leituras', verificarAutenticacao, async (req, res) => {
       
       console.log('💾 Criando leitura no banco...');
       const novaLeitura = await Leituras.criar(
-          clubeId, 
-          titulo, 
-          autor, 
-          dataInicio, 
-          dataFim, 
-          paginas || null, 
-          imagemUrl || null
+      clubeId, 
+      titulo, 
+      autor, 
+      dataInicio, 
+      dataFim, 
+      paginas || null, 
+      imagemUrl || null
       );
       
       console.log('✅ Leitura criada com sucesso:', novaLeitura);
       
-      res.status(201).json({
-          mensagem: 'Leitura adicionada com sucesso',
-          leitura: novaLeitura
+      const NotificationService = require('./services/notificationService');
+      NotificationService.notifyNewReading(clubeId, titulo).catch(err => {
+      console.error('Erro ao enviar notificação de leitura:', err);
       });
+    
+    res.status(201).json({
+        mensagem: 'Leitura adicionada com sucesso',
+        leitura: novaLeitura
+    });
   } catch (error) {
       console.error('❌ Erro ao adicionar leitura:', error);
       console.error('Stack:', error.stack);
@@ -2836,21 +2844,28 @@ app.post('/api/clube/:id/encontros', verificarAutenticacao, async (req, res) => 
         }
           try {
             const novoEncontro = await Encontros.criar(
-                clubeId,
-                titulo,
-                descricao || '',
-                dataEncontro,
-                horaInicio,
-                horaFim || null,
-                local || null,
-                link || null,
-                tipoEncontro
+            clubeId,
+            titulo,
+            descricao || '',
+            dataEncontro,
+            horaInicio,
+            horaFim || null,
+            local || null,
+            link || null,
+            tipoEncontro
             );
-        await Encontros.confirmarParticipacao(novoEncontro.id, userId, 'confirmado');        
-         res.status(201).json({
-                mensagem: 'Encontro agendado com sucesso',
-                encontro: novoEncontro
-            });
+            await Encontros.confirmarParticipacao(novoEncontro.id, userId, 'confirmado');
+            
+            const NotificationService = require('./services/notificationService');
+            const dataFormatada = new Date(dataEncontro).toLocaleDateString('pt-BR');
+            NotificationService.notifyNewMeeting(clubeId, titulo, `${dataFormatada} às ${horaInicio}`).catch(err => {
+      console.error('Erro ao enviar notificação de encontro:', err);
+    });
+    
+     res.status(201).json({
+            mensagem: 'Encontro agendado com sucesso',
+            encontro: novoEncontro
+        });
         } catch (createError) {
             console.error('Erro detalhado ao criar encontro:', createError);
             return res.status(500).json({ 
@@ -3348,6 +3363,11 @@ app.post('/api/clube/:id/votacao', verificarAutenticacao, async (req, res) => {
     
     console.log('✅ Votação criada com sucesso:', novaVotacao);
     
+    const NotificationService = require('./services/notificationService');
+    NotificationService.notifyVotingCreated(clubeId, titulo).catch(err => {
+      console.error('Erro ao enviar notificação de votação:', err);
+    });
+    
     res.status(201).json({
       mensagem: 'Votação criada com sucesso',
       votacao: novaVotacao
@@ -3469,6 +3489,12 @@ app.post('/api/clube/:id/votacao/encerrar', verificarAutenticacao, async (req, r
     }
     
     const resultado = await Votacao.encerrarVotacao(votacao.id);
+    
+    const NotificationService = require('./services/notificationService');
+    const winnerOption = resultado.vencedor?.titulo || 'Empate';
+    NotificationService.notifyVotingEnded(clubeId, votacao.titulo, winnerOption).catch(err => {
+      console.error('Erro ao enviar notificação de votação encerrada:', err);
+    });
     
     res.json({
       mensagem: 'Votação encerrada com sucesso',
@@ -4045,6 +4071,13 @@ app.post('/api/chat/:clubeId/mensagens', verificarAutenticacaoAPI, async (req, r
     }
     
     const novaMensagem = await Chat.criarMensagem(clubeId, req.session.userId, mensagem);
+    
+    const NotificationService = require('./services/notificationService');
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    const mensagemPreview = mensagem.length > 50 ? mensagem.substring(0, 50) + '...' : mensagem;
+    NotificationService.notifyNewMessage(clubeId, usuario.nome, mensagemPreview, req.session.userId).catch(err => {
+      console.error('Erro ao enviar notificação de mensagem:', err);
+    });
     
     res.status(201).json({
       mensagem: 'Mensagem enviada com sucesso',

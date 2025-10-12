@@ -7,7 +7,6 @@ const STATIC_ASSETS = [
   '/manifest.json'
 ];
 
-// Instalação: limpar caches antigos e adicionar arquivos estáticos
 self.addEventListener('install', event => {
   console.log('SW: Instalando e atualizando caches...');
   event.waitUntil(
@@ -21,7 +20,6 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
-// Ativação: limpar caches antigos
 self.addEventListener('activate', event => {
   console.log('SW: Ativando...');
   event.waitUntil(
@@ -34,7 +32,6 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Fetch: intercepta apenas arquivos estáticos, deixa requisições de sessão passarem
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   if (STATIC_ASSETS.includes(url.pathname)) {
@@ -43,4 +40,46 @@ self.addEventListener('fetch', event => {
     );
   }
 });
-//pwa causando problemas de sessão
+
+self.addEventListener('push', event => {
+  console.log('SW: Push recebido:', event);
+  
+  const data = event.data ? event.data.json() : {};
+  const title = data.title || 'Loom';
+  const options = {
+    body: data.body || 'Nova notificação',
+    icon: '/logo-192.png',
+    badge: '/favicon-32x32.png',
+    vibrate: [200, 100, 200],
+    tag: data.tag || 'loom-notification',
+    requireInteraction: data.requireInteraction || false,
+    data: {
+      url: data.url || '/feed',
+      ...data.data
+    }
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(title, options)
+  );
+});
+
+self.addEventListener('notificationclick', event => {
+  console.log('SW: Notificação clicada:', event);
+  event.notification.close();
+
+  const urlToOpen = event.notification.data?.url || '/feed';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
+      for (let client of clientList) {
+        if (client.url === urlToOpen && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
+    })
+  );
+});

@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="/css/menu.css">
     <link rel="stylesheet" href="/css/cardsClube.css">
     <link rel="stylesheet" href="/css/criarClube.css">
+    <link rel="stylesheet" href="/css/notifications.css">
     <title><%= titulo %></title>
 </head>
 <body>
@@ -119,6 +120,28 @@
       </script>
            
     <script src="/js/dashboard.js"></script>
+    <script src="/js/push-notifications.js"></script>
+    <script>
+      if ('serviceWorker' in navigator && 'PushManager' in window) {
+        setTimeout(() => {
+          if (Notification.permission === 'default') {
+            const enableNotificationsDiv = document.createElement('div');
+            enableNotificationsDiv.className = 'notification-permission-prompt';
+            enableNotificationsDiv.innerHTML = `
+              <div class="notification-prompt-content">
+                <i class="fas fa-bell"></i>
+                <span>Ativar notificações para receber atualizações do clube?</span>
+                <button onclick="requestNotificationPermission().then(() => this.parentElement.parentElement.remove())" class="btn-enable-notif">Ativar</button>
+                <button onclick="this.parentElement.parentElement.remove()" class="btn-dismiss-notif">Agora não</button>
+              </div>
+            `;
+            document.body.appendChild(enableNotificationsDiv);
+          } else if (Notification.permission === 'granted' && !isSubscribed) {
+            subscribeUser();
+          }
+        }, 3000);
+      }
+    </script>
     <%- include('partials/imports') %>
 </body>
 </html></html>
