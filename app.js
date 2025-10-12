@@ -69,7 +69,7 @@ app.set('views', path.join(__dirname, 'views'));
 const sessionStore = new MySQLStore({
   clearExpired: true,
   checkExpirationInterval: 900000, // 15 minutos
-  expiration: 86400000, // 24 horas
+  expiration: 30 * 24 * 60 * 60 * 1000, // 30 dias (mesmo que o cookie)
   createDatabaseTable: true,
   schema: {
     tableName: 'sessions',
@@ -133,13 +133,8 @@ async function verificarAutenticacao(req, res, next) {
     
     req.user = { id: usuario.id, tipo: usuario.tipo };
 
-    if (req.session.cookie?.expires && new Date(req.session.cookie.expires) <= new Date()) {
-      req.session.destroy(() => {
-        res.clearCookie('loom_session');
-        return res.redirect('/autenticacao');
-      });
-      return;
-    }
+    // Com rolling: true, a sessão é renovada automaticamente
+    // Não precisa verificar expiração manualmente
     
     res.set({
       'Cache-Control': 'no-cache, no-store, must-revalidate, private, max-age=0',
