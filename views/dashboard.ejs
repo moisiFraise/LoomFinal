@@ -121,9 +121,8 @@
            
     <script src="/js/dashboard.js"></script>
     <script src="/js/push-notifications.js"></script>
-    <script src="/js/test-notifications.js"></script>
-    <script src="/js/test-notification-simple.js"></script>
     <script>
+      // Solicitar permissão de notificações após 3 segundos
       if ('serviceWorker' in navigator && 'PushManager' in window) {
         setTimeout(() => {
           if (Notification.permission === 'default') {
@@ -139,6 +138,7 @@
             `;
             document.body.appendChild(enableNotificationsDiv);
           } else if (Notification.permission === 'granted' && !isSubscribed) {
+            // Se já tem permissão mas não está inscrito, inscrever
             subscribeUser();
           }
         }, 3000);
