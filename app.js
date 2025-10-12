@@ -94,14 +94,15 @@ app.use(session({
   key: 'loom_session',
   secret: process.env.SESSION_SECRET,
   store: sessionStore,
-  resave: false,
+  resave: true, // Necessário para garantir save no PWA
   saveUninitialized: false,
   rolling: true, // Ativado para renovar sessão a cada request
   cookie: { 
-    secure: false,
-    httpOnly: true,
+    secure: 'auto', // auto detecta HTTPS
+    httpOnly: false, // PWA precisa acessar
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 dias
-    sameSite: 'lax'
+    sameSite: 'lax',
+    path: '/'
   }
 }));
 

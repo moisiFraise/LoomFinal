@@ -2,7 +2,7 @@
   "name": "Loom: Aplicação Web para Gerenciamento e Interação em Clubes de Leitura",
   "short_name": "Loom",
   "description": "Aplicação web para gerenciar e interagir em clubes de leitura",
-  "start_url": "/autenticacao",
+  "start_url": "/dashboard",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#ffffff",
