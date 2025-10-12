@@ -96,11 +96,11 @@ app.use(session({
   store: sessionStore,
   resave: false,
   saveUninitialized: false,
-  rolling: false, // Desativado para evitar writes no banco a cada request
+  rolling: true, // Ativado para renovar sessão a cada request
   cookie: { 
     secure: false,
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000,
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 dias
     sameSite: 'lax'
   }
 }));
