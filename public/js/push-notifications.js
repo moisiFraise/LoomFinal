@@ -18,29 +18,33 @@ function urlBase64ToUint8Array(base64String) {
 
 async function initializePushNotifications() {
   if (!('serviceWorker' in navigator)) {
-    console.log('Service Worker não suportado');
+    console.log('❌ Service Worker não suportado');
     return;
   }
 
   if (!('PushManager' in window)) {
-    console.log('Push não suportado');
+    console.log('❌ Push não suportado');
     return;
   }
 
   try {
     swRegistration = await navigator.serviceWorker.register('/sw.js');
-    console.log('Service Worker registrado');
+    console.log('✅ Service Worker registrado');
+
+    await navigator.serviceWorker.ready;
+    console.log('✅ Service Worker pronto');
 
     const subscription = await swRegistration.pushManager.getSubscription();
     isSubscribed = !(subscription === null);
 
     if (!isSubscribed) {
-      console.log('Usuário não está inscrito em push notifications');
+      console.log('ℹ️ Usuário não está inscrito em push notifications');
     } else {
-      console.log('Usuário já está inscrito em push notifications');
+      console.log('✅ Usuário já está inscrito em push notifications');
+      console.log('📍 Endpoint:', subscription.endpoint);
     }
   } catch (error) {
-    console.error('Erro ao registrar Service Worker:', error);
+    console.error('❌ Erro ao registrar Service Worker:', error);
   }
 }
 
@@ -68,14 +72,23 @@ async function requestNotificationPermission() {
 
 async function subscribeUser() {
   try {
+    console.log('🔔 Iniciando subscription...');
+    
+    if (!swRegistration) {
+      console.error('❌ Service Worker não registrado');
+      return false;
+    }
+    
     const response = await fetch('/api/push/vapid-public-key');
     const { publicKey } = await response.json();
+    console.log('✅ VAPID Public Key obtida');
 
     const applicationServerKey = urlBase64ToUint8Array(publicKey);
     const subscription = await swRegistration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: applicationServerKey
     });
+    console.log('✅ Push Manager subscription criada');
 
     const subscribeResponse = await fetch('/api/push/subscribe', {
       method: 'POST',
@@ -86,13 +99,18 @@ async function subscribeUser() {
     });
 
     const result = await subscribeResponse.json();
+    console.log('📡 Resposta do servidor:', result);
+    
     if (result.success) {
-      console.log('Inscrito em push notifications com sucesso');
+      console.log('✅ Inscrito em push notifications com sucesso');
       isSubscribed = true;
       return true;
+    } else {
+      console.error('❌ Falha ao salvar subscription:', result);
+      return false;
     }
   } catch (error) {
-    console.error('Erro ao inscrever em push notifications:', error);
+    console.error('❌ Erro ao inscrever em push notifications:', error);
     return false;
   }
 }
