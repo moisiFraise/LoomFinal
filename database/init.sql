@@ -150,10 +150,6 @@ CREATE TABLE IF NOT EXISTS denuncias (
   FOREIGN KEY (id_atualizacao) REFERENCES atualizacoes(id) ON DELETE CASCADE,
   FOREIGN KEY (id_admin_analise) REFERENCES usuarios(id) ON DELETE SET NULL
 );
--- Adiciona campos cidade e estado em clubes
-ALTER TABLE clubes
-ADD COLUMN cidade VARCHAR(100),
-ADD COLUMN estado VARCHAR(100);
 
 -- Tabela de sugestões de leitura
 CREATE TABLE IF NOT EXISTS sugestoes (

@@ -3592,7 +3592,7 @@ app.put('/api/clube/:id/configuracoes', verificarAutenticacao, async (req, res) 
   try {
     const clubeId = req.params.id;
     const userId = req.session.userId;
-    const { nome, descricao, visibilidade, senha, modelo, cidade, estado } = req.body;
+    const { nome, descricao, visibilidade, senha, modelo } = req.body;
     
     const [clubeRows] = await pool.safeQuery(
       'SELECT * FROM clubes WHERE id = ? AND id_criador = ?',
@@ -3621,9 +3621,9 @@ app.put('/api/clube/:id/configuracoes', verificarAutenticacao, async (req, res) 
     await pool.safeQuery(`
       UPDATE clubes 
       SET nome = ?, descricao = ?, visibilidade = ?, senha_acesso = ?, 
-          modelo = ?, cidade = ?, estado = ?
+          modelo = ?
       WHERE id = ?
-    `, [nome, descricao || '', visibilidade, senhaAcesso, modelo, cidade || null, estado || null, clubeId]);
+    `, [nome, descricao || '', visibilidade, senhaAcesso, modelo, clubeId]);
     
     const [clubeAtualizado] = await pool.safeQuery('SELECT * FROM clubes WHERE id = ?', [clubeId]);
     

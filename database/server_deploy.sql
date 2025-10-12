@@ -60,8 +60,6 @@ CREATE TABLE clubes (
   data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
   modelo ENUM('hibrido', 'online', 'presencial') DEFAULT 'online',
   leitura_atual VARCHAR(255) DEFAULT NULL,
-  cidade VARCHAR(100),
-  estado VARCHAR(100),
   FOREIGN KEY (id_criador) REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

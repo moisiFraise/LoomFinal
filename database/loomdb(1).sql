@@ -92,17 +92,15 @@ CREATE TABLE `clubes` (
   `senha_acesso` varchar(255) DEFAULT NULL,
   `data_criacao` datetime DEFAULT CURRENT_TIMESTAMP,
   `modelo` enum('hibrido','online','presencial') DEFAULT 'online',
-  `leitura_atual` varchar(255) DEFAULT NULL,
-  `cidade` varchar(100) DEFAULT NULL,
-  `estado` varchar(100) DEFAULT NULL
+  `leitura_atual` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Extraindo dados da tabela `clubes`
 --
 
-INSERT INTO `clubes` (`id`, `nome`, `descricao`, `id_criador`, `visibilidade`, `senha_acesso`, `data_criacao`, `modelo`, `leitura_atual`, `cidade`, `estado`) VALUES
-(28, 'teste dev', 'teste desenvolvedor', 4, 'privado', 'dev', '2025-08-05 10:12:11', 'online', NULL, NULL, NULL);
+INSERT INTO `clubes` (`id`, `nome`, `descricao`, `id_criador`, `visibilidade`, `senha_acesso`, `data_criacao`, `modelo`, `leitura_atual`) VALUES
+(28, 'teste dev', 'teste desenvolvedor', 4, 'privado', 'dev', '2025-08-05 10:12:11', 'online', NULL);
 
 -- --------------------------------------------------------
 
