@@ -157,10 +157,10 @@ navigator.serviceWorker.ready.then(registration => {
 
 ## ✅ Checklist de Produção
 
-- [ ] Gerar novas VAPID keys (não usar as de exemplo)
-- [ ] Atualizar VAPID_EMAIL com email real
-- [ ] Executar migration do banco de dados
-- [ ] Testar notificações em diferentes navegadores
-- [ ] Verificar HTTPS está configurado (obrigatório para PWA)
-- [ ] Testar no mobile (Android/iOS)
-- [ ] Configurar rate limiting para evitar spam de notificações
+- [✅ ] Gerar novas VAPID keys (não usar as de exemplo)
+- [ ✅] Atualizar VAPID_EMAIL com email real
+- [✅ ] Executar migration do banco de dados
+- [ ✅] Testar notificações em diferentes navegadores
+- [ ✅] Verificar HTTPS está configurado (obrigatório para PWA)
+- [ ✅] Testar no mobile (Android/iOS)
+- [✅ ] Configurar rate limiting para evitar spam de notificações
