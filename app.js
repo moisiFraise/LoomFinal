@@ -316,12 +316,8 @@ app.get('/api/test-email-config', async (req, res) => {
 
     const emailService = new EmailService();
     
-    // Apenas testar a conexão, não enviar email
-    await emailService.transporter.verify();
-    
     res.json({ 
-      sucesso: '✅ Configuração do Gmail está correta!',
-      email: 'loom.leitura@gmail.com',
+      sucesso: '✅ Resend configurado!',
       status: 'Pronto para enviar emails'
     });
   } catch (error) {
@@ -390,21 +386,6 @@ app.post('/api/esqueci-senha', async (req, res) => {
     
     // Criar instância do serviço de email
     const emailService = new EmailService();
-    
-    // Testar conexão antes de enviar
-    try {
-      console.log('🔍 Testando conexão SMTP...');
-      await emailService.transporter.verify();
-      console.log('✅ Conexão SMTP verificada');
-    } catch (verifyError) {
-      console.error('❌ Falha na verificação SMTP:', verifyError.message);
-      await Usuario.limparTokenReset(email);
-      
-      return res.status(500).json({ 
-        erro: 'Sistema de email temporariamente indisponível. Tente novamente em alguns minutos.',
-        tech_error: 'SMTP_CONFIG_ERROR'
-      });
-    }
     
     // Enviar email
     try {

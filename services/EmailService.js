@@ -11,24 +11,20 @@ class EmailService {
       service: 'gmail',
       auth: {
         user: 'loom.leitura@gmail.com',
-        pass: process.env.EMAIL_PASSWORD // Senha de app do Gmail
+        pass: process.env.EMAIL_PASSWORD
       },
-      secure: true, // Use SSL
-      port: 465,
-      debug: process.env.NODE_ENV !== 'production', // Debug apenas em desenvolvimento
-      logger: process.env.NODE_ENV !== 'production'
+      secure: true,
+      port: 465
     });
   }
 
   async enviarEmailResetSenha(email, nomeUsuario, token) {
-    // Detectar automaticamente o ambiente
     let baseUrl;
     if (process.env.NODE_ENV === 'production') {
       baseUrl = 'https://loom-final.vercel.app';
     } else if (process.env.BASE_URL) {
       baseUrl = process.env.BASE_URL;
     } else {
-      // Fallback para desenvolvimento
       const port = process.env.PORT || 3000;
       baseUrl = `http://localhost:${port}`;
     }
@@ -62,14 +58,12 @@ class EmailService {
           <div class="header">
             <div class="logo-container">
               <svg class="logo" viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
-                <!-- Livro aberto -->
                 <path d="M20 30 Q100 20, 180 30 L180 90 Q100 80, 20 90 Z" fill="#6c5ce7" opacity="0.1"/>
                 <path d="M100 25 L100 85" stroke="#6c5ce7" stroke-width="2"/>
                 <path d="M20 30 Q100 20, 100 25 Q100 20, 180 30" stroke="#6c5ce7" stroke-width="2" fill="none"/>
                 <path d="M20 90 Q100 80, 100 85 Q100 80, 180 90" stroke="#6c5ce7" stroke-width="2" fill="none"/>
                 <path d="M20 30 L20 90" stroke="#6c5ce7" stroke-width="2"/>
                 <path d="M180 30 L180 90" stroke="#6c5ce7" stroke-width="2"/>
-                <!-- Páginas -->
                 <path d="M30 40 L90 40" stroke="#8e7cc3" stroke-width="1"/>
                 <path d="M30 50 L85 50" stroke="#8e7cc3" stroke-width="1"/>
                 <path d="M30 60 L80 60" stroke="#8e7cc3" stroke-width="1"/>
@@ -130,39 +124,23 @@ class EmailService {
     };
 
     try {
-      // Verificar conexão primeiro
-      await this.transporter.verify();
-      console.log('✅ Conexão SMTP verificada com sucesso');
-      
       const info = await this.transporter.sendMail(mailOptions);
       console.log('📧 Email de reset enviado:', info.messageId);
       return { success: true, messageId: info.messageId };
     } catch (error) {
       console.error('❌ Erro ao enviar email:', error);
-      
-      // Tratamento específico para diferentes tipos de erro
-      if (error.code === 'EAUTH') {
-        throw new Error('Erro de autenticação: Verifique se a senha de app do Gmail está correta e se a autenticação de dois fatores está habilitada.');
-      } else if (error.code === 'ENOTFOUND') {
-        throw new Error('Erro de conexão: Verifique sua conexão com a internet.');
-      } else if (error.code === 'ETIMEDOUT') {
-        throw new Error('Timeout: O servidor de email não respondeu a tempo.');
-      } else {
-        throw new Error(`Erro no envio de email: ${error.message}`);
-      }
+      throw new Error(`Erro no envio de email: ${error.message}`);
     }
   }
 
-  // Gerar token seguro
   static gerarToken() {
     return crypto.randomBytes(32).toString('hex');
   }
 
-  // Verificar se o token não expirou (1 hora)
   static verificarExpiracaoToken(dataToken) {
     const agora = new Date();
     const expiracao = new Date(dataToken);
-    expiracao.setHours(expiracao.getHours() + 1); // 1 hora de validade
+    expiracao.setHours(expiracao.getHours() + 1);
     
     return agora <= expiracao;
   }
