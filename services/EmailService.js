@@ -1,21 +1,13 @@
-const nodemailer = require('nodemailer');
+const sgMail = require('@sendgrid/mail');
 const crypto = require('crypto');
 
 class EmailService {
   constructor() {
-    if (!process.env.EMAIL_PASSWORD) {
-      console.warn('⚠️  EMAIL_PASSWORD não configurado. Sistema de email não funcionará.');
+    if (!process.env.SENDGRID_API_KEY) {
+      console.warn('⚠️  SENDGRID_API_KEY não configurado. Sistema de email não funcionará.');
     }
     
-    this.transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: 'loom.leitura@gmail.com',
-        pass: process.env.EMAIL_PASSWORD
-      },
-      secure: true,
-      port: 465
-    });
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
   }
 
   async enviarEmailResetSenha(email, nomeUsuario, token) {
@@ -113,22 +105,22 @@ class EmailService {
       </html>
     `;
 
-    const mailOptions = {
-      from: {
-        name: 'Loom - Clubes de Leitura',
-        address: 'loom.leitura@gmail.com'
-      },
+    const msg = {
       to: email,
+      from: {
+        email: 'loom.leitura@gmail.com',
+        name: 'Loom - Clubes de Leitura'
+      },
       subject: 'Redefinir senha - Loom',
       html: htmlContent
     };
 
     try {
-      const info = await this.transporter.sendMail(mailOptions);
-      console.log('📧 Email de reset enviado:', info.messageId);
-      return { success: true, messageId: info.messageId };
+      const response = await sgMail.send(msg);
+      console.log('📧 Email de reset enviado via SendGrid');
+      return { success: true, messageId: response[0].headers['x-message-id'] };
     } catch (error) {
-      console.error('❌ Erro ao enviar email:', error);
+      console.error('❌ Erro ao enviar email:', error.response ? error.response.body : error);
       throw new Error(`Erro no envio de email: ${error.message}`);
     }
   }
