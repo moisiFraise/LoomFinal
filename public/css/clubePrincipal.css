@@ -1060,8 +1060,8 @@
 
 /* Estilos para a lista de sugestões */
 .sugestoes-lista {
-    max-height: 400px;
-    overflow-y: auto;
+    max-height: none;
+    overflow-y: visible;
 }
 
 .sugestao-item {

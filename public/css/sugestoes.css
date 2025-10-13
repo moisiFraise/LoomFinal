@@ -2,7 +2,7 @@
     max-width: 800px;
     margin: 0 auto;
     padding: 20px;
-    padding-bottom: 70px;
+    padding-bottom: 100px;
 }
 
 .sugestoes-header {
@@ -24,10 +24,11 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
+    padding-bottom: 20px;
 }
 
 .sugestao-card {
-    background: var(--current-line);
+    background: var(--background);
     border: 2px solid var(--roxo);
     border-radius: 15px;
     padding: 20px;
@@ -35,6 +36,7 @@
     box-shadow: 0 8px 32px rgba(189, 147, 249, 0.3);
     transition: all 0.3s ease;
     position: relative;
+    z-index: 1;
 }
 
 .sugestao-card:hover {
@@ -91,14 +93,22 @@
     gap: 15px;
 }
 
-.sugestao-usuario {
+.sugestao-usuario-info {
     display: flex;
     align-items: center;
-    gap: 8px;
-    background: var(--current-line);
-    padding: 8px 12px;
-    border-radius: 10px;
-    border-left: 4px solid var(--roxo);
+    gap: 12px;
+}
+
+.sugestao-usuario {
+    color: var(--foreground);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.sugestao-usuario:hover {
+    color: var(--roxo);
 }
 
 .usuario-avatar {
@@ -112,6 +122,35 @@
     justify-content: center;
     font-weight: bold;
     font-size: 0.8rem;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.usuario-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.usuario-avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(45deg, var(--roxo), var(--rosa));
+    color: white;
+    font-weight: bold;
+    border-radius: 50%;
+}
+
+.sugestao-usuario-data {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
 }
 
 .sugestao-data {
