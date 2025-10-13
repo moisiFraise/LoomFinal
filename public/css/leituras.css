@@ -17,10 +17,10 @@
 }
 
 .leituras-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, 450px);
+    display: flex;
+    flex-direction: column;
     gap: 20px;
-    justify-content: start;
+    width: 100%;
 }
 
 .leitura-card {
@@ -35,6 +35,7 @@
     justify-content: space-between;
     gap: 10px;
     color: var(--foreground);
+    width: 100%;
 }
 
 .leitura-card:hover {
@@ -329,6 +330,7 @@
     margin-bottom: 15px;
     box-shadow: 0 8px 32px rgba(0, 184, 148, 0.2);
     transition: all 0.3s ease;
+    width: 100%;
 }
 
 .leitura-atual-detalhada:hover {
@@ -513,4 +515,211 @@
     flex-direction: column;
     gap: 12px;
     margin-top: 15px;
+}
+
+/* ====== RESPONSIVIDADE ====== */
+
+/* Tablets */
+@media (max-width: 1024px) {
+    .leituras-grid {
+        gap: 16px;
+    }
+
+    .leitura-atual-detalhada {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .leitura-atual-detalhada .leitura-capa {
+        width: 150px;
+        height: 225px;
+        margin: 0 auto;
+    }
+
+    .leituras-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+
+    .leituras-header h3 {
+        font-size: 1.3rem;
+    }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .leituras-container {
+        gap: 16px;
+    }
+
+    .leituras-grid {
+        gap: 16px;
+    }
+
+    .leitura-card {
+        padding: 14px;
+    }
+
+    .leitura-card h3 {
+        font-size: 0.95rem;
+    }
+
+    .leitura-card p {
+        font-size: 0.8rem;
+    }
+
+    .leitura-info h4 {
+        font-size: 1.1rem;
+    }
+
+    .leitura-meta {
+        gap: 10px;
+    }
+
+    .leitura-autor,
+    .leitura-paginas {
+        font-size: 0.85rem;
+    }
+
+    .leitura-capa-pequena {
+        height: 180px;
+    }
+
+    .leitura-atual-detalhada {
+        padding: 16px;
+        gap: 16px;
+    }
+
+    .leitura-atual-detalhada .leitura-capa {
+        width: 120px;
+        height: 180px;
+    }
+
+    .leitura-atual-detalhada .leitura-info h4 {
+        font-size: 1.1rem;
+    }
+
+    .leitura-acoes {
+        flex-direction: column;
+    }
+
+    .botao-ver-atualizacoes {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .leituras-header {
+        margin-bottom: 16px;
+    }
+
+    .leituras-header h3 {
+        font-size: 1.2rem;
+    }
+
+    .participantes-info {
+        font-size: 0.85rem;
+        padding: 6px 10px;
+    }
+
+    .leitura-acoes-admin {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .botao-pequeno {
+        padding: 6px 8px;
+        font-size: 0.85rem;
+    }
+
+    #modal-selecao-leitura {
+        width: 95%;
+        max-height: 90vh;
+        padding: 16px;
+    }
+
+    .search-input {
+        flex-direction: column;
+        gap: 8px;
+    }
+}
+
+/* Mobile pequeno */
+@media (max-width: 480px) {
+    .leituras-container {
+        gap: 12px;
+    }
+
+    .leitura-card {
+        padding: 12px;
+    }
+
+    .leitura-card h3 {
+        font-size: 0.9rem;
+    }
+
+    .leitura-info h4 {
+        font-size: 1rem;
+    }
+
+    .leitura-meta {
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+    }
+
+    .leitura-capa-pequena {
+        height: 150px;
+    }
+
+    .leitura-atual-detalhada {
+        padding: 12px;
+        gap: 12px;
+    }
+
+    .leitura-atual-detalhada .leitura-capa {
+        width: 100px;
+        height: 150px;
+    }
+
+    .leitura-tipo {
+        font-size: 0.7rem;
+        padding: 5px 10px;
+    }
+
+    .sem-leituras {
+        padding: 30px 16px;
+    }
+
+    .sem-leituras i {
+        font-size: 2.5rem;
+    }
+
+    .sem-leituras h4 {
+        font-size: 1rem;
+    }
+
+    .leituras-header h3 {
+        font-size: 1.1rem;
+    }
+
+    #modal-selecao-leitura {
+        padding: 12px;
+    }
+
+    .tabs-container {
+        flex-direction: column;
+    }
+
+    .tab-item {
+        padding: 10px;
+        border-bottom: 1px solid var(--border-color);
+        text-align: center;
+    }
+
+    .tab-item.tab-ativo {
+        background: var(--roxo);
+        color: white;
+        border-radius: 8px;
+    }
 }

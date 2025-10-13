@@ -1153,9 +1153,9 @@
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 3001;
-  width: 90%;
-  max-width: 650px;
-  max-height: 85vh;
+  width: 95%;
+  max-width: 900px;
+  max-height: 90vh;
   background: var(--current-line);
   border: 2px solid var(--roxo);
   border-radius: 15px;
@@ -1213,10 +1213,11 @@
 
 .modal-body-giphy {
   padding: 20px;
-  max-height: 60vh;
+  max-height: 70vh;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--roxo) var(--current-line);
+  width: 100%;
 }
 
 .modal-body-giphy::-webkit-scrollbar {
@@ -1283,10 +1284,9 @@
 
 .giphy-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 1rem;
-  max-height: 300px;
-  overflow-y: auto;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  width: 100%;
 }
 
 .gif-item {
@@ -1297,6 +1297,8 @@
   transition: all 0.3s ease;
   background: var(--input-bg);
   border: 2px solid var(--border-color);
+  width: 100%;
+  min-height: auto;
 }
 
 .gif-item:hover {
@@ -1313,9 +1315,11 @@
 
 .gif-item img {
   width: 100%;
-  height: 120px;
+  height: 200px;
   object-fit: cover;
   border-radius: 10px;
+  background-color: var(--background);
+  display: block;
 }
 
 .gif-overlay {

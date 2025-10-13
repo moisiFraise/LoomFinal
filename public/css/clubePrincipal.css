@@ -445,6 +445,7 @@
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 20px;
+    width: 100%;
 }
 
 .livro-atual-container h4 {
@@ -685,8 +686,8 @@
 }
 .livro-atual-container {
     flex: 1 !important;
-    width: 450px !important;
-    min-width: 450px !important;
+    width: 100% !important;
+    min-width: 0 !important;
     background-color: var(--current-line);
     border-radius: 12px;
     padding: 20px;

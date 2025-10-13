@@ -9,6 +9,7 @@
     background-color: var(--current-line);
     padding: 20px;
     border-bottom: 1px solid var(--selection);
+    margin-top: 60px;
 }
 
 .header-info {
