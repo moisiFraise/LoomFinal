@@ -207,7 +207,7 @@ function atualizarLeituraAtual(leitura) {
             <div class="leitura-conteudo">
                 <div class="leitura-detalhes">
                     <div class="detalhe-item">
-                        <i class="fa fa-calendar-o detalhe-icone"></i>
+                        <i class="fa-regular fa-calendar detalhe-icone"></i>
                         <div class="detalhe-texto">
                             <span class="detalhe-label">Iniciado em</span>
                             <span class="detalhe-valor">${new Date(leitura.data_inicio).toLocaleDateString('pt-BR')}</span>
@@ -216,7 +216,7 @@ function atualizarLeituraAtual(leitura) {
                     
                     ${leitura.data_fim ? `
                         <div class="detalhe-item">
-                            <i class="fa fa-flag-checkered detalhe-icone"></i>
+                            <i class="fa-solid fa-flag-checkered detalhe-icone"></i>
                             <div class="detalhe-texto">
                                 <span class="detalhe-label">Previsão de término</span>
                                 <span class="detalhe-valor">${new Date(leitura.data_fim).toLocaleDateString('pt-BR')}</span>
@@ -226,7 +226,7 @@ function atualizarLeituraAtual(leitura) {
                     
                     ${leitura.paginas ? `
                         <div class="detalhe-item">
-                            <i class="fa fa-file-text-o detalhe-icone"></i>
+                            <i class="fa-regular fa-file-lines detalhe-icone"></i>
                             <div class="detalhe-texto">
                                 <span class="detalhe-label">Total de páginas</span>
                                 <span class="detalhe-valor">${leitura.paginas} páginas</span>
