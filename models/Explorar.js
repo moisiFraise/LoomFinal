@@ -1,4 +1,5 @@
 const pool = require('../config/database');
+const Categorias = require('./Categorias');
 
 class Explorar {
 static async listarTodosClubes() {
@@ -25,6 +26,15 @@ static async listarTodosClubes() {
         JOIN clube_categorias cc ON cat.id = cc.id_categoria
         WHERE cc.id_clube = ?
       `, [clube.id]);
+      
+      if (categorias.length === 0) {
+        const categoriaGeralId = await Categorias.obterOuCriarCategoriaPadrao();
+        await pool.safeQuery(
+          'INSERT INTO clube_categorias (id_clube, id_categoria) VALUES (?, ?)',
+          [clube.id, categoriaGeralId]
+        );
+        categorias.push({ nome: 'Geral' });
+      }
       
       clubesComLeituras.push({
         ...clube,

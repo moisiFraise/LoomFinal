@@ -1918,7 +1918,16 @@ app.get('/convite-clube/:id', async (req, res) => {
       WHERE cc.id_clube = ?
     `, [clubeId]);
     
-    clube.categorias = categoriasRows.map(cat => cat.nome);
+    if (categoriasRows.length === 0) {
+      const categoriaGeralId = await Categorias.obterOuCriarCategoriaPadrao();
+      await pool.safeQuery(
+        'INSERT INTO clube_categorias (id_clube, id_categoria) VALUES (?, ?)',
+        [clubeId, categoriaGeralId]
+      );
+      clube.categorias = ['Geral'];
+    } else {
+      clube.categorias = categoriasRows.map(cat => cat.nome);
+    }
     
     // Renderizar página de convite
     res.render('conviteClube', { 
@@ -1988,7 +1997,16 @@ app.get('/api/clube/:id', verificarAutenticacao, async (req, res) => {
       WHERE cc.id_clube = ?
     `, [clubeId]);
     
-    clube.categorias = categoriasRows.map(cat => cat.nome);
+    if (categoriasRows.length === 0) {
+      const categoriaGeralId = await Categorias.obterOuCriarCategoriaPadrao();
+      await pool.safeQuery(
+        'INSERT INTO clube_categorias (id_clube, id_categoria) VALUES (?, ?)',
+        [clubeId, categoriaGeralId]
+      );
+      clube.categorias = ['Geral'];
+    } else {
+      clube.categorias = categoriasRows.map(cat => cat.nome);
+    }
     
     try {
       const [leituraRows] = await pool.safeQuery(`
@@ -3596,6 +3614,15 @@ app.get('/api/clube/:id/configuracoes', verificarAutenticacao, async (req, res) 
       JOIN clube_categorias cc ON c.id = cc.id_categoria
       WHERE cc.id_clube = ?
     `, [clubeId]);
+    
+    if (categoriasClube.length === 0) {
+      const categoriaGeralId = await Categorias.obterOuCriarCategoriaPadrao();
+      await pool.safeQuery(
+        'INSERT INTO clube_categorias (id_clube, id_categoria) VALUES (?, ?)',
+        [clubeId, categoriaGeralId]
+      );
+      categoriasClube.push({ id: categoriaGeralId, nome: 'Geral' });
+    }
     
     const [todasCategorias] = await pool.safeQuery('SELECT id, nome FROM categorias ORDER BY nome');
     
