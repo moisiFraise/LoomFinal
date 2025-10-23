@@ -6,18 +6,21 @@ const dbConfig = {
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'loom_db',
+  port: process.env.DB_PORT || 3306,
   waitForConnections: true,
-  connectionLimit: 50, // Pool maior compartilhado
+  connectionLimit: process.env.VERCEL ? 10 : 50, // Pool menor no Vercel
   queueLimit: 0,
-  acquireTimeout: 60000,
-  timeout: 60000,
+  acquireTimeout: 30000, // 30s
+  timeout: 30000, // 30s
+  connectTimeout: 20000, // 20s para conectar
   charset: 'utf8mb4',
   collation: 'utf8mb4_unicode_ci',
   timezone: '-03:00',
-  idleTimeout: 60000,
-  maxIdle: 10,
+  idleTimeout: 10000, // 10s no Vercel
+  maxIdle: 5,
   enableKeepAlive: true,
-  keepAliveInitialDelay: 0
+  keepAliveInitialDelay: 0,
+  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined
 };
 
 console.log('Tentando conectar ao banco de dados com as configurações:', {

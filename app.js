@@ -3798,6 +3798,35 @@ app.delete('/api/clube/:id/membros/:membroId', verificarAutenticacao, async (req
     res.status(500).json({ erro: 'Erro ao remover membro do clube' });
   }
 });
+// Teste: verificar se tabela historico_denuncias existe
+app.get('/api/admin/denuncias/test/tabela', verificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.buscarPorId(req.session.userId);
+    if (!usuario || usuario.tipo !== 'admin') {
+      return res.status(403).json({ erro: 'Acesso negado' });
+    }
+    
+    const pool = require('./config/database');
+    const [tables] = await pool.safeQuery("SHOW TABLES LIKE 'historico_denuncias'");
+    const tabelaExiste = tables.length > 0;
+    
+    if (tabelaExiste) {
+      const [colunas] = await pool.safeQuery("DESCRIBE historico_denuncias");
+      const [count] = await pool.safeQuery("SELECT COUNT(*) as total FROM historico_denuncias");
+      res.json({ 
+        existe: true, 
+        colunas: colunas,
+        total_registros: count[0].total
+      });
+    } else {
+      res.json({ existe: false });
+    }
+  } catch (error) {
+    console.error('Erro ao verificar tabela:', error);
+    res.status(500).json({ erro: error.message });
+  }
+});
+
 app.get('/api/admin/denuncias', verificarAutenticacao, async (req, res) => {
   try {
     const usuario = await Usuario.buscarPorId(req.session.userId);
