@@ -93,6 +93,7 @@ class Denuncias {
   }
 
   static async analisar(id, idAdmin, status, observacoes) {
+    console.log('🔄 Iniciando analisar - Denúncia:', id, 'Admin:', idAdmin, 'Status:', status);
     return await pool.safeTransaction(async (connection) => {
       // Buscar status anterior
       const [denunciaAtual] = await connection.query(
@@ -100,6 +101,7 @@ class Denuncias {
         [id]
       );
       const statusAnterior = denunciaAtual[0]?.status || 'pendente';
+      console.log('📊 Status anterior:', statusAnterior, '→ Novo status:', status);
 
       // Atualizar denúncia
       await connection.query(
@@ -108,9 +110,11 @@ class Denuncias {
          WHERE id = ?`,
         [status, idAdmin, observacoes, id]
       );
+      console.log('✅ Denúncia atualizada');
 
       // Registrar no histórico
       try {
+        console.log('📝 Tentando inserir no histórico...');
         const [resultHistorico] = await connection.query(
           `INSERT INTO historico_denuncias 
            (id_denuncia, id_admin, acao, status_anterior, status_novo, observacoes)
@@ -120,6 +124,8 @@ class Denuncias {
         console.log('✅ Histórico registrado - ID:', resultHistorico.insertId, 'Denúncia:', id, 'Ação: análise');
       } catch (error) {
         console.error('❌ Erro ao registrar histórico:', error.message);
+        console.error('❌ Código do erro:', error.code);
+        console.error('❌ SQL State:', error.sqlState);
         throw error;
       }
 
@@ -128,6 +134,7 @@ class Denuncias {
   }
 
   static async processarDenuncia(id, idAdmin, acao, observacoes) {
+    console.log('🔄 Iniciando processarDenuncia - Denúncia:', id, 'Admin:', idAdmin, 'Ação:', acao);
     return await pool.safeTransaction(async (connection) => {
       // Buscar denúncia DENTRO da transação
       const [denuncias] = await connection.query(`
@@ -148,6 +155,7 @@ class Denuncias {
 
       // Buscar status anterior
       const statusAnterior = denuncia.status;
+      console.log('📊 Status anterior:', statusAnterior, '→ Novo status: analisada');
 
       // Atualizar denúncia
       await connection.query(
@@ -156,9 +164,11 @@ class Denuncias {
          WHERE id = ?`,
         [idAdmin, observacoes, id]
       );
+      console.log('✅ Denúncia atualizada');
 
       // Registrar no histórico
       try {
+        console.log('📝 Tentando inserir no histórico...');
         const [resultHistorico] = await connection.query(
           `INSERT INTO historico_denuncias 
            (id_denuncia, id_admin, acao, status_anterior, status_novo, observacoes)
@@ -168,6 +178,8 @@ class Denuncias {
         console.log('✅ Histórico registrado - ID:', resultHistorico.insertId, 'Denúncia:', id, 'Ação:', acao);
       } catch (error) {
         console.error('❌ Erro ao registrar histórico:', error.message);
+        console.error('❌ Código do erro:', error.code);
+        console.error('❌ SQL State:', error.sqlState);
         console.error('❌ Stack:', error.stack);
         throw error;
       }
