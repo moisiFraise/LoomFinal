@@ -1,4 +1,5 @@
 const pool = require('../config/database');
+const Categorias = require('./Categorias');
 
 class Clube {
 static async criar(nome, descricao, idCriador, visibilidade, senha, categorias = [], modelo = 'online') {
@@ -22,6 +23,12 @@ static async criar(nome, descricao, idCriador, visibilidade, senha, categorias =
         const valoresSQL = categorias.map(categoriaId => `(${clubeId}, ${categoriaId})`).join(', ');
         await connection.query(
           `INSERT INTO clube_categorias (id_clube, id_categoria) VALUES ${valoresSQL}`
+        );
+      } else {
+        const categoriaGeralId = await Categorias.obterOuCriarCategoriaPadrao();
+        await connection.query(
+          'INSERT INTO clube_categorias (id_clube, id_categoria) VALUES (?, ?)',
+          [clubeId, categoriaGeralId]
         );
       }
       

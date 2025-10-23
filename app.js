@@ -3684,6 +3684,12 @@ app.put('/api/clube/:id/categorias', verificarAutenticacao, async (req, res) => 
         `INSERT INTO clube_categorias (id_clube, id_categoria) VALUES ${placeholders}`,
         flatValues
       );
+    } else {
+      const categoriaGeralId = await Categorias.obterOuCriarCategoriaPadrao();
+      await pool.safeQuery(
+        'INSERT INTO clube_categorias (id_clube, id_categoria) VALUES (?, ?)',
+        [clubeId, categoriaGeralId]
+      );
     }
     
     const [categoriasAtualizadas] = await pool.safeQuery(`
@@ -4199,10 +4205,19 @@ process.on('SIGINT', () => {
   });
 });
 
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, async () => {
   console.log(`🚀 Loom Server running on http://localhost:${PORT}`);
   console.log(`📱 PWA available for installation!`);
   console.log('📊 Connection leak prevention active');
+  
+  try {
+    const clubesCorrigidos = await Categorias.corrigirClubesSemCategoria();
+    if (clubesCorrigidos > 0) {
+      console.log(`✅ ${clubesCorrigidos} clubes sem categoria foram corrigidos com categoria "Geral"`);
+    }
+  } catch (error) {
+    console.error('❌ Erro ao corrigir clubes sem categoria:', error);
+  }
 });
 
 server.on('error', (err) => {

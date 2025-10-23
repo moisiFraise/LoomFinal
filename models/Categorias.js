@@ -96,6 +96,57 @@ class Categorias {
       throw error;
     }
   }
+
+  static async obterOuCriarCategoriaPadrao() {
+    try {
+      const [categorias] = await pool.safeQuery(
+        'SELECT id FROM categorias WHERE nome = ? LIMIT 1',
+        ['Geral']
+      );
+      
+      if (categorias.length > 0) {
+        return categorias[0].id;
+      }
+      
+      const [result] = await pool.safeQuery(
+        'INSERT INTO categorias (nome) VALUES (?)',
+        ['Geral']
+      );
+      return result.insertId;
+    } catch (error) {
+      console.error('Erro ao obter/criar categoria padrão:', error);
+      throw error;
+    }
+  }
+
+  static async corrigirClubesSemCategoria() {
+    try {
+      const categoriaGeralId = await this.obterOuCriarCategoriaPadrao();
+      
+      const [clubesSemCategoria] = await pool.safeQuery(`
+        SELECT c.id 
+        FROM clubes c
+        LEFT JOIN clube_categorias cc ON c.id = cc.id_clube
+        WHERE cc.id_clube IS NULL
+      `);
+      
+      if (clubesSemCategoria.length > 0) {
+        const values = clubesSemCategoria.map(clube => [clube.id, categoriaGeralId]);
+        const placeholders = values.map(() => '(?, ?)').join(', ');
+        const flatValues = values.flat();
+        
+        await pool.safeQuery(
+          `INSERT INTO clube_categorias (id_clube, id_categoria) VALUES ${placeholders}`,
+          flatValues
+        );
+      }
+      
+      return clubesSemCategoria.length;
+    } catch (error) {
+      console.error('Erro ao corrigir clubes sem categoria:', error);
+      throw error;
+    }
+  }
 }
 
 module.exports = Categorias;
