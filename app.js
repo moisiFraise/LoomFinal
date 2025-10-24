@@ -1261,54 +1261,97 @@ app.post('/api/upload-foto-perfil', verificarAutenticacao, (req, res) => {
   }
 });
 app.delete('/api/perfil', verificarAutenticacao, async (req, res) => {
+  const connection = await pool.getConnection();
+  
   try {
-    const [clubesCriados] = await pool.safeQuery(
-      'SELECT id FROM clubes WHERE id_criador = ?',
-      [req.session.userId]
+    await connection.beginTransaction();
+    
+    const userId = req.session.userId;
+    console.log('🗑️ Iniciando exclusão de conta do usuário:', userId);
+    
+    // 1. Verificar se é criador de clubes
+    const [clubesCriados] = await connection.query(
+      'SELECT id, nome FROM clubes WHERE id_criador = ?',
+      [userId]
     );
     
     if (clubesCriados.length > 0) {
+      await connection.rollback();
       return res.status(400).json({ 
-        erro: 'Você não pode excluir sua conta porque é criador de um ou mais clubes. Transfira a propriedade ou exclua os clubes primeiro.' 
+        erro: 'Você não pode excluir sua conta porque é criador de um ou mais clubes. Transfira a propriedade ou exclua os clubes primeiro.',
+        clubes: clubesCriados.map(c => c.nome)
       });
     }
     
-    await pool.safeQuery(
-      'DELETE FROM participacoes WHERE id_usuario = ?',
-      [req.session.userId]
-    );
+    // 2. Deletar votos
+    await connection.query('DELETE FROM votos WHERE id_usuario = ?', [userId]);
+    console.log('✅ Votos deletados');
     
-    await pool.safeQuery(
-      'DELETE FROM curtidas WHERE id_usuario = ?',
-      [req.session.userId]
-    );
+    // 3. Deletar comentários
+    await connection.query('DELETE FROM comentarios WHERE id_usuario = ?', [userId]);
+    console.log('✅ Comentários deletados');
     
-    await pool.safeQuery(
-      'DELETE FROM participantes_encontro WHERE id_usuario = ?',
-      [req.session.userId]
-    );
+    // 4. Deletar curtidas
+    await connection.query('DELETE FROM curtidas WHERE id_usuario = ?', [userId]);
+    console.log('✅ Curtidas deletadas');
     
-    await pool.safeQuery(
-      'DELETE FROM atualizacoes WHERE id_usuario = ?',
-      [req.session.userId]
-    );
-    
-    await pool.safeQuery(
+    // 5. Soft delete das mensagens de chat
+    await connection.query(
       'UPDATE mensagens_chat SET excluida = TRUE WHERE id_usuario = ?',
-      [req.session.userId]
+      [userId]
     );
+    console.log('✅ Mensagens marcadas como excluídas');
     
-    await pool.safeQuery(
-      'DELETE FROM usuarios WHERE id = ?',
-      [req.session.userId]
+    // 6. Deletar participações em encontros
+    await connection.query('DELETE FROM participantes_encontro WHERE id_usuario = ?', [userId]);
+    console.log('✅ Participações em encontros deletadas');
+    
+    // 7. Deletar sugestões de leitura
+    await connection.query('DELETE FROM sugestoes WHERE id_usuario = ?', [userId]);
+    console.log('✅ Sugestões deletadas');
+    
+    // 8. Deletar atualizações (cascadeará comentários e curtidas se tiver)
+    await connection.query('DELETE FROM atualizacoes WHERE id_usuario = ?', [userId]);
+    console.log('✅ Atualizações deletadas');
+    
+    // 9. Remover de denúncias (manter histórico mas anonimizar)
+    await connection.query(
+      'UPDATE denuncias SET id_denunciante = NULL WHERE id_denunciante = ?',
+      [userId]
     );
+    await connection.query(
+      'UPDATE denuncias SET id_denunciado = NULL WHERE id_denunciado = ?',
+      [userId]
+    );
+    console.log('✅ Denúncias anonimizadas');
     
-    req.session.destroy();
+    // 10. Deletar participações em clubes
+    await connection.query('DELETE FROM participacoes WHERE id_usuario = ?', [userId]);
+    console.log('✅ Participações deletadas');
     
+    // 11. Finalmente, deletar o usuário
+    await connection.query('DELETE FROM usuarios WHERE id = ?', [userId]);
+    console.log('✅ Usuário deletado do banco');
+    
+    await connection.commit();
+    
+    // 12. Destruir sessão
+    req.session.destroy((err) => {
+      if (err) console.error('Erro ao destruir sessão:', err);
+    });
+    
+    console.log('✅ Conta excluída com sucesso!');
     res.json({ mensagem: 'Conta excluída com sucesso' });
+    
   } catch (error) {
-    console.error('Erro ao excluir conta:', error);
-    res.status(500).json({ erro: 'Erro ao excluir conta' });
+    await connection.rollback();
+    console.error('❌ Erro ao excluir conta:', error);
+    res.status(500).json({ 
+      erro: 'Erro ao excluir conta',
+      detalhes: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  } finally {
+    connection.release();
   }
 });
 app.get('/api/clubes/:userId', async (req, res) => {
