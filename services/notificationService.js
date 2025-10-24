@@ -182,6 +182,42 @@ const NotificationService = {
       data: { type: 'club_update', clubeId }
     };
     return NotificationService.sendToClubMembers(clubeId, payload);
+  },
+
+  notifyLike: (userId, likerName, updatePreview) => {
+    const payload = {
+      title: `${likerName} curtiu sua atualização`,
+      body: updatePreview,
+      icon: '/logo-192.png',
+      tag: `like-${userId}`,
+      url: `/feed`,
+      data: { type: 'like', userId }
+    };
+    return NotificationService.sendToUser(userId, payload);
+  },
+
+  notifyComment: (userId, commenterName, commentPreview, clubeId) => {
+    const payload = {
+      title: `${commenterName} comentou sua atualização`,
+      body: commentPreview,
+      icon: '/logo-192.png',
+      tag: `comment-${userId}`,
+      url: `/clube/${clubeId}`,
+      data: { type: 'comment', userId, clubeId }
+    };
+    return NotificationService.sendToUser(userId, payload);
+  },
+
+  notifySuggestion: (clubeId, suggestorName, bookTitle) => {
+    const payload = {
+      title: `${suggestorName} sugeriu um livro`,
+      body: `"${bookTitle}"`,
+      icon: '/logo-192.png',
+      tag: `suggestion-${clubeId}`,
+      url: `/clube/${clubeId}/sugestoes`,
+      data: { type: 'suggestion', clubeId }
+    };
+    return NotificationService.sendToClubMembers(clubeId, payload);
   }
 };
 

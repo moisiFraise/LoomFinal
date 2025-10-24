@@ -2566,6 +2566,28 @@ app.post('/api/clube/:id/atualizacoes/:atualizacaoId/curtir', verificarAutentica
     }
     
     const resultado = await Curtidas.curtir(atualizacaoId, req.session.userId);
+    
+    // Enviar notificação se foi curtida (não descurtida)
+    if (resultado.curtiu) {
+      try {
+        const [atualizacao] = await pool.safeQuery(
+          'SELECT a.*, u.nome as autor_nome FROM atualizacoes a JOIN usuarios u ON a.id_usuario = u.id WHERE a.id = ?',
+          [atualizacaoId]
+        );
+        
+        if (atualizacao.length > 0 && atualizacao[0].id_usuario !== req.session.userId) {
+          const usuario = await Usuario.buscarPorId(req.session.userId);
+          const preview = atualizacao[0].conteudo.substring(0, 50) + (atualizacao[0].conteudo.length > 50 ? '...' : '');
+          
+          NotificationService.notifyLike(atualizacao[0].id_usuario, usuario.nome, preview).catch(err => {
+            console.error('Erro ao enviar notificação de curtida:', err);
+          });
+        }
+      } catch (notifErr) {
+        console.error('Erro ao processar notificação de curtida:', notifErr);
+      }
+    }
+    
     res.json(resultado);
   } catch (error) {
     console.error('Erro ao curtir atualização:', error);
@@ -3231,6 +3253,18 @@ app.post('/api/clube/:id/sugestoes', verificarAutenticacao, async (req, res) => 
     );
     
     console.log('✅ Sugestão criada com sucesso:', novaSugestao);
+    
+    // Enviar notificação aos membros do clube
+    try {
+      const usuario = await Usuario.buscarPorId(userId);
+      const bookTitle = titulo + (autor ? ` - ${autor}` : '');
+      
+      NotificationService.notifySuggestion(clubeId, usuario.nome, bookTitle).catch(err => {
+        console.error('Erro ao enviar notificação de sugestão:', err);
+      });
+    } catch (notifErr) {
+      console.error('Erro ao processar notificação de sugestão:', notifErr);
+    }
     
     res.status(201).json({
       mensagem: 'Sugestão criada com sucesso',
@@ -4000,6 +4034,30 @@ app.post('/api/comentarios', verificarAutenticacaoAPI, async (req, res) => {
     console.log('Criando comentário...', { idAtualizacao, userId: req.session.userId, conteudo, gifUrl });
     const novoComentario = await Comentarios.criar(idAtualizacao, req.session.userId, conteudo, gifUrl || null);
     console.log('Comentário criado com sucesso:', novoComentario);
+    
+    // Enviar notificação ao autor da atualização
+    try {
+      const [atualizacao] = await pool.safeQuery(
+        'SELECT a.id_usuario, a.id_clube FROM atualizacoes a WHERE a.id = ?',
+        [idAtualizacao]
+      );
+      
+      if (atualizacao.length > 0 && atualizacao[0].id_usuario !== req.session.userId) {
+        const usuario = await Usuario.buscarPorId(req.session.userId);
+        const commentPreview = conteudo.substring(0, 50) + (conteudo.length > 50 ? '...' : '');
+        
+        NotificationService.notifyComment(
+          atualizacao[0].id_usuario, 
+          usuario.nome, 
+          commentPreview, 
+          atualizacao[0].id_clube
+        ).catch(err => {
+          console.error('Erro ao enviar notificação de comentário:', err);
+        });
+      }
+    } catch (notifErr) {
+      console.error('Erro ao processar notificação de comentário:', notifErr);
+    }
     
     res.status(201).json({
       mensagem: 'Comentário criado com sucesso',
