@@ -17,69 +17,96 @@ if (vapidKeys.publicKey && vapidKeys.privateKey) {
 const NotificationService = {
   sendToUser: async (userId, payload) => {
     try {
+      console.log(`📤 Enviando notificação para usuário ${userId}:`, payload.title);
       const subscriptions = await PushSubscription.findByUserId(userId);
 
       if (!subscriptions || subscriptions.length === 0) {
+        console.log(`⚠️ Nenhuma subscription para usuário ${userId}`);
         return { sent: 0, message: 'Nenhuma subscription encontrada' };
       }
 
-      const promises = subscriptions.map(sub => {
+      console.log(`📱 ${subscriptions.length} subscription(s) encontrada(s)`);
+      let successCount = 0;
+      let failCount = 0;
+
+      const promises = subscriptions.map(async sub => {
         try {
           const subscription = JSON.parse(sub.dados_inscricao);
-          return webpush.sendNotification(subscription, JSON.stringify(payload))
-            .catch(err => {
-              console.error('Erro ao enviar notificação:', err);
-              if (err.statusCode === 410) {
-                PushSubscription.delete(userId, subscription.endpoint);
-              }
-            });
-        } catch (parseErr) {
-          console.error('Erro ao parsear subscription:', parseErr);
-          return Promise.resolve();
+          console.log(`🔔 Enviando para endpoint: ${subscription.endpoint.substring(0, 50)}...`);
+          
+          await webpush.sendNotification(subscription, JSON.stringify(payload), {
+            TTL: 86400, // 24 horas
+            urgency: 'high'
+          });
+          
+          successCount++;
+          console.log(`✅ Notificação enviada com sucesso`);
+        } catch (err) {
+          failCount++;
+          console.error(`❌ Erro ao enviar notificação:`, err.message);
+          if (err.statusCode === 410 || err.statusCode === 404) {
+            console.log(`🗑️ Removendo subscription inválida`);
+            await PushSubscription.delete(userId, subscription.endpoint);
+          }
         }
       });
 
       await Promise.all(promises);
-      return { sent: subscriptions.length };
+      console.log(`📊 Resultado: ${successCount} sucesso, ${failCount} falhas`);
+      return { sent: successCount, failed: failCount };
     } catch (err) {
-      console.error('Erro ao buscar subscriptions:', err);
+      console.error('❌ Erro ao buscar subscriptions:', err);
       throw err;
     }
   },
 
   sendToClubMembers: async (clubeId, payload, excludeUserId = null) => {
     try {
+      console.log(`📤 Enviando notificação para clube ${clubeId}:`, payload.title);
       const subscriptions = await PushSubscription.findByClubMembers(clubeId);
 
       if (!subscriptions || subscriptions.length === 0) {
+        console.log(`⚠️ Nenhuma subscription para clube ${clubeId}`);
         return { sent: 0, message: 'Nenhuma subscription encontrada' };
       }
 
       let filteredSubs = subscriptions;
       if (excludeUserId) {
         filteredSubs = subscriptions.filter(sub => sub.id_usuario !== excludeUserId);
+        console.log(`🚫 Excluindo usuário ${excludeUserId}, ${filteredSubs.length} restantes`);
       }
 
-      const promises = filteredSubs.map(sub => {
+      console.log(`📱 Enviando para ${filteredSubs.length} membro(s) do clube`);
+      let successCount = 0;
+      let failCount = 0;
+
+      const promises = filteredSubs.map(async sub => {
         try {
           const subscription = JSON.parse(sub.dados_inscricao);
-          return webpush.sendNotification(subscription, JSON.stringify(payload))
-            .catch(err => {
-              console.error('Erro ao enviar notificação:', err);
-              if (err.statusCode === 410) {
-                PushSubscription.delete(sub.id_usuario, subscription.endpoint);
-              }
-            });
-        } catch (parseErr) {
-          console.error('Erro ao parsear subscription:', parseErr);
-          return Promise.resolve();
+          console.log(`🔔 Enviando para usuário ${sub.id_usuario}`);
+          
+          await webpush.sendNotification(subscription, JSON.stringify(payload), {
+            TTL: 86400,
+            urgency: 'high'
+          });
+          
+          successCount++;
+          console.log(`✅ Enviado para usuário ${sub.id_usuario}`);
+        } catch (err) {
+          failCount++;
+          console.error(`❌ Falha para usuário ${sub.id_usuario}:`, err.message);
+          if (err.statusCode === 410 || err.statusCode === 404) {
+            console.log(`🗑️ Removendo subscription inválida do usuário ${sub.id_usuario}`);
+            await PushSubscription.delete(sub.id_usuario, subscription.endpoint);
+          }
         }
       });
 
       await Promise.all(promises);
-      return { sent: filteredSubs.length };
+      console.log(`📊 Clube ${clubeId}: ${successCount} sucesso, ${failCount} falhas`);
+      return { sent: successCount, failed: failCount };
     } catch (err) {
-      console.error('Erro ao buscar subscriptions do clube:', err);
+      console.error('❌ Erro ao buscar subscriptions do clube:', err);
       throw err;
     }
   },

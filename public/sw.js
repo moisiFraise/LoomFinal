@@ -1,18 +1,33 @@
-// Service Worker SIMPLIFICADO para Push Notifications
-// Sem cache para evitar erros de instalação
+// Service Worker para Push Notifications com Background Sync
+// Versão: 2.0
 
-console.log('SW: Carregando service worker simplificado...');
+const SW_VERSION = '2.0';
+console.log(`SW: Carregando service worker v${SW_VERSION}...`);
 
-// Install - não faz cache, só ativa
+// Install - ativa imediatamente
 self.addEventListener('install', event => {
   console.log('SW: Instalando...');
-  self.skipWaiting(); // Ativa imediatamente
+  self.skipWaiting();
 });
 
-// Activate - toma controle imediatamente
+// Activate - toma controle e registra periodic sync
 self.addEventListener('activate', event => {
   console.log('SW: Ativando...');
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    self.clients.claim().then(() => {
+      console.log('SW: Controle reivindicado');
+      // Registrar periodic background sync se disponível
+      if ('periodicSync' in self.registration) {
+        return self.registration.periodicSync.register('check-notifications', {
+          minInterval: 5 * 60 * 1000 // 5 minutos
+        }).then(() => {
+          console.log('SW: Periodic sync registrado');
+        }).catch(err => {
+          console.log('SW: Periodic sync não disponível:', err);
+        });
+      }
+    })
+  );
 });
 
 // Push - recebe e mostra notificação
@@ -105,4 +120,37 @@ self.addEventListener('notificationclick', event => {
   );
 });
 
-console.log('SW: Service worker simplificado carregado!');
+// Periodic Background Sync para verificar notificações pendentes
+self.addEventListener('periodicsync', event => {
+  console.log('SW: Periodic sync disparado:', event.tag);
+  if (event.tag === 'check-notifications') {
+    event.waitUntil(checkForPendingNotifications());
+  }
+});
+
+// Função para verificar notificações pendentes
+async function checkForPendingNotifications() {
+  try {
+    console.log('SW: Verificando notificações pendentes...');
+    // Aqui você pode fazer fetch para verificar notificações não lidas
+    // Por enquanto, apenas log
+    return Promise.resolve();
+  } catch (error) {
+    console.error('SW: Erro ao verificar notificações:', error);
+  }
+}
+
+// Background Sync para quando a conexão voltar
+self.addEventListener('sync', event => {
+  console.log('SW: Background sync disparado:', event.tag);
+  if (event.tag === 'sync-notifications') {
+    event.waitUntil(syncNotifications());
+  }
+});
+
+async function syncNotifications() {
+  console.log('SW: Sincronizando notificações...');
+  return Promise.resolve();
+}
+
+console.log('SW: Service worker carregado com background sync!');

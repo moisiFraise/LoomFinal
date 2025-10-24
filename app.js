@@ -219,6 +219,16 @@ function recordDbFailure() {
 const pushRoutes = require('./services/pushRoutes');
 app.use('/api/push', pushRoutes);
 
+// Endpoint de heartbeat para manter conexão ativa
+app.post('/api/heartbeat', (req, res) => {
+  if (req.session && req.session.userId) {
+    req.session.touch(); // Renovar sessão
+    res.json({ status: 'ok', timestamp: Date.now() });
+  } else {
+    res.status(401).json({ status: 'unauthorized' });
+  }
+});
+
 // Middleware específico para APIs que retorna JSON em vez de redirect
 // VERSÃO RADICAL: Confia apenas na sessão, sem consultas ao banco
 async function verificarAutenticacaoAPI(req, res, next) {
