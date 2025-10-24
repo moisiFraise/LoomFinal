@@ -196,11 +196,31 @@ class Denuncias {
           [denuncia.id_denunciado, denuncia.id_clube]
         );
 
+        // Guardar conteúdo da atualização e clube antes de deletar
+        await connection.query(
+          `UPDATE denuncias d
+           JOIN atualizacoes a ON d.id_atualizacao = a.id
+           SET d.conteudo_atualizacao_backup = a.conteudo,
+               d.id_clube_backup = a.id_clube
+           WHERE d.id = ?`,
+          [id]
+        );
+
         await connection.query(
           'DELETE FROM atualizacoes WHERE id = ?',
           [denuncia.id_atualizacao]
         );
       } else if (acao === 'remover_atualizacao') {
+        // Guardar conteúdo da atualização e clube antes de deletar
+        await connection.query(
+          `UPDATE denuncias d
+           JOIN atualizacoes a ON d.id_atualizacao = a.id
+           SET d.conteudo_atualizacao_backup = a.conteudo,
+               d.id_clube_backup = a.id_clube
+           WHERE d.id = ?`,
+          [id]
+        );
+
         await connection.query(
           'DELETE FROM atualizacoes WHERE id = ?',
           [denuncia.id_atualizacao]
@@ -215,16 +235,16 @@ class Denuncias {
                denunciado.nome as nome_denunciado,
                denunciado.email as email_denunciado,
                denunciado.estado as estado_denunciado,
-               a.conteudo as conteudo_atualizacao,
+               COALESCE(a.conteudo, d.conteudo_atualizacao_backup) as conteudo_atualizacao,
                a.data_postagem as data_atualizacao,
-               a.id_clube as id_clube,
+               COALESCE(a.id_clube, d.id_clube_backup) as id_clube,
                c.nome as nome_clube,
                admin.nome as nome_admin_analise
         FROM denuncias d
         JOIN usuarios denunciante ON d.id_denunciante = denunciante.id
         JOIN usuarios denunciado ON d.id_denunciado = denunciado.id
-        JOIN atualizacoes a ON d.id_atualizacao = a.id
-        JOIN clubes c ON a.id_clube = c.id
+        LEFT JOIN atualizacoes a ON d.id_atualizacao = a.id
+        LEFT JOIN clubes c ON a.id_clube = c.id OR d.id_clube_backup = c.id
         LEFT JOIN usuarios admin ON d.id_admin_analise = admin.id
         WHERE d.id = ?
       `, [id]);
@@ -262,6 +282,7 @@ class Denuncias {
 
   static async buscarHistorico(idDenuncia) {
     try {
+      console.log('🔍 Buscando histórico para denúncia:', idDenuncia);
       const [historico] = await pool.safeQuery(`
         SELECT h.*, 
                u.nome as nome_admin,
@@ -272,9 +293,10 @@ class Denuncias {
         ORDER BY h.data_acao DESC
       `, [idDenuncia]);
 
+      console.log('📊 Histórico encontrado:', historico.length, 'registros');
       return historico;
     } catch (error) {
-      console.error('Erro ao buscar histórico:', error);
+      console.error('❌ Erro ao buscar histórico:', error.message);
       throw error;
     }
   }
