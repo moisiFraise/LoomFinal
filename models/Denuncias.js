@@ -42,15 +42,16 @@ class Denuncias {
                denunciado.nome as nome_denunciado,
                denunciado.email as email_denunciado,
                denunciado.estado as estado_denunciado,
-               a.conteudo as conteudo_atualizacao,
+               COALESCE(a.conteudo, d.conteudo_atualizacao_backup, '[Atualização removida]') as conteudo_atualizacao,
                a.data_postagem as data_atualizacao,
-               c.nome as nome_clube,
+               COALESCE(c.nome, cb.nome, '[Clube não encontrado]') as nome_clube,
                admin.nome as nome_admin_analise
         FROM denuncias d
         JOIN usuarios denunciante ON d.id_denunciante = denunciante.id
         JOIN usuarios denunciado ON d.id_denunciado = denunciado.id
-        JOIN atualizacoes a ON d.id_atualizacao = a.id
-        JOIN clubes c ON a.id_clube = c.id
+        LEFT JOIN atualizacoes a ON d.id_atualizacao = a.id
+        LEFT JOIN clubes c ON a.id_clube = c.id
+        LEFT JOIN clubes cb ON d.id_clube_backup = cb.id
         LEFT JOIN usuarios admin ON d.id_admin_analise = admin.id
         ORDER BY d.data_denuncia DESC
       `);
@@ -71,16 +72,17 @@ class Denuncias {
                denunciado.nome as nome_denunciado,
                denunciado.email as email_denunciado,
                denunciado.estado as estado_denunciado,
-               a.conteudo as conteudo_atualizacao,
+               COALESCE(a.conteudo, d.conteudo_atualizacao_backup, '[Atualização removida]') as conteudo_atualizacao,
                a.data_postagem as data_atualizacao,
-               a.id_clube as id_clube,
-               c.nome as nome_clube,
+               COALESCE(a.id_clube, d.id_clube_backup) as id_clube,
+               COALESCE(c.nome, cb.nome, '[Clube não encontrado]') as nome_clube,
                admin.nome as nome_admin_analise
         FROM denuncias d
         JOIN usuarios denunciante ON d.id_denunciante = denunciante.id
         JOIN usuarios denunciado ON d.id_denunciado = denunciado.id
-        JOIN atualizacoes a ON d.id_atualizacao = a.id
-        JOIN clubes c ON a.id_clube = c.id
+        LEFT JOIN atualizacoes a ON d.id_atualizacao = a.id
+        LEFT JOIN clubes c ON a.id_clube = c.id
+        LEFT JOIN clubes cb ON d.id_clube_backup = cb.id
         LEFT JOIN usuarios admin ON d.id_admin_analise = admin.id
         WHERE d.id = ?
       `, [id]);
