@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 Corrigir Loom</title>
+    <link rel="icon" href="/favicon-32x32.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #aaa;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        button {
+            width: 100%;
+            background: linear-gradient(135deg, #e94560 0%, #ff6b6b 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 10px;
+            margin: 10px 0;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(233, 69, 96, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button.success {
+            background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+        }
+        
+        #log {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            min-height: 150px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        
+        .log-entry {
+            margin: 5px 0;
+        }
+        
+        .warning-box {
+            background: rgba(255, 193, 7, 0.1);
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .warning-box strong {
+            color: #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Corrigir Loom</h1>
+        <p class="subtitle">Ferramenta de diagnóstico e reparo</p>
+        
+        <div class="warning-box">
+            <strong>⚠️ Use apenas se estiver com problemas</strong><br>
+            Se o Loom estiver travando ou em loop infinito.
+        </div>
+        
+        <button onclick="clearAll()">🧹 LIMPAR TUDO</button>
+        <button onclick="unregisterSW()">🔄 Limpar Service Worker</button>
+        <button onclick="clearCache()">🗑️ Limpar Cache</button>
+        <button class="success" onclick="goBack()">✅ Voltar ao Loom</button>
+        
+        <div id="log"></div>
+    </div>
+    
+    <script>
+        const log = (msg, emoji = '📋') => {
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.textContent = msg;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(msg);
+        };
+        
+        async function unregisterSW() {
+            log('🔄 Desregistrando service workers...');
+            try {
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    if (registrations.length === 0) {
+                        log('ℹ️ Nenhum service worker registrado');
+                        return;
+                    }
+                    
+                    for (let reg of registrations) {
+                        await reg.unregister();
+                        log('✅ SW desregistrado: ' + reg.scope.substring(0, 50) + '...');
+                    }
+                    log('✅ Todos os service workers removidos!');
+                } else {
+                    log('⚠️ Service Worker não suportado neste navegador');
+                }
+            } catch (err) {
+                log('❌ Erro: ' + err.message);
+            }
+        }
+        
+        async function clearCache() {
+            log('🗑️ Limpando cache...');
+            try {
+                if ('caches' in window) {
+                    const keys = await caches.keys();
+                    if (keys.length === 0) {
+                        log('ℹ️ Nenhum cache encontrado');
+                        return;
+                    }
+                    
+                    for (let key of keys) {
+                        await caches.delete(key);
+                        log('✅ Cache removido: ' + key);
+                    }
+                    log('✅ Todo o cache foi limpo!');
+                } else {
+                    log('⚠️ Cache API não suportada neste navegador');
+                }
+            } catch (err) {
+                log('❌ Erro: ' + err.message);
+            }
+        }
+        
+        async function clearAll() {
+            log('🧹 INICIANDO LIMPEZA COMPLETA...');
+            log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            
+            await unregisterSW();
+            await clearCache();
+            
+            // Limpar localStorage e sessionStorage
+            try {
+                localStorage.clear();
+                log('✅ LocalStorage limpo');
+            } catch (e) {
+                log('⚠️ Erro ao limpar localStorage');
+            }
+            
+            try {
+                sessionStorage.clear();
+                log('✅ SessionStorage limpo');
+            } catch (e) {
+                log('⚠️ Erro ao limpar sessionStorage');
+            }
+            
+            log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            log('✅ LIMPEZA CONCLUÍDA!');
+            log('');
+            log('⚠️ PRÓXIMOS PASSOS:');
+            log('1. Feche TODAS as abas do Loom');
+            log('2. Feche o navegador completamente');
+            log('3. Abra o navegador novamente');
+            log('4. Entre no Loom');
+            log('');
+            log('Se o problema persistir, limpe o cache');
+            log('nas configurações do navegador.');
+        }
+        
+        function goBack() {
+            window.location.href = '/dashboard';
+        }
+        
+        // Log inicial
+        log('🔧 Ferramenta de diagnóstico carregada');
+        log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        
+        // Verificar estado atual
+        (async () => {
+            if ('serviceWorker' in navigator) {
+                const regs = await navigator.serviceWorker.getRegistrations();
+                log(`📊 Service Workers ativos: ${regs.length}`);
+            }
+            
+            if ('caches' in window) {
+                const keys = await caches.keys();
+                log(`📊 Caches existentes: ${keys.length}`);
+            }
+            
+            log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        })();
+    </script>
+</body>
+</html>

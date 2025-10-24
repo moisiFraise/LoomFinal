@@ -957,6 +957,13 @@ app.post('/api/login', async (req, res) => {
     });
   }
 });
+// Página de emergência para corrigir service worker
+app.get('/fix-sw', (req, res) => {
+  res.render('fix-sw', { 
+    titulo: 'Corrigir Loom'
+  });
+});
+
 app.get('/dashboard', verificarAutenticacao, verificarRestricaoAdmin, async (req, res) => {
   try {
     const usuario = await Usuario.buscarPorId(req.session.userId);
