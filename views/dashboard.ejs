@@ -120,29 +120,8 @@
       </script>
            
     <script src="/js/dashboard.js"></script>
-    <script src="/js/push-notifications.js?v=5"></script>
     <script>
-      // Solicitar permissão de notificações após 3 segundos
-      if ('serviceWorker' in navigator && 'PushManager' in window) {
-        setTimeout(() => {
-          if (Notification.permission === 'default') {
-            const enableNotificationsDiv = document.createElement('div');
-            enableNotificationsDiv.className = 'notification-permission-prompt';
-            enableNotificationsDiv.innerHTML = `
-              <div class="notification-prompt-content">
-                <i class="fas fa-bell"></i>
-                <span>Ativar notificações para receber atualizações do clube?</span>
-                <button onclick="requestNotificationPermission().then(() => this.parentElement.parentElement.remove())" class="btn-enable-notif">Ativar</button>
-                <button onclick="this.parentElement.parentElement.remove()" class="btn-dismiss-notif">Agora não</button>
-              </div>
-            `;
-            document.body.appendChild(enableNotificationsDiv);
-          } else if (Notification.permission === 'granted' && !isSubscribed) {
-            // Se já tem permissão mas não está inscrito, inscrever
-            subscribeUser();
-          }
-        }, 3000);
-      }
+    // Sistema de notificações desabilitado
     </script>
     <%- include('partials/imports') %>
 </body>

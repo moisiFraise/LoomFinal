@@ -216,18 +216,9 @@ function recordDbFailure() {
   }
 }
 
-const pushRoutes = require('./services/pushRoutes');
-app.use('/api/push', pushRoutes);
-
-// Endpoint de heartbeat para manter conexão ativa
-app.post('/api/heartbeat', (req, res) => {
-  if (req.session && req.session.userId) {
-    req.session.touch(); // Renovar sessão
-    res.json({ status: 'ok', timestamp: Date.now() });
-  } else {
-    res.status(401).json({ status: 'unauthorized' });
-  }
-});
+// Sistema de notificações push desabilitado
+// const pushRoutes = require('./services/pushRoutes');
+// app.use('/api/push', pushRoutes);
 
 // Middleware específico para APIs que retorna JSON em vez de redirect
 // VERSÃO RADICAL: Confia apenas na sessão, sem consultas ao banco
@@ -2220,10 +2211,11 @@ app.post('/api/clube/:id/leituras', verificarAutenticacao, async (req, res) => {
       
       console.log('✅ Leitura criada com sucesso:', novaLeitura);
       
-      const NotificationService = require('./services/notificationService');
-      NotificationService.notifyNewReading(clubeId, titulo).catch(err => {
-      console.error('Erro ao enviar notificação de leitura:', err);
-      });
+      // Notificações desabilitadas
+      // const NotificationService = require('./services/notificationService');
+      // NotificationService.notifyNewReading(clubeId, titulo).catch(err => {
+      // console.error('Erro ao enviar notificação de leitura:', err);
+      // });
     
     res.status(201).json({
         mensagem: 'Leitura adicionada com sucesso',
@@ -2567,26 +2559,7 @@ app.post('/api/clube/:id/atualizacoes/:atualizacaoId/curtir', verificarAutentica
     
     const resultado = await Curtidas.curtir(atualizacaoId, req.session.userId);
     
-    // Enviar notificação se foi curtida (não descurtida)
-    if (resultado.curtiu) {
-      try {
-        const [atualizacao] = await pool.safeQuery(
-          'SELECT a.*, u.nome as autor_nome FROM atualizacoes a JOIN usuarios u ON a.id_usuario = u.id WHERE a.id = ?',
-          [atualizacaoId]
-        );
-        
-        if (atualizacao.length > 0 && atualizacao[0].id_usuario !== req.session.userId) {
-          const usuario = await Usuario.buscarPorId(req.session.userId);
-          const preview = atualizacao[0].conteudo.substring(0, 50) + (atualizacao[0].conteudo.length > 50 ? '...' : '');
-          
-          NotificationService.notifyLike(atualizacao[0].id_usuario, usuario.nome, preview).catch(err => {
-            console.error('Erro ao enviar notificação de curtida:', err);
-          });
-        }
-      } catch (notifErr) {
-        console.error('Erro ao processar notificação de curtida:', notifErr);
-      }
-    }
+    // Notificações desabilitadas
     
     res.json(resultado);
   } catch (error) {
@@ -2909,11 +2882,7 @@ app.post('/api/clube/:id/encontros', verificarAutenticacao, async (req, res) => 
             );
             await Encontros.confirmarParticipacao(novoEncontro.id, userId, 'confirmado');
             
-            const NotificationService = require('./services/notificationService');
-            const dataFormatada = new Date(dataEncontro).toLocaleDateString('pt-BR');
-            NotificationService.notifyNewMeeting(clubeId, titulo, `${dataFormatada} às ${horaInicio}`).catch(err => {
-      console.error('Erro ao enviar notificação de encontro:', err);
-    });
+            // Notificações desabilitadas
     
      res.status(201).json({
             mensagem: 'Encontro agendado com sucesso',
@@ -3254,17 +3223,7 @@ app.post('/api/clube/:id/sugestoes', verificarAutenticacao, async (req, res) => 
     
     console.log('✅ Sugestão criada com sucesso:', novaSugestao);
     
-    // Enviar notificação aos membros do clube
-    try {
-      const usuario = await Usuario.buscarPorId(userId);
-      const bookTitle = titulo + (autor ? ` - ${autor}` : '');
-      
-      NotificationService.notifySuggestion(clubeId, usuario.nome, bookTitle).catch(err => {
-        console.error('Erro ao enviar notificação de sugestão:', err);
-      });
-    } catch (notifErr) {
-      console.error('Erro ao processar notificação de sugestão:', notifErr);
-    }
+    // Notificações desabilitadas
     
     res.status(201).json({
       mensagem: 'Sugestão criada com sucesso',
@@ -3428,10 +3387,7 @@ app.post('/api/clube/:id/votacao', verificarAutenticacao, async (req, res) => {
     
     console.log('✅ Votação criada com sucesso:', novaVotacao);
     
-    const NotificationService = require('./services/notificationService');
-    NotificationService.notifyVotingCreated(clubeId, titulo).catch(err => {
-      console.error('Erro ao enviar notificação de votação:', err);
-    });
+    // Notificações desabilitadas
     
     res.status(201).json({
       mensagem: 'Votação criada com sucesso',
@@ -3555,11 +3511,7 @@ app.post('/api/clube/:id/votacao/encerrar', verificarAutenticacao, async (req, r
     
     const resultado = await Votacao.encerrarVotacao(votacao.id);
     
-    const NotificationService = require('./services/notificationService');
-    const winnerOption = resultado.vencedor?.titulo || 'Empate';
-    NotificationService.notifyVotingEnded(clubeId, votacao.titulo, winnerOption).catch(err => {
-      console.error('Erro ao enviar notificação de votação encerrada:', err);
-    });
+    // Notificações desabilitadas
     
     res.json({
       mensagem: 'Votação encerrada com sucesso',
@@ -4035,29 +3987,7 @@ app.post('/api/comentarios', verificarAutenticacaoAPI, async (req, res) => {
     const novoComentario = await Comentarios.criar(idAtualizacao, req.session.userId, conteudo, gifUrl || null);
     console.log('Comentário criado com sucesso:', novoComentario);
     
-    // Enviar notificação ao autor da atualização
-    try {
-      const [atualizacao] = await pool.safeQuery(
-        'SELECT a.id_usuario, a.id_clube FROM atualizacoes a WHERE a.id = ?',
-        [idAtualizacao]
-      );
-      
-      if (atualizacao.length > 0 && atualizacao[0].id_usuario !== req.session.userId) {
-        const usuario = await Usuario.buscarPorId(req.session.userId);
-        const commentPreview = conteudo.substring(0, 50) + (conteudo.length > 50 ? '...' : '');
-        
-        NotificationService.notifyComment(
-          atualizacao[0].id_usuario, 
-          usuario.nome, 
-          commentPreview, 
-          atualizacao[0].id_clube
-        ).catch(err => {
-          console.error('Erro ao enviar notificação de comentário:', err);
-        });
-      }
-    } catch (notifErr) {
-      console.error('Erro ao processar notificação de comentário:', notifErr);
-    }
+    // Notificações desabilitadas
     
     res.status(201).json({
       mensagem: 'Comentário criado com sucesso',
@@ -4205,12 +4135,7 @@ app.post('/api/chat/:clubeId/mensagens', verificarAutenticacaoAPI, async (req, r
     
     const novaMensagem = await Chat.criarMensagem(clubeId, req.session.userId, mensagem);
     
-    const NotificationService = require('./services/notificationService');
-    const usuario = await Usuario.buscarPorId(req.session.userId);
-    const mensagemPreview = mensagem.length > 50 ? mensagem.substring(0, 50) + '...' : mensagem;
-    NotificationService.notifyNewMessage(clubeId, usuario.nome, mensagemPreview, req.session.userId).catch(err => {
-      console.error('Erro ao enviar notificação de mensagem:', err);
-    });
+    // Notificações desabilitadas
     
     res.status(201).json({
       mensagem: 'Mensagem enviada com sucesso',
