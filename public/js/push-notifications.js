@@ -28,22 +28,8 @@ async function initializePushNotifications() {
   }
 
   try {
-    swRegistration = await navigator.serviceWorker.register('/sw.js', {
-      updateViaCache: 'none' // Sempre buscar nova versão
-    });
+    swRegistration = await navigator.serviceWorker.register('/sw.js');
     console.log('✅ Service Worker registrado');
-
-    // Forçar atualização se houver nova versão
-    swRegistration.addEventListener('updatefound', () => {
-      console.log('🔄 Nova versão do Service Worker encontrada');
-      const newWorker = swRegistration.installing;
-      newWorker.addEventListener('statechange', () => {
-        if (newWorker.state === 'activated') {
-          console.log('✅ Nova versão ativada - recarregando...');
-          window.location.reload();
-        }
-      });
-    });
 
     await navigator.serviceWorker.ready;
     console.log('✅ Service Worker pronto e ATIVO');

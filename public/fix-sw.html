@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Limpar Service Worker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a2e;
+            color: #fff;
+        }
+        button {
+            background: #e94560;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin: 10px 0;
+            width: 100%;
+        }
+        button:hover {
+            background: #ff6b6b;
+        }
+        #log {
+            background: #0f3460;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            min-height: 100px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Limpar Service Worker e Cache</h1>
+    <p>Use esta página para corrigir problemas de loop no service worker.</p>
+    
+    <button onclick="unregisterSW()">1. Desregistrar Service Worker</button>
+    <button onclick="clearCache()">2. Limpar Cache</button>
+    <button onclick="clearAll()">3. Limpar TUDO</button>
+    <button onclick="location.href='/dashboard'">4. Voltar ao Dashboard</button>
+    
+    <div id="log"></div>
+    
+    <script>
+        const log = (msg) => {
+            const logDiv = document.getElementById('log');
+            logDiv.innerHTML += msg + '<br>';
+            console.log(msg);
+        };
+        
+        async function unregisterSW() {
+            log('🔄 Desregistrando service workers...');
+            try {
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let reg of registrations) {
+                        await reg.unregister();
+                        log('✅ SW desregistrado: ' + reg.scope);
+                    }
+                    log('✅ Todos os service workers foram removidos');
+                } else {
+                    log('⚠️ Service Worker não suportado');
+                }
+            } catch (err) {
+                log('❌ Erro: ' + err.message);
+            }
+        }
+        
+        async function clearCache() {
+            log('🗑️ Limpando cache...');
+            try {
+                if ('caches' in window) {
+                    const keys = await caches.keys();
+                    for (let key of keys) {
+                        await caches.delete(key);
+                        log('✅ Cache removido: ' + key);
+                    }
+                    log('✅ Todo o cache foi limpo');
+                } else {
+                    log('⚠️ Cache API não suportada');
+                }
+            } catch (err) {
+                log('❌ Erro: ' + err.message);
+            }
+        }
+        
+        async function clearAll() {
+            log('🧹 LIMPEZA COMPLETA...');
+            await unregisterSW();
+            await clearCache();
+            
+            // Limpar localStorage e sessionStorage
+            localStorage.clear();
+            sessionStorage.clear();
+            log('✅ LocalStorage limpo');
+            
+            log('');
+            log('✅ TUDO LIMPO!');
+            log('⚠️ Agora: Feche TODAS as abas do Loom');
+            log('⚠️ Depois: Abra o Loom novamente');
+        }
+        
+        // Log inicial
+        log('📋 Página de diagnóstico carregada');
+        log('');
+        
+        // Verificar estado atual
+        (async () => {
+            if ('serviceWorker' in navigator) {
+                const regs = await navigator.serviceWorker.getRegistrations();
+                log(`📊 Service Workers ativos: ${regs.length}`);
+            }
+            
+            if ('caches' in window) {
+                const keys = await caches.keys();
+                log(`📊 Caches existentes: ${keys.length}`);
+            }
+        })();
+    </script>
+</body>
+</html>

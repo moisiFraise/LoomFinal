@@ -34,7 +34,7 @@ async function releaseWakeLock() {
 let heartbeatInterval = null;
 
 function startHeartbeat() {
-  // Enviar ping a cada 30 segundos para manter conexão viva
+  // Enviar ping a cada 5 minutos para manter sessão ativa
   heartbeatInterval = setInterval(async () => {
     try {
       // Ping silencioso para manter sessão ativa
@@ -46,7 +46,7 @@ function startHeartbeat() {
     } catch (err) {
       console.error('❌ Erro no heartbeat:', err);
     }
-  }, 30000); // 30 segundos
+  }, 5 * 60 * 1000); // 5 minutos
 }
 
 function stopHeartbeat() {
@@ -56,24 +56,9 @@ function stopHeartbeat() {
   }
 }
 
-// Inicializar quando o app estiver visível
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') {
-    console.log('👁️ App visível - iniciando keep-alive');
-    requestWakeLock();
-    startHeartbeat();
-  } else {
-    console.log('🌙 App em background - liberando wake lock');
-    releaseWakeLock();
-    // Manter heartbeat mesmo em background
-  }
-});
-
-// Iniciar quando carregar
-if (document.visibilityState === 'visible') {
-  requestWakeLock();
-}
-startHeartbeat();
+// NÃO iniciar automaticamente - apenas quando explicitamente necessário
+// Desabilitado por padrão para evitar problemas
+console.log('⚠️ Keep-alive desabilitado por padrão');
 
 // Limpar ao fechar
 window.addEventListener('beforeunload', () => {
