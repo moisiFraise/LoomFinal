@@ -215,7 +215,7 @@ function criarModalDenuncia() {
             <div class="modal-header">
                 <h3>Denunciar Comentário</h3>
                 <button class="modal-close" onclick="fecharModalDenuncia()" type="button">
-                    <i class="far fa-times"></i>
+                    <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="modal-body">
