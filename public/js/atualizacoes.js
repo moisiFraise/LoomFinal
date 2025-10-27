@@ -595,7 +595,7 @@ async function salvarAtualizacao() {
         
         const botaoConfirmar = document.getElementById('confirmarAtualizacao');
         const textoOriginal = botaoConfirmar.textContent;
-        botaoConfirmar.innerHTML = '<i class="far fa-spinner fa-spin"></i> Salvando...';
+        botaoConfirmar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
         botaoConfirmar.disabled = true;
         
         const url = atualizacaoParaEditar 
