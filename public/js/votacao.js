@@ -286,7 +286,26 @@ async function encerrarVotacao() {
     }
 }
 
-function abrirModalNovaVotacao() {
+async function abrirModalNovaVotacao() {
+    // Verificar se já existe uma votação ativa
+    try {
+        const response = await fetch(`/api/clube/${clubeId}/votacao`);
+        const data = await response.json();
+        
+        if (response.ok && data.votacao && !data.votacao.encerrada) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Votação já existe',
+                text: 'Já existe uma votação ativa no momento. Só é possível ter uma votação por vez. Encerre a votação atual para criar uma nova.',
+                confirmButtonText: 'Entendi',
+                confirmButtonColor: '#6c5ce7'
+            });
+            return;
+        }
+    } catch (error) {
+        console.error('Erro ao verificar votação ativa:', error);
+    }
+    
     const modal = document.getElementById('modal-nova-votacao');
     const overlay = document.getElementById('overlay-votacao');
     
@@ -535,10 +554,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-function iniciarVotacao() {
+async function iniciarVotacao() {
     fecharModalSelecaoLeitura();
     
-    abrirModalNovaVotacao();
+    await abrirModalNovaVotacao();
 }
 
 if (typeof escapeHtml === 'undefined') {
