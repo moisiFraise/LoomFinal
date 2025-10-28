@@ -251,7 +251,9 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('Erro ao excluir conta');
+                    return response.json().then(errData => {
+                        throw new Error(errData.erro || errData.detalhes || 'Erro ao excluir conta');
+                    });
                 }
                 return response.json();
             })
@@ -259,8 +261,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 window.location.href = '/autenticacao';
             })
             .catch(error => {
-                console.error('Erro:', error);
-                mostrarNotificacao('Erro ao excluir conta.', 'erro');
+                console.error('Erro completo:', error);
+                alert('ERRO: ' + error.message);
+                mostrarNotificacao(error.message, 'erro');
                 modalConfirmarExclusao.classList.remove('ativo');
             });
         });
