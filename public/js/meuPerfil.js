@@ -21,18 +21,20 @@ document.addEventListener('DOMContentLoaded', function () {
             const safePercentage = isNaN(percentage) ? 0 : Math.max(0, Math.min(100, percentage));
 
             progressBar.style.width = safePercentage + '%';
-            percentageText.textContent = safePercentage + '% concluído';
+            percentageText.textContent = safePercentage + '% concluido';
         } catch (e) {
             console.error('Erro ao configurar barra de progresso:', e);
             progressBar.style.width = '0%';
-            percentageText.textContent = '0% concluído';
+            percentageText.textContent = '0% concluido';
         }
     });
+    
     if (btnEditarPerfil) {
         btnEditarPerfil.addEventListener('click', function () {
             modalEditarPerfil.classList.add('ativo');
         });
     }
+    
     if (btnExcluirConta) {
         btnExcluirConta.addEventListener('click', function (e) {
             e.preventDefault();
@@ -40,12 +42,14 @@ document.addEventListener('DOMContentLoaded', function () {
             modalConfirmarExclusao.classList.add('ativo');
         });
     }
+    
     if (btnCancelarExclusao) {
         btnCancelarExclusao.addEventListener('click', function () {
             modalConfirmarExclusao.classList.remove('ativo');
             modalEditarPerfil.classList.add('ativo');
         });
     }
+    
     if (fecharModais) {
         fecharModais.forEach(btn => {
             btn.addEventListener('click', function () {
@@ -62,22 +66,22 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log('Arquivo selecionado:', file.name, file.type, file.size);
 
                 const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
-                const maxSize = 5 * 1024 * 1024; // 5MB
+                const maxSize = 5 * 1024 * 1024;
 
                 if (!validTypes.includes(file.type)) {
-                    mostrarNotificacao('Apenas imagens JPEG, PNG e GIF são permitidas.', 'erro');
+                    mostrarNotificacao('Apenas imagens JPEG, PNG e GIF sao permitidas.', 'erro');
                     return;
                 }
 
                 if (file.size > maxSize) {
-                    mostrarNotificacao('O tamanho máximo da imagem é 5MB.', 'erro');
+                    mostrarNotificacao('O tamanho maximo da imagem e 5MB.', 'erro');
                     return;
                 }
 
                 const fotoContainer = document.querySelector('.foto-perfil-container');
                 if (!fotoContainer) {
-                    console.error('Container da foto não encontrado');
-                    mostrarNotificacao('Erro: Container da foto não encontrado.', 'erro');
+                    console.error('Container da foto nao encontrado');
+                    mostrarNotificacao('Erro: Container da foto nao encontrado.', 'erro');
                     return;
                 }
 
@@ -101,48 +105,45 @@ document.addEventListener('DOMContentLoaded', function () {
                     body: formData,
                     credentials: 'same-origin'
                 })
-                    .then(response => {
-                        console.log('Resposta recebida:', response.status, response.statusText);
+                .then(response => {
+                    console.log('Resposta recebida:', response.status, response.statusText);
 
-                        const loading = document.querySelector('.loading-indicator');
-                        if (loading) {
-                            loading.remove();
-                        }
+                    const loading = document.querySelector('.loading-indicator');
+                    if (loading) {
+                        loading.remove();
+                    }
 
-                        if (!response.ok) {
-                            return response.json().then(err => {
-                                console.error('Erro do servidor:', err);
-                                throw new Error(err.erro || `Erro ${response.status}: ${response.statusText}`);
-                            });
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        console.log('Upload bem-sucedido:', data);
+                    if (!response.ok) {
+                        return response.json().then(err => {
+                            console.error('Erro do servidor:', err);
+                            throw new Error(err.erro || 'Erro ' + response.status + ': ' + response.statusText);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Upload bem-sucedido:', data);
 
-                        if (fotoPerfil && data.fotoUrl) {
-                            const imageUrl = data.fotoUrl + '?t=' + Date.now();
-                            fotoPerfil.src = imageUrl;
-                            console.log('Foto atualizada na interface');
-                        }
+                    if (fotoPerfil && data.fotoUrl) {
+                        const imageUrl = data.fotoUrl + '?t=' + Date.now();
+                        fotoPerfil.src = imageUrl;
+                        console.log('Foto atualizada na interface');
+                    }
 
-                        mostrarNotificacao('Foto de perfil atualizada com sucesso!', 'sucesso');
+                    mostrarNotificacao('Foto de perfil atualizada com sucesso!', 'sucesso');
+                    uploadFoto.value = '';
+                })
+                .catch(error => {
+                    console.error('Erro completo no upload:', error);
 
-                        uploadFoto.value = '';
-                    })
-                    .catch(error => {
-                        console.error('Erro completo no upload:', error);
+                    const loading = document.querySelector('.loading-indicator');
+                    if (loading) {
+                        loading.remove();
+                    }
 
-                        const loading = document.querySelector('.loading-indicator');
-                        if (loading) {
-                            loading.remove();
-                        }
-
-                        mostrarNotificacao(error.message || 'Erro ao atualizar foto de perfil.', 'erro');
-
-
-                        uploadFoto.value = '';
-                    });
+                    mostrarNotificacao(error.message || 'Erro ao atualizar foto de perfil.', 'erro');
+                    uploadFoto.value = '';
+                });
             }
         });
     }
@@ -204,7 +205,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const confirmarSenha = document.getElementById('confirmar-senha').value;
 
             if (senha && senha !== confirmarSenha) {
-                mostrarNotificacao('As senhas não coincidem.', 'erro');
+                mostrarNotificacao('As senhas nao coincidem.', 'erro');
                 return;
             }
 
@@ -222,24 +223,24 @@ document.addEventListener('DOMContentLoaded', function () {
                 },
                 body: JSON.stringify(dadosPerfil)
             })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Erro ao atualizar perfil');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    document.getElementById('nome-usuario').textContent = data.nome;
-                    document.getElementById('email-usuario').textContent = data.email;
-                    document.getElementById('biografia-texto').textContent = data.biografia || 'Adicione uma biografia para que outros usuários conheçam você melhor.';
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erro ao atualizar perfil');
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('nome-usuario').textContent = data.nome;
+                document.getElementById('email-usuario').textContent = data.email;
+                document.getElementById('biografia-texto').textContent = data.biografia || 'Adicione uma biografia para que outros usuarios conhecam voce melhor.';
 
-                    modalEditarPerfil.classList.remove('ativo');
-                    mostrarNotificacao('Perfil atualizado com sucesso!', 'sucesso');
-                })
-                .catch(error => {
-                    console.error('Erro:', error);
-                    mostrarNotificacao('Erro ao atualizar perfil.', 'erro');
-                });
+                modalEditarPerfil.classList.remove('ativo');
+                mostrarNotificacao('Perfil atualizado com sucesso!', 'sucesso');
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                mostrarNotificacao('Erro ao atualizar perfil.', 'erro');
+            });
         });
     }
 
@@ -248,20 +249,20 @@ document.addEventListener('DOMContentLoaded', function () {
             fetch('/api/perfil', {
                 method: 'DELETE'
             })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Erro ao excluir conta');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    window.location.href = '/autenticacao';
-                })
-                .catch(error => {
-                    console.error('Erro:', error);
-                    mostrarNotificacao('Erro ao excluir conta.', 'erro');
-                    modalConfirmarExclusao.classList.remove('ativo');
-                });
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erro ao excluir conta');
+                }
+                return response.json();
+            })
+            .then(data => {
+                window.location.href = '/autenticacao';
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                mostrarNotificacao('Erro ao excluir conta.', 'erro');
+                modalConfirmarExclusao.classList.remove('ativo');
+            });
         });
     }
 
@@ -295,7 +296,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const publicacaoId = this.dataset.id;
             const clubeId = this.closest('.publicacao-item').dataset.clubeId;
 
-            window.location.href = `/clube/${clubeId}/atualizacoes/${publicacaoId}/editar`;
+            window.location.href = '/clube/' + clubeId + '/atualizacoes/' + publicacaoId + '/editar';
         });
     });
 
@@ -305,36 +306,36 @@ document.addEventListener('DOMContentLoaded', function () {
             const clubeId = this.closest('.publicacao-item').dataset.clubeId;
             const publicacaoItem = this.closest('.publicacao-item');
 
-            if (confirm('Tem certeza que deseja excluir esta publicação?')) {
-                fetch(`/api/clube/${clubeId}/atualizacoes/${publicacaoId}`, {
+            if (confirm('Tem certeza que deseja excluir esta publicacao?')) {
+                fetch('/api/clube/' + clubeId + '/atualizacoes/' + publicacaoId, {
                     method: 'DELETE'
                 })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Erro ao excluir publicação');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        publicacaoItem.remove();
-                        mostrarNotificacao('Publicação excluída com sucesso!', 'sucesso');
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Erro ao excluir publicacao');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    publicacaoItem.remove();
+                    mostrarNotificacao('Publicacao excluida com sucesso!', 'sucesso');
 
-                        const numeroPublicacoes = document.querySelector('.estatistica .numero');
-                        if (numeroPublicacoes) {
-                            numeroPublicacoes.textContent = parseInt(numeroPublicacoes.textContent) - 1;
-                        }
+                    const numeroPublicacoes = document.querySelector('.estatistica .numero');
+                    if (numeroPublicacoes) {
+                        numeroPublicacoes.textContent = parseInt(numeroPublicacoes.textContent) - 1;
+                    }
 
-                        if (listaPublicacoes && listaPublicacoes.querySelectorAll('.publicacao-item').length === 0) {
-                            const semPublicacoes = document.createElement('div');
-                            semPublicacoes.className = 'sem-publicacoes';
-                            semPublicacoes.innerHTML = '<p>Você ainda não fez nenhuma publicação.</p>';
-                            listaPublicacoes.appendChild(semPublicacoes);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Erro:', error);
-                        mostrarNotificacao('Erro ao excluir publicação.', 'erro');
-                    });
+                    if (listaPublicacoes && listaPublicacoes.querySelectorAll('.publicacao-item').length === 0) {
+                        const semPublicacoes = document.createElement('div');
+                        semPublicacoes.className = 'sem-publicacoes';
+                        semPublicacoes.innerHTML = '<p>Voce ainda nao fez nenhuma publicacao.</p>';
+                        listaPublicacoes.appendChild(semPublicacoes);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    mostrarNotificacao('Erro ao excluir publicacao.', 'erro');
+                });
             }
         });
     });
@@ -353,23 +354,21 @@ document.addEventListener('DOMContentLoaded', function () {
         notificacao.textContent = mensagem;
         notificacao.style.display = 'block';
 
-        setTimeout(() => {
+        setTimeout(function() {
             notificacao.classList.add('mostrar');
         }, 10);
 
-        setTimeout(() => {
+        setTimeout(function() {
             notificacao.classList.remove('mostrar');
-            setTimeout(() => {
+            setTimeout(function() {
                 notificacao.style.display = 'none';
             }, 300);
         }, 3000);
     }
 
-    // Carregar estado das curtidas e contadores de comentários para publicações
     document.querySelectorAll('.publicacao-item').forEach(item => {
         const atualizacaoId = item.getAttribute('data-id');
         if (atualizacaoId) {
-            // Só carregar curtidas se a função existir
             if (typeof carregarEstadoCurtidas === 'function') {
                 try {
                     carregarEstadoCurtidas(atualizacaoId);
@@ -378,30 +377,28 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
 
-            // Carregar comentários se a função existir
             if (typeof carregarContadorComentarios === 'function') {
                 try {
                     carregarContadorComentarios(atualizacaoId);
                 } catch (e) {
-                    console.warn('Erro ao carregar comentários:', e);
+                    console.warn('Erro ao carregar comentarios:', e);
                 }
             }
         }
     });
 });
 
-// Função para carregar contador de comentários
 async function carregarContadorComentarios(idAtualizacao) {
     try {
-        const response = await fetch(`/api/comentarios/${idAtualizacao}/count`);
+        const response = await fetch('/api/comentarios/' + idAtualizacao + '/count');
         if (response.ok) {
             const data = await response.json();
-            const contador = document.querySelector(`[data-atualizacao-id="${idAtualizacao}"]`);
+            const contador = document.querySelector('[data-atualizacao-id="' + idAtualizacao + '"]');
             if (contador) {
                 contador.textContent = data.total;
             }
         }
     } catch (error) {
-        console.error('Erro ao carregar contador de comentários:', error);
+        console.error('Erro ao carregar contador de comentarios:', error);
     }
 }
