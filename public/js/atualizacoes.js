@@ -214,9 +214,6 @@ function criarModalDenuncia() {
         <div id="modal-denuncia" class="modal modal-denuncia" tabindex="-1">
             <div class="modal-header">
                 <h3>Denunciar Comentário</h3>
-                <button class="modal-close" onclick="fecharModalDenuncia()" type="button">
-                    <i class="fas fa-times"></i>
-                </button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="denuncia-atualizacao-id">
