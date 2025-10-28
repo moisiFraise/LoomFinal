@@ -216,9 +216,7 @@ function recordDbFailure() {
   }
 }
 
-// Sistema de notificações push desabilitado
-// const pushRoutes = require('./services/pushRoutes');
-// app.use('/api/push', pushRoutes);
+
 
 // Middleware específico para APIs que retorna JSON em vez de redirect
 // VERSÃO RADICAL: Confia apenas na sessão, sem consultas ao banco
@@ -2253,12 +2251,6 @@ app.post('/api/clube/:id/leituras', verificarAutenticacao, async (req, res) => {
       );
       
       console.log('✅ Leitura criada com sucesso:', novaLeitura);
-      
-      // Notificações desabilitadas
-      // const NotificationService = require('./services/notificationService');
-      // NotificationService.notifyNewReading(clubeId, titulo).catch(err => {
-      // console.error('Erro ao enviar notificação de leitura:', err);
-      // });
     
     res.status(201).json({
         mensagem: 'Leitura adicionada com sucesso',
@@ -2601,8 +2593,6 @@ app.post('/api/clube/:id/atualizacoes/:atualizacaoId/curtir', verificarAutentica
     }
     
     const resultado = await Curtidas.curtir(atualizacaoId, req.session.userId);
-    
-    // Notificações desabilitadas
     
     res.json(resultado);
   } catch (error) {
@@ -4029,8 +4019,6 @@ app.post('/api/comentarios', verificarAutenticacaoAPI, async (req, res) => {
     console.log('Criando comentário...', { idAtualizacao, userId: req.session.userId, conteudo, gifUrl });
     const novoComentario = await Comentarios.criar(idAtualizacao, req.session.userId, conteudo, gifUrl || null);
     console.log('Comentário criado com sucesso:', novoComentario);
-    
-    // Notificações desabilitadas
     
     res.status(201).json({
       mensagem: 'Comentário criado com sucesso',
