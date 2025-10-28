@@ -1312,28 +1312,17 @@ app.delete('/api/perfil', verificarAutenticacao, async (req, res) => {
     await connection.query('DELETE FROM atualizacoes WHERE id_usuario = ?', [userId]);
     console.log('✅ Atualizações deletadas');
     
-    // 9. Remover de denúncias (manter histórico mas anonimizar)
-    await connection.query(
-      'UPDATE denuncias SET id_denunciante = NULL WHERE id_denunciante = ?',
-      [userId]
-    );
-    await connection.query(
-      'UPDATE denuncias SET id_denunciado = NULL WHERE id_denunciado = ?',
-      [userId]
-    );
-    console.log('✅ Denúncias anonimizadas');
-    
-    // 10. Deletar participações em clubes
+    // 9. Deletar participações em clubes
     await connection.query('DELETE FROM participacoes WHERE id_usuario = ?', [userId]);
     console.log('✅ Participações deletadas');
     
-    // 11. Finalmente, deletar o usuário
+    // 10. Finalmente, deletar o usuário (CASCADE vai deletar denúncias automaticamente)
     await connection.query('DELETE FROM usuarios WHERE id = ?', [userId]);
     console.log('✅ Usuário deletado do banco');
     
     await connection.commit();
     
-    // 12. Destruir sessão
+    // 11. Destruir sessão
     req.session.destroy((err) => {
       if (err) console.error('Erro ao destruir sessão:', err);
     });
