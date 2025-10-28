@@ -513,8 +513,102 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 0;
     margin-top: 15px;
+    padding: 5px;
+}
+
+.livro-resultado {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 15px;
+    cursor: pointer;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    background: var(--current-line);
+    border: 2px solid transparent;
+    min-height: 100px;
+    position: relative;
+    z-index: 1;
+    margin-bottom: 10px;
+}
+
+.livro-resultado:hover {
+    transform: translateY(-2px);
+    border-color: var(--roxo);
+    box-shadow: 0 4px 12px rgba(189, 147, 249, 0.3);
+}
+
+.livro-resultado.selecionado {
+    background: var(--current-line);
+    border: 2px solid var(--roxo);
+    box-shadow: 0 4px 15px rgba(189, 147, 249, 0.4);
+}
+
+.livro-capa-pequena {
+    width: 50px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 4px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.livro-capa-pequena.capa-placeholder {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+}
+
+.livro-capa-pequena img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.livro-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+}
+
+.livro-info h4 {
+    margin: 0 0 8px 0;
+    font-size: 1rem;
+    color: var(--foreground);
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.livro-info p {
+    margin: 3px 0;
+    font-size: 0.9rem;
+    color: var(--paragrafo);
+    line-height: 1.5;
+}
+
+.botao-selecionar {
+    background: linear-gradient(45deg, var(--roxo), var(--rosa));
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.botao-selecionar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(189, 147, 249, 0.3);
 }
 
 /* ====== RESPONSIVIDADE ====== */
@@ -641,6 +735,30 @@
     .search-input {
         flex-direction: column;
         gap: 8px;
+    }
+
+    .livro-resultado {
+        padding: 12px;
+        gap: 12px;
+        min-height: auto;
+    }
+
+    .livro-capa-pequena {
+        width: 45px;
+        height: 65px;
+    }
+
+    .livro-info h4 {
+        font-size: 0.95rem;
+    }
+
+    .livro-info p {
+        font-size: 0.85rem;
+    }
+
+    .botao-selecionar {
+        padding: 8px 12px;
+        font-size: 0.85rem;
     }
 }
 
