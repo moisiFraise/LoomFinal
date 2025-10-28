@@ -1344,9 +1344,10 @@ app.delete('/api/perfil', verificarAutenticacao, async (req, res) => {
   } catch (error) {
     await connection.rollback();
     console.error('❌ Erro ao excluir conta:', error);
+    console.error('Stack trace:', error.stack);
     res.status(500).json({ 
-      erro: 'Erro ao excluir conta',
-      detalhes: process.env.NODE_ENV === 'development' ? error.message : undefined
+      erro: 'Erro ao excluir conta: ' + error.message,
+      detalhes: error.message
     });
   } finally {
     connection.release();
