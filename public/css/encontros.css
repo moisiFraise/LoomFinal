@@ -40,7 +40,7 @@
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 1001;
-    width: 85%;
+    width: 90%;
     max-width: 450px;
     max-height: 90vh;
     overflow-y: auto;
@@ -592,10 +592,17 @@
 
     .modal-encontro {
         width: 95%;
-        max-width: none;
-        margin: 10px;
-        max-height: 95vh;
+        max-width: 95vw;
+        max-height: 90vh;
         padding: 15px;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        overflow-x: hidden;
+    }
+
+    .modal-encontro h2 {
+        font-size: 1.4rem;
     }
 
     .form-row {
@@ -652,21 +659,35 @@
     }
 
     .modal-encontro {
+        width: 98%;
+        max-width: 98vw;
         padding: 12px;
+        max-height: 85vh;
     }
 
     .modal-encontro h2 {
-        font-size: 1.3rem;
-        margin-bottom: 15px;
+        font-size: 1.2rem;
+        margin-bottom: 12px;
     }
 
     .form-group {
-        margin-bottom: 15px;
+        margin-bottom: 12px;
+        gap: 6px;
+    }
+
+    .form-group label {
+        font-size: 0.9rem;
     }
 
     .form-group input,
-    .form-group textarea {
+    .form-group textarea,
+    .form-group select {
         padding: 10px;
+        font-size: 0.9rem;
+    }
+
+    .form-actions button {
+        padding: 12px;
         font-size: 0.9rem;
     }
 }
@@ -818,45 +839,3 @@
     box-sizing: border-box;
 }
 
-/* Corrige o modal no mobile */
-@media (max-width: 768px) {
-    .modal-encontro {
-        width: 100%;
-        max-width: 100%;
-        margin: 0;
-        left: 50%;
-        transform: translateX(-50%) translateY(-50%);
-        overflow-x: hidden; /* impede barra lateral horizontal */
-    }
-
-    .form-encontro {
-        width: 100%;
-        padding: 0;
-    }
-
-    .form-group input,
-    .form-group textarea,
-    .form-group select {
-        width: 100%;
-        max-width: 100%;
-    }
-
-    .form-row {
-        flex-direction: column;
-        gap: 10px;
-    }
-}
-
-/* Telas muito pequenas */
-@media (max-width: 480px) {
-    .modal-encontro {
-        padding: 10px;
-    }
-
-    .form-group input,
-    .form-group textarea,
-    .form-group select {
-        font-size: 0.9rem;
-        padding: 10px;
-    }
-}
