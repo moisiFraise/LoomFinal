@@ -365,6 +365,7 @@ async function enviarDenuncia() {
         
   } catch (error) {
     console.error('Erro ao enviar denúncia:', error);
+    fecharModalDenuncia();
     if (error.message && error.message.includes('Você já denunciou')) {
         Swal.fire({
             icon: 'info',
