@@ -327,4 +327,20 @@ if (formularioLogin) {
     if (sucesso === 'senha_redefinida') {
         mostrarToast('Senha redefinida com sucesso! Você já pode fazer login.', 'sucesso');
     }
+
+    // Funcionalidade de toggle de senha
+    document.querySelectorAll('.toggle-password').forEach(button => {
+        button.addEventListener('click', () => {
+            const targetId = button.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            const icon = button.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fas fa-eye';
+            }
+        });
+    });
 });

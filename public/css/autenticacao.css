@@ -173,6 +173,36 @@ label {
     color: var(--vermelho);
 }
 
+.input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-container input {
+    flex: 1;
+    padding-right: 40px;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: #666;
+    padding: 5px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.toggle-password:hover {
+    color: #333;
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
 .mensagem-sucesso {
     background-color: rgba(0, 184, 148, 0.08);
     border-left: 3px solid var(--ciano);
