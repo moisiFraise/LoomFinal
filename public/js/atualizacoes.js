@@ -337,7 +337,7 @@ async function enviarDenuncia() {
         
         const botaoEnviar = document.querySelector('.btn-confirmar');
         const textoOriginal = botaoEnviar.textContent;
-        botaoEnviar.innerHTML = '<i class="far fa-spinner fa-spin"></i> Enviando...';
+        botaoEnviar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
         botaoEnviar.disabled = true;
         
         const response = await fetch('/api/denuncias', {
