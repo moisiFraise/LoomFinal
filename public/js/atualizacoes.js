@@ -365,11 +365,19 @@ async function enviarDenuncia() {
         
   } catch (error) {
     console.error('Erro ao enviar denúncia:', error);
-    Swal.fire({
-        icon: 'error',
-        title: 'Erro',
-        text: error.message || 'Erro ao enviar denúncia. Tente novamente.'
-    });
+    if (error.message && error.message.includes('Você já denunciou')) {
+        Swal.fire({
+            icon: 'info',
+            title: 'Atenção',
+            text: 'Você já denunciou esta atualização.'
+        });
+    } else {
+        Swal.fire({
+            icon: 'error',
+            title: 'Erro',
+            text: error.message || 'Erro ao enviar denúncia. Tente novamente.'
+        });
+    }
 } finally {
     const botaoEnviar = document.querySelector('.btn-confirmar');
     if (botaoEnviar) {
