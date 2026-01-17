@@ -325,17 +325,39 @@ function renderizarMeusClubes(clubesCriados, clubesParticipando) {
         }
         
         clubeCard.innerHTML = `
-            <h3 class="clube-nome">${clube.nome} ${iconeVisibilidade}</h3>
-            <p class="clube-descricao">${clube.descricao || 'Sem descrição'}</p>
-            <div class="clube-info">
-                ${iconeModalidade}
+            <div class="clube-header">
+                <div class="clube-titulo-section">
+                    <h3 class="clube-nome">${clube.nome}</h3>
+                    <span class="clube-visibilidade">${iconeVisibilidade}</span>
+                </div>
+                ${ehCriador ? '<div class="criador-badge"><i class="fas fa-crown"></i> Você é o criador</div>' : ''}
             </div>
-            <div class="clube-tags">
-                ${clube.categorias ? clube.categorias.map(cat => `<span class="tag">${cat}</span>`).join('') : ''}
+            
+            <p class="clube-descricao">${clube.descricao || 'Sem descrição disponível'}</p>
+            
+            <div class="clube-metadata">
+                <div class="metadata-item">
+                    ${iconeModalidade}
+                </div>
+                ${clube.categorias && clube.categorias.length > 0 ? `
+                    <div class="metadata-item">
+                        <span class="categoria-label">
+                            ${clube.categorias.slice(0, 2).join(', ')}${clube.categorias.length > 2 ? '...' : ''}
+                        </span>
+                    </div>
+                ` : ''}
+                ${clube.total_membros ? `
+                    <div class="metadata-item">
+                        <i class="fas fa-users"></i>
+                        <span>${clube.total_membros} ${clube.total_membros === 1 ? 'membro' : 'membros'}</span>
+                    </div>
+                ` : ''}
             </div>
-            ${ehCriador ? '<span class="criador-badge">Criador</span>' : ''}
-            <div class="clube-acoes">
-                <button class="botao-padrao" onclick="acessarClube(${clube.id})">Acessar</button>
+            
+            <div class="clube-footer">
+                <button class="botao-padrao" onclick="acessarClube(${clube.id})">
+                    <i class="fas fa-arrow-right"></i> Entrar no Clube
+                </button>
             </div>
         `;
         

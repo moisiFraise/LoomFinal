@@ -1,5 +1,6 @@
 const pool = require('../config/database');
 const bcrypt = require('bcrypt');
+const { buscarPorEmailRobusto } = require('../utils/busca-usuarios');
 
 class Usuario {
   static async criar(nome, email, senha) { //Crud
@@ -21,14 +22,8 @@ class Usuario {
 
   static async buscarPorEmail(email) {
     try {
-      console.log('Buscando usuário por email:', email);
-      const [rows] = await pool.safeQuery(
-        'SELECT * FROM usuarios WHERE email = ?',
-        [email]
-      );
-      
-      console.log('Resultado da busca:', rows.length > 0 ? 'Usuário encontrado' : 'Usuário não encontrado');
-      return rows[0];
+      // Usar busca robusta que trata variações de email
+      return await buscarPorEmailRobusto(email);
     } catch (error) {
       console.error('Erro ao buscar usuário por email:', error);
       throw error;

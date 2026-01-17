@@ -804,7 +804,9 @@
     }
     
     .atualizacao-header {
-        flex-direction: column;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-between;
         gap: 15px;
     }
     

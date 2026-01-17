@@ -296,50 +296,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.querySelectorAll('.btn-editar-publicacao').forEach(btn => {
         btn.addEventListener('click', function () {
-            const publicacaoId = this.dataset.id;
-            const clubeId = this.closest('.publicacao-item').dataset.clubeId;
-
-            window.location.href = '/clube/' + clubeId + '/atualizacoes/' + publicacaoId + '/editar';
+            Swal.fire({
+                title: 'Editar Atualização',
+                text: 'Para excluir ou editar atualizações entre no clube de leitura correspondente',
+                icon: 'info',
+                confirmButtonText: 'Entendi'
+            });
         });
     });
 
     document.querySelectorAll('.btn-excluir-publicacao').forEach(btn => {
         btn.addEventListener('click', function () {
-            const publicacaoId = this.dataset.id;
-            const clubeId = this.closest('.publicacao-item').dataset.clubeId;
-            const publicacaoItem = this.closest('.publicacao-item');
-
-            if (confirm('Tem certeza que deseja excluir esta publicacao?')) {
-                fetch('/api/clube/' + clubeId + '/atualizacoes/' + publicacaoId, {
-                    method: 'DELETE'
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Erro ao excluir publicacao');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    publicacaoItem.remove();
-                    mostrarNotificacao('Publicacao excluida com sucesso!', 'sucesso');
-
-                    const numeroPublicacoes = document.querySelector('.estatistica .numero');
-                    if (numeroPublicacoes) {
-                        numeroPublicacoes.textContent = parseInt(numeroPublicacoes.textContent) - 1;
-                    }
-
-                    if (listaPublicacoes && listaPublicacoes.querySelectorAll('.publicacao-item').length === 0) {
-                        const semPublicacoes = document.createElement('div');
-                        semPublicacoes.className = 'sem-publicacoes';
-                        semPublicacoes.innerHTML = '<p>Voce ainda nao fez nenhuma publicacao.</p>';
-                        listaPublicacoes.appendChild(semPublicacoes);
-                    }
-                })
-                .catch(error => {
-                    console.error('Erro:', error);
-                    mostrarNotificacao('Erro ao excluir publicacao.', 'erro');
-                });
-            }
+            Swal.fire({
+                title: 'Excluir Atualização',
+                text: 'Para excluir ou editar atualizações entre no clube de leitura correspondente',
+                icon: 'info',
+                confirmButtonText: 'Entendi'
+            });
         });
     });
 

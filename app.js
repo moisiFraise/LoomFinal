@@ -154,6 +154,10 @@ async function verificarAutenticacao(req, res, next) {
 const userCache = new Map();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
 
+// Cache para atualizações de clubes
+const updatesCache = new Map();
+const UPDATES_CACHE_DURATION = 2 * 60 * 1000; // 2 minutos
+
 // Função para obter usuário com cache
 async function getCachedUser(id) {
   const cached = userCache.get(id);
@@ -184,6 +188,12 @@ setInterval(() => {
       userCache.delete(id);
     }
   }
+  // Limpar cache de atualizações
+  for (const [key, cache] of updatesCache.entries()) {
+    if (cache.expiresAt <= now) {
+      updatesCache.delete(key);
+    }
+  }
 }, 60000); // A cada minuto
 
 // Circuit breaker para banco de dados
@@ -191,8 +201,8 @@ let dbCircuitBreaker = {
   failures: 0,
   lastFailure: 0,
   isOpen: false,
-  threshold: 10, // Após 10 falhas
-  timeout: 60000 // 1 minuto
+  threshold: 50, // Após 50 falhas (aumentado para múltiplos usuários)
+  timeout: 30000 // 30 segundos (reduzido para recuperação mais rápida)
 };
 
 function checkCircuitBreaker() {
@@ -2253,35 +2263,57 @@ app.post('/api/clube/:id/leituras', verificarAutenticacao, async (req, res) => {
   }
 });
 app.get('/api/clube/:id/atualizacoes', verificarAutenticacao, async (req, res) => {
-  try {
-      const clubeId = req.params.id;
-      const userId = req.session.userId;
-      
-      const [participacoes] = await pool.safeQuery(
-          'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
-          [userId, clubeId]
-      );
-      
-      if (participacoes.length === 0) {
-          return res.status(403).json({ erro: 'Você não é membro deste clube' });
+try {
+const clubeId = req.params.id;
+const userId = req.session.userId;
+      const cacheKey = `clube_${clubeId}_atualizacoes`;
+
+// Verificar cache primeiro
+const cached = updatesCache.get(cacheKey);
+if (cached && cached.expiresAt > Date.now()) {
+  return res.json(cached.data);
       }
-      const [leituraRows] = await pool.safeQuery(
-          'SELECT * FROM leituras WHERE id_clube = ? AND status = "atual" LIMIT 1',
-          [clubeId]
-      );
-      
-      if (leituraRows.length === 0) {
-          return res.json({ atualizacoes: [], leituraAtual: null });
-      }
-      
-      const leituraAtual = leituraRows[0];
-      const atualizacoes = await Atualizacoes.listarPorClube(clubeId, leituraAtual.id);
-      res.json({
-          atualizacoes,
-          leituraAtual
-      });
+
+// Verificar circuit breaker
+if (!checkCircuitBreaker()) {
+  console.log('💔 Circuit breaker ativo - retornando atualizações vazias');
+  return res.json({ atualizacoes: [], leituraAtual: null, circuitBreaker: true });
+}
+
+const [participacoes] = await pool.safeQuery(
+    'SELECT * FROM participacoes WHERE id_usuario = ? AND id_clube = ?',
+[userId, clubeId]
+);
+
+if (participacoes.length === 0) {
+    return res.status(403).json({ erro: 'Você não é membro deste clube' });
+}
+const [leituraRows] = await pool.safeQuery(
+    'SELECT * FROM leituras WHERE id_clube = ? AND status = "atual" LIMIT 1',
+    [clubeId]
+);
+
+if (leituraRows.length === 0) {
+const response = { atualizacoes: [], leituraAtual: null };
+    updatesCache.set(cacheKey, { data: response, expiresAt: Date.now() + UPDATES_CACHE_DURATION });
+        return res.json(response);
+}
+
+const leituraAtual = leituraRows[0];
+const atualizacoes = await Atualizacoes.listarPorClube(clubeId, leituraAtual.id);
+
+const response = { atualizacoes, leituraAtual };
+      updatesCache.set(cacheKey, { data: response, expiresAt: Date.now() + UPDATES_CACHE_DURATION });
+
+    res.json(response);
   } catch (error) {
       console.error('Erro ao buscar atualizações:', error);
+
+      // Registrar falha no circuit breaker
+      if (error.code === 'ER_TOO_MANY_USER_CONNECTIONS' || error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT') {
+        recordDbFailure();
+      }
+
       res.status(500).json({ erro: 'Erro ao buscar atualizações do clube' });
   }
 });
@@ -2346,6 +2378,10 @@ app.post('/api/clube/:id/atualizacoes', verificarAutenticacao, async (req, res) 
       
       novaAtualizacao.nome_usuario = usuarioRows[0].nome;
       
+      // Invalidar cache das atualizações do clube
+      const cacheKey = `clube_${clubeId}_atualizacoes`;
+      updatesCache.delete(cacheKey);
+
       res.status(201).json({
           mensagem: 'Atualização publicada com sucesso',
           atualizacao: novaAtualizacao
@@ -4024,12 +4060,24 @@ app.post('/api/comentarios', verificarAutenticacaoAPI, async (req, res) => {
 app.get('/api/comentarios/:idAtualizacao', verificarAutenticacaoAPI, async (req, res) => {
   try {
     const { idAtualizacao } = req.params;
-    
+
+    // Verificar circuit breaker
+    if (!checkCircuitBreaker()) {
+      console.log('💔 Circuit breaker ativo - retornando comentários vazios');
+      return res.json([]);
+    }
+
     const comentarios = await Comentarios.listarPorAtualizacao(idAtualizacao);
-    
+
     res.json(comentarios);
   } catch (error) {
     console.error('Erro ao listar comentários:', error);
+
+    // Registrar falha no circuit breaker
+    if (error.code === 'ER_TOO_MANY_USER_CONNECTIONS' || error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT') {
+      recordDbFailure();
+    }
+
     res.status(500).json({ erro: 'Erro ao listar comentários' });
   }
 });

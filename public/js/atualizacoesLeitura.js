@@ -276,8 +276,12 @@ function toggleMenuOpcoes(atualizacaoId) {
 }
 
 function editarAtualizacao(id) {
-    // Redirecionar de volta para o clube com modal de edição
-    window.location.href = `/clube/${clubeId}?editarAtualizacao=${id}`;
+    Swal.fire({
+        title: 'Não é possível editar',
+        text: 'Não é possível editar atualizações de leituras passadas, somente exclui-las',
+        icon: 'warning',
+        confirmButtonText: 'Entendi'
+    });
 }
 
 async function excluirAtualizacao(id) {
@@ -303,18 +307,7 @@ async function excluirAtualizacao(id) {
     }
 }
 
-function abrirModalDenuncia(atualizacaoId, nomeUsuario) {
-    // Usar a mesma função do arquivo atualizacoes.js
-    if (typeof window.abrirModalDenuncia === 'function') {
-        window.abrirModalDenuncia(atualizacaoId, nomeUsuario);
-    } else {
-        // Implementação básica se a função não estiver disponível
-Swal.fire({
-    icon: 'info',
-    title: 'Atenção',
-    text: 'Funcionalidade de denúncia temporariamente indisponível'
-});    }
-}
+
 
 function voltarParaClube() {
     window.location.href = `/clube/${clubeId}`;

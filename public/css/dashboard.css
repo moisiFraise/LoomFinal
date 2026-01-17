@@ -2,10 +2,10 @@
     max-width: 450px;
     width: 85%; 
     padding: 20px; 
-    background: var(--current-line);
-    border: 2px solid var(--roxo);
+    background: var(--card-bg);
+    border: 2px solid var(--principal);
     border-radius: 15px;
-    box-shadow: 0 8px 32px rgba(189, 147, 249, 0.3);
+    box-shadow: 0 8px 32px rgba(122, 155, 111, 0.2);
     position: relative;
     margin: 15px auto; 
 }
@@ -18,20 +18,20 @@ form {
 }
 
 h2 {
-    color: var(--roxo);
+    color: var(--principal);
     text-align: center;
     font-size: 24px;
     margin-bottom: 15px;
     font-weight: 600;
-    text-shadow: 0 0 8px var(--roxo);
+    text-shadow: 0 0 8px rgba(122, 155, 111, 0.3);
 }
 
 input {
     padding: 10px 12px;
-    border: 2px solid var(--roxo);
+    border: 2px solid var(--principal);
     border-radius: 8px;
     font-size: 14px;
-    background: var(--background);
+    background: var(--input-bg);
     color: var(--foreground);
     transition: all 0.3s ease;
     width: 100%;
@@ -44,8 +44,8 @@ input {
 }
 
 .botao-padrao {
-    background: linear-gradient(45deg, var(--roxo), var(--rosa));
-    color: var(--current-line);
+    background: linear-gradient(45deg, var(--principal), var(--secundaria));
+    color: var(--background);
     padding: 12px;
     border: none;
     border-radius: 15px;
@@ -54,9 +54,14 @@ input {
     transition: all 0.3s ease;
 }
 
+.botao-padrao:hover {
+    background: linear-gradient(45deg, var(--principal-claro), var(--secundaria-claro));
+    transform: translateY(-2px);
+}
+
 .botao-editar {
     background: linear-gradient(45deg, var(--laranja), var(--vermelho));
-    color: var(--current-line);
+    color: var(--background);
     padding: 12px;
     border: none;
     border-radius: 15px;
@@ -152,38 +157,150 @@ input[type="password"] {
 
 .clube-card {
     width: 100% !important;
-    margin: 0 0 30px 0 !important;
-    border-radius: 0 !important; 
+    margin: 0 0 24px 0 !important;
+    border-radius: 12px !important;
+    padding: 20px !important;
+    background: linear-gradient(135deg, var(--card-bg) 0%, rgba(122, 155, 111, 0.05) 100%) !important;
+    border-left: 4px solid var(--principal) !important;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3) !important;
+    transition: all 0.3s ease !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+}
+
+.clube-card:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 6px 20px rgba(122, 155, 111, 0.2) !important;
+    border-left-color: var(--secundaria) !important;
+}
+
+.clube-header {
+    margin-bottom: 12px;
+}
+
+.clube-titulo-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.clube-nome {
+    margin: 0 !important;
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    color: var(--foreground) !important;
+}
+
+.clube-visibilidade {
+    font-size: 14px;
+    color: var(--principal);
+    opacity: 0.8;
+}
+
+.criador-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    padding: 4px 10px;
+    background: linear-gradient(45deg, var(--principal), var(--secundaria));
+    color: var(--background);
+    border-radius: 20px;
+    font-weight: 600;
+    width: fit-content;
+}
+
+.criador-badge i {
+    font-size: 11px;
+}
+
+.clube-descricao {
+    font-size: 14px;
+    color: var(--paragrafo);
+    margin: 0 0 14px 0 !important;
+    line-height: 1.4;
+}
+
+.clube-metadata {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding: 10px 0;
+    border-top: 1px solid rgba(122, 155, 111, 0.1);
+    border-bottom: 1px solid rgba(122, 155, 111, 0.1);
+}
+
+.metadata-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--paragrafo);
+}
+
+.metadata-item i {
+    font-size: 12px;
+    color: var(--principal);
+}
+
+.categoria-label {
+    background: rgba(122, 155, 111, 0.1);
+    color: var(--principal);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.clube-footer {
+    display: flex;
+    gap: 10px;
+}
+
+.clube-footer .botao-padrao {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 14px;
+    padding: 10px 16px !important;
+}
+
+.clube-footer .botao-padrao i {
+    font-size: 12px;
 }
 
 .modalidade-badge {
     display: inline-flex;
     align-items: center;
-    padding: 3px 8px;
+    padding: 4px 10px;
     border-radius: 10px;
     font-size: 12px;
-    margin-right: 5px;
-    margin-bottom: 5px;
+    font-weight: 500;
+    gap: 5px;
 }
 
 .modalidade-badge i {
-    margin-right: 4px;
-    font-size: 11px;
+    font-size: 12px;
 }
 
 .modalidade-badge.online {
-    background-color: var(--roxo);
-    color: var(--foreground);
+    background-color: rgba(122, 155, 111, 0.15);
+    color: var(--principal);
 }
 
 .modalidade-badge.presencial {
-    background-color: var(--verde);
-    color: var(--background);
+    background-color: rgba(139, 157, 111, 0.15);
+    color: var(--ciano);
 }
 
 .modalidade-badge.hibrido {
-    background-color: var(--laranja);
-    color: var(--background);
+    background-color: rgba(200, 156, 94, 0.15);
+    color: var(--laranja);
 }
 
 .clube-info {

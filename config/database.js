@@ -8,7 +8,7 @@ const dbConfig = {
   database: process.env.DB_NAME || 'loom_db',
   port: process.env.DB_PORT || 3306,
   waitForConnections: true,
-  connectionLimit: process.env.VERCEL ? 10 : 50, // Pool menor no Vercel
+  connectionLimit: process.env.VERCEL ? 10 : 100, // Pool maior para múltiplos usuários
   queueLimit: 0,
   acquireTimeout: 30000, // 30s
   timeout: 30000, // 30s
